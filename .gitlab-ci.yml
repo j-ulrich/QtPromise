@@ -1,0 +1,31 @@
+image: ubuntu:yakkety
+
+variables:
+  BUILD_DIR: linux64_gcc-5_qt-5.6
+
+build:
+  stage: build
+  # instead of calling g++ directly you can also use some build toolkit like make
+  # install the necessary build tools when needed
+  before_script: 
+    - apt update && apt-get -y install gcc-5 make cmake qt5-default
+  script:
+    - gcc --version
+    - qmake --version
+#    - mkdir $BUILD_DIR
+#    - cd $BUILD_DIR
+#    - cmake ..
+#    - make
+  #artifacts:
+  #  paths:
+  #    - mybinary
+  # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
+  # cache:
+  #   paths:
+  #     - "*.o"
+
+# run tests using the binary built before
+#test:
+#  stage: test
+#  script:
+#    - ./runmytests.sh
