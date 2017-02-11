@@ -9,14 +9,12 @@ build:
   # install the necessary build tools when needed
   before_script: 
     - apt-get update && apt-get -y install gcc-5 g++-5 make cmake qt5-default
-    - update-alternatives --set gcc "/usr/bin/gcc-5"
-    - update-alternatives --set g++ "/usr/bin/g++-5"
   script:
-    - gcc --version
+    - g++-5 --version
     - qmake --version
 #    - mkdir $BUILD_DIR
 #    - cd $BUILD_DIR
-#    - cmake ..
+#    - CC=gcc-5 CXX=g++-5 cmake ..
 #    - make
   #artifacts:
   #  paths:
