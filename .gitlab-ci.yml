@@ -8,7 +8,9 @@ build:
   # instead of calling g++ directly you can also use some build toolkit like make
   # install the necessary build tools when needed
   before_script: 
-    - apt update && apt-get -y install gcc-5 make cmake qt5-default
+    - apt-get update && apt-get -y install gcc-5 g++-5 make cmake qt5-default
+    - update-alternatives --set gcc "/usr/bin/gcc-5"
+    - update-alternatives --set g++ "/usr/bin/g++-5"
   script:
     - gcc --version
     - qmake --version
