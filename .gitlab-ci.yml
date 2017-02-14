@@ -1,21 +1,21 @@
 image: ubuntu:yakkety
 
 variables:
-  BUILD_DIR: linux64_gcc-5_qt-5.6
+  BUILD_DIR: build_linux64_gcc-5_qt-5.6
 
 build:
   stage: build
   # instead of calling g++ directly you can also use some build toolkit like make
   # install the necessary build tools when needed
-  before_script: 
+  before_script:
     - apt-get update && apt-get -y install gcc-5 g++-5 make cmake qt5-default
   script:
     - g++-5 --version
     - qmake --version
-#    - mkdir $BUILD_DIR
-#    - cd $BUILD_DIR
-#    - CC=gcc-5 CXX=g++-5 cmake ..
-#    - make
+    - mkdir -p "$BUILD_DIR"
+    - cd "$BUILD_DIR"
+    - CC=gcc-5 CXX=g++-5 cmake -DCMAKE_BUILD_TYPE=Release ..
+    - make
   #artifacts:
   #  paths:
   #    - mybinary
@@ -25,7 +25,10 @@ build:
   #     - "*.o"
 
 # run tests using the binary built before
-#test:
-#  stage: test
-#  script:
-#    - ./runmytests.sh
+test:
+  stage: test
+  script:
+    - mkdir -p "$BUILD_DIR"
+    - cd "$BUILD_DIR"
+    - CC=gcc-5 CXX=g++-5 cmake -DCMAKE_BUILD_TYPE=Release ..
+    - make test
