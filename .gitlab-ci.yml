@@ -1,31 +1,28 @@
-image: ubuntu:yakkety
+image: julrich/docker_qt:latest
 
 variables:
-  BUILD_DIR: linux64_gcc-5_qt-5.6
+  BUILD_DIR: build_linux64_gcc-5_qt-5.6
 
 build:
   stage: build
-  # instead of calling g++ directly you can also use some build toolkit like make
-  # install the necessary build tools when needed
-  before_script: 
-    - apt-get update && apt-get -y install gcc-5 g++-5 make cmake qt5-default
   script:
-    - g++-5 --version
+    - g++ --version
     - qmake --version
-#    - mkdir $BUILD_DIR
-#    - cd $BUILD_DIR
-#    - CC=gcc-5 CXX=g++-5 cmake ..
-#    - make
+    - mkdir -p "$BUILD_DIR"
+    - cd "$BUILD_DIR"
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - make qt5promise
   #artifacts:
   #  paths:
   #    - mybinary
-  # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
-  # cache:
-  #   paths:
-  #     - "*.o"
 
-# run tests using the binary built before
-#test:
-#  stage: test
-#  script:
-#    - ./runmytests.sh
+test:
+  stage: test
+  script:
+    - mkdir -p "$BUILD_DIR"
+    - cd "$BUILD_DIR"
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - cd tests
+    - make # Build the tests
+    - cd ..
+    - make test # Run the tests

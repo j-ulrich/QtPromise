@@ -36,3 +36,10 @@ Makefile*
 # QtCtreator CMake
 CMakeLists.txt.user*
 
+# Eclipse
+.cproject
+.project
+.settings
+
+# CMake
+build*
