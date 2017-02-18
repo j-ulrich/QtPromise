@@ -11,20 +11,18 @@ build:
     - mkdir -p "$BUILD_DIR"
     - cd "$BUILD_DIR"
     - cmake -DCMAKE_BUILD_TYPE=Release ..
-    - make
+    - make qt5promise
   #artifacts:
   #  paths:
   #    - mybinary
-  # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
-  # cache:
-  #   paths:
-  #     - "*.o"
 
-# run tests using the binary built before
 test:
   stage: test
   script:
     - mkdir -p "$BUILD_DIR"
     - cd "$BUILD_DIR"
     - cmake -DCMAKE_BUILD_TYPE=Release ..
-    - make test
+    - cd tests
+    - make # Build the tests
+    - cd ..
+    - make test # Run the tests
