@@ -1,8 +1,12 @@
 
 set(QT5PROMISE_SOURCES
+	Deferred.h
 	Deferred.cpp
+	Promise.h
 	Promise.cpp
+	ChildDeferred.h
 	ChildDeferred.cpp
+	NetworkDeferred.h
 	NetworkDeferred.cpp
 )
 
