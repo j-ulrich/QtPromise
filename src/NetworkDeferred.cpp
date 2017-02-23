@@ -5,6 +5,10 @@ namespace QtPromise {
 NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 	: m_reply(reply), m_progress{{-1,-1},{-1,-1}}
 {
+	qRegisterMetaType<Error>();
+	qRegisterMetaType<Progress>();
+	qRegisterMetaType<NetworkReplyProgress>();
+
 	m_reply->setParent(this);
 	connect(m_reply, &QNetworkReply::readyRead, this, &NetworkDeferred::replyReadyRead);
 	connect(m_reply, &QNetworkReply::finished, this, &NetworkDeferred::replyFinished);

@@ -20,8 +20,6 @@ public:
 
 	typedef QSharedPointer<ChildDeferred> Ptr;
 
-	virtual ~ChildDeferred();
-
 	static Ptr create(Deferred::Ptr parent);
 
 protected slots:

@@ -75,15 +75,13 @@ public slots:
 	bool notify(const QVariant& progress);
 
 protected:
-	Deferred() : QObject(nullptr), m_lock(QReadWriteLock::Recursive), m_state(Pending) {};
+	Deferred();
 
+	void logInvalidActionMessage(const char* action) const;
 
 	mutable QReadWriteLock m_lock;
 	State m_state;
 	QVariant m_data;
-
-
-	void logInvalidActionMessage(const char* action) const;
 };
 
 }  // namespace QtPromise

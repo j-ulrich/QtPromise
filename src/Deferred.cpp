@@ -2,6 +2,11 @@
 
 namespace QtPromise {
 
+Deferred::Deferred()
+	: QObject(nullptr), m_lock(QReadWriteLock::Recursive), m_state(Pending)
+{
+	qRegisterMetaType<DeferredDestroyed>();
+}
 
 Deferred::Ptr Deferred::create()
 {
