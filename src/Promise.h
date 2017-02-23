@@ -32,6 +32,7 @@ public:
 	static Ptr createRejected(const QVariant& reason);
 
 	Deferred::State state() const;
+	QVariant data() const;
 
 	template<typename ResolvedFunc, typename RejectedFunc>
 	Ptr then(ResolvedFunc&& resolvedFunc, RejectedFunc&& rejectedFunc) const;

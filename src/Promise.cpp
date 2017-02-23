@@ -47,6 +47,11 @@ Deferred::State Promise::state() const
 	return m_deferred->state();
 }
 
+QVariant Promise::data() const
+{
+	return m_deferred->data();
+}
+
 QSharedPointer<Deferred> Promise::createChildDeferred() const
 {
 	return ChildDeferred::create(m_deferred).staticCast<Deferred>();
