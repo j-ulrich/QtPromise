@@ -35,9 +35,6 @@ DeferredTest::DeferredSpies::DeferredSpies(Deferred::Ptr deferred)
 	  rejected(deferred.data(), &Deferred::rejected),
 	  notified(deferred.data(), &Deferred::notified)
 {
-	QVERIFY(resolved.isValid());
-	QVERIFY(rejected.isValid());
-	QVERIFY(notified.isValid());
 }
 
 void DeferredTest::constructorTest()
