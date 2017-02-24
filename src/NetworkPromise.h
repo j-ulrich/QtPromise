@@ -23,6 +23,8 @@ public:
 
 	static Ptr create(QNetworkReply* reply);
 
+	virtual void reemitSignals() const;
+
 signals:
 	void resolved(const QByteArray& data) const;
 	void rejected(NetworkDeferred::Error reason) const;

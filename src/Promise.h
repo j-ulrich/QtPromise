@@ -33,6 +33,7 @@ public:
 
 	Deferred::State state() const;
 	QVariant data() const;
+	virtual void reemitSignals() const;
 
 	template<typename ResolvedFunc, typename RejectedFunc>
 	Ptr then(ResolvedFunc&& resolvedFunc, RejectedFunc&& rejectedFunc) const;

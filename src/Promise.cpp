@@ -52,6 +52,22 @@ QVariant Promise::data() const
 	return m_deferred->data();
 }
 
+void Promise::reemitSignals() const
+{
+	switch (state())
+	{
+	case Deferred::Resolved:
+		emit resolved(data());
+		break;
+	case Deferred::Rejected:
+		emit rejected(data());
+		break;
+	default:
+	case Deferred::Pending:
+		break;
+	}
+}
+
 QSharedPointer<Deferred> Promise::createChildDeferred() const
 {
 	return ChildDeferred::create(m_deferred).staticCast<Deferred>();
