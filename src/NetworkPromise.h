@@ -18,18 +18,23 @@ class NetworkPromise : public Promise
 	Q_OBJECT
 
 public:
+
+	typedef QSharedPointer<NetworkPromise> Ptr;
+
+	static Ptr create(QNetworkReply* reply);
+
+signals:
+	void resolved(const QByteArray& data) const;
+	void rejected(NetworkDeferred::Error reason) const;
+	void notified(NetworkDeferred::NetworkReplyProgress progress) const;
+
+protected:
 	/*!
 	 *
 	 * \param reply The promise chain takes ownership of the \p reply.
 	 * \param parent QObject parent.
 	 */
-	NetworkPromise(QNetworkReply* reply, QObject* parent = nullptr);
-
-
-signals:
-	void rejected(NetworkDeferred::Error reason) const;
-	void notified(NetworkDeferred::NetworkReplyProgress progress) const;
-
+	NetworkPromise(QNetworkReply* reply);
 };
 
 } /* namespace QtPromise */

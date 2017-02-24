@@ -40,7 +40,7 @@ void NetworkDeferred::replyFinished()
 	}
 	else
 	{
-		if (this->resolve(m_buffer))
+		if (this->resolve(QVariant(m_buffer)))
 			emit resolved(m_buffer);
 	}
 }
