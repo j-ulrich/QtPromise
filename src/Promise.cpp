@@ -3,6 +3,11 @@
 
 namespace QtPromise {
 
+void noop(const QVariant&)
+{
+
+}
+
 Promise::Promise(QSharedPointer<Deferred> deferred)
 	: QObject(), m_deferred(deferred)
 {

@@ -87,5 +87,6 @@ protected:
 }  // namespace QtPromise
 
 Q_DECLARE_METATYPE(QtPromise::DeferredDestroyed)
+Q_DECLARE_METATYPE(QtPromise::Deferred::State)
 
 #endif /* SRC_DEFERRED_H_ */
