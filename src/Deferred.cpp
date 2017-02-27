@@ -6,6 +6,10 @@ Deferred::Deferred()
 	: QObject(nullptr), m_lock(QReadWriteLock::Recursive), m_state(Pending)
 {
 	qRegisterMetaType<DeferredDestroyed>();
+	qRegisterMetaType<DeferredDestroyed>("QtPromise::DeferredDestroyed");
+	qRegisterMetaType<State>();
+	qRegisterMetaType<State>("Deferred::State");
+	qRegisterMetaType<State>("QtPromise::Deferred::State");
 }
 
 Deferred::Ptr Deferred::create()
@@ -70,7 +74,12 @@ bool Deferred::reject(const QVariant& reason)
 
 bool Deferred::notify(const QVariant& progress)
 {
-	QReadLocker locker(&m_lock);
+	/* We need to use a QWriterLocker here although we do not want to write
+	 * because the recursive locking cannot change the type of the lock (read/write).
+	 * So in case a derived class already acquired a write lock and then wants to notify,
+	 * we would get a dead lock if we use a QReadLocker here.
+	 */
+	QWriteLocker locker(&m_lock);
 
 	if (m_state == Pending)
 	{
