@@ -5,9 +5,7 @@ namespace QtPromise {
 NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 	: m_reply(reply), m_progress{{-1,-1},{-1,-1}}
 {
-	qRegisterMetaType<Error>();
-	qRegisterMetaType<Progress>();
-	qRegisterMetaType<NetworkReplyProgress>();
+	registerMetaTypes();
 
 	m_reply->setParent(this);
 	connect(m_reply, &QNetworkReply::readyRead, this, &NetworkDeferred::replyReadyRead);
@@ -19,6 +17,23 @@ NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 NetworkDeferred::Ptr NetworkDeferred::create(QNetworkReply* reply)
 {
 	return Ptr(new NetworkDeferred(reply), &QObject::deleteLater);
+}
+
+void NetworkDeferred::registerMetaTypes() const
+{
+	qRegisterMetaType<ReplyData>();
+	qRegisterMetaType<ReplyData>("NetworkDeferred::ReplyData");
+	qRegisterMetaType<ReplyData>("QtPromise::NetworkDeferred::ReplyData");
+	qRegisterMetaType<Error>();
+	qRegisterMetaType<Error>("NetworkDeferred::Error");
+	qRegisterMetaType<Error>("QtPromise::NetworkDeferred::Error");
+	qRegisterMetaType<Progress>();
+	qRegisterMetaType<Progress>("NetworkDeferred::Progress");
+	qRegisterMetaType<Progress>("QtPromise::NetworkDeferred::Progress");
+	qRegisterMetaType<ReplyProgress>();
+	qRegisterMetaType<ReplyProgress>("NetworkDeferred::ReplyProgress");
+	qRegisterMetaType<ReplyProgress>("QtPromise::NetworkDeferred::ReplyProgress");
+
 }
 
 void NetworkDeferred::replyReadyRead()
@@ -40,8 +55,11 @@ void NetworkDeferred::replyFinished()
 	}
 	else
 	{
-		if (this->resolve(QVariant(m_buffer)))
-			emit resolved(m_buffer);
+		ReplyData data;
+		data.data = m_buffer;
+		data.headers = m_reply->rawHeaderPairs();
+		if (this->resolve(QVariant::fromValue(data)))
+			emit resolved(data);
 	}
 }
 

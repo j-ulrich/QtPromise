@@ -6,9 +6,10 @@ namespace QtPromise
 NetworkPromise::NetworkPromise(QNetworkReply* reply)
 	: Promise(NetworkDeferred::create(reply))
 {
-	connect(m_deferred.data(), &NetworkDeferred::resolved, this, &NetworkPromise::resolved);
-	connect(m_deferred.data(), &NetworkDeferred::rejected, this, &NetworkPromise::rejected);
-	connect(m_deferred.data(), &NetworkDeferred::notified, this, &NetworkPromise::notified);
+	NetworkDeferred::Ptr deferred = m_deferred.staticCast<NetworkDeferred>();
+	connect(deferred.data(), &NetworkDeferred::resolved, this, &NetworkPromise::resolved);
+	connect(deferred.data(), &NetworkDeferred::rejected, this, &NetworkPromise::rejected);
+	connect(deferred.data(), &NetworkDeferred::notified, this, &NetworkPromise::notified);
 
 }
 
@@ -23,11 +24,19 @@ void NetworkPromise::reemitSignals() const
 	switch (state())
 	{
 	case Deferred::Resolved:
-		emit resolved(m_deferred->data().toByteArray());
+	{
+		NetworkDeferred::Ptr deferred = m_deferred.staticCast<NetworkDeferred>();
+		NetworkDeferred::ReplyData data;
+		data.data = deferred->data();
+		data.headers = deferred->headers();
+		emit resolved(data);
 		break;
+	}
 	case Deferred::Rejected:
+	{
 		emit rejected(m_deferred->data().value<NetworkDeferred::Error>());
 		break;
+	}
 	default:
 	case Deferred::Pending:
 		break;

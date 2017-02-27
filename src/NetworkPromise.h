@@ -26,9 +26,9 @@ public:
 	virtual void reemitSignals() const;
 
 signals:
-	void resolved(const QByteArray& data) const;
-	void rejected(NetworkDeferred::Error reason) const;
-	void notified(NetworkDeferred::NetworkReplyProgress progress) const;
+	void resolved(const NetworkDeferred::ReplyData& data) const;
+	void rejected(const NetworkDeferred::Error& reason) const;
+	void notified(const NetworkDeferred::ReplyProgress& progress) const;
 
 protected:
 	/*!
