@@ -126,6 +126,13 @@ void NetworkPromiseTest::reemitSignalsTest()
 
 	PromiseSpies expectedSpies(promise);
 	QTest::qWait(1000);
+	// Disconnect expectedSpies else they contain the signals twice after reemitSignals() was called
+	promise->disconnect(&expectedSpies.resolved);
+	promise->disconnect(&expectedSpies.rejected);
+	promise->disconnect(&expectedSpies.notified);
+	promise->disconnect(&expectedSpies.baseResolved);
+	promise->disconnect(&expectedSpies.baseRejected);
+	promise->disconnect(&expectedSpies.baseNotified);
 
 	// Slots connected after promise has been resolved/rejected/notified
 	PromiseSpies spies(promise);
