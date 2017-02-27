@@ -1,0 +1,57 @@
+.navpath ul {
+	background-image: none;
+}
+
+.navpath li {
+	color: #41cd52;
+}
+.navpath li.navelem a {
+	color: #41cd52;
+	text-shadow: none;
+}
+.navpath li.navelem a:hover {
+	color: #70e67f;
+	text-shadow: none;
+}
+
+.sm-dox {
+	background-image: none;
+	background-color: #41cd52;
+}
+
+.sm-dox a {
+	color: #ffffff;
+	background-image: none;
+	text-shadow: none;
+}
+.sm-dox a:hover {
+	background-image: none;
+	background-color: #70e67f;
+	text-shadow: none;
+}
+
+.sm-dox ul a {
+	background-image: none;
+	text-shadow: none;
+}
+.sm-dox ul a:hover {
+	background-image: none;
+	background-color: #70e67f;
+	text-shadow: none;
+}
+
+.contents a {
+	color: #41cd52;
+}
+.contents a:visited {
+	color: #158523;
+}
+
+.icon {
+	background-color: #41cd52;
+}
+
+div.ah {
+	background-image: none;
+	background-color: #41cd52;
+}

@@ -11,5 +11,6 @@ find_package(Qt5Network REQUIRED)
 
 
 add_subdirectory(src)
+add_subdirectory(docs)
 enable_testing()
 add_subdirectory(tests)
