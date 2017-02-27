@@ -1,5 +1,6 @@
 
-add_executable(NetworkPromiseTest NetworkPromiseTest.cpp)
-target_link_libraries(NetworkPromiseTest Qt5::Core Qt5::Network Qt5::Test)
+include_directories(${PROJECT_SOURCE_DIR}/src)
+add_executable(test_NetworkPromise NetworkPromiseTest.cpp)
+target_link_libraries(test_NetworkPromise Qt5::Core Qt5::Network Qt5::Test)
 
-add_test(NAME NetworkPromise COMMAND NetworkPromiseTest)
+add_test(NAME NetworkPromise COMMAND test_NetworkPromise)
