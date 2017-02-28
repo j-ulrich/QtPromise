@@ -69,7 +69,7 @@ void NetworkPromiseTest::successTest()
 	NetworkDeferred::ReplyData replyData = spies.resolved.first().first().value<NetworkDeferred::ReplyData>();
 	QCOMPARE(replyData.data, expectedData);
 	QCOMPARE(spies.baseResolved.count(), 1);
-	QCOMPARE(spies.baseResolved.first().first(), QVariant::fromValue(replyData));
+	QCOMPARE(spies.baseResolved.first().first().value<NetworkDeferred::ReplyData>(), replyData);
 	QCOMPARE(spies.rejected.count(), 0);
 	QCOMPARE(spies.baseRejected.count(), 0);
 	QVERIFY(spies.notified.count() > 0);
@@ -98,10 +98,11 @@ void NetworkPromiseTest::failTest()
 	QCOMPARE(spies.rejected.count(), 1);
 	NetworkDeferred::Error error = spies.rejected.first().first().value<NetworkDeferred::Error>();
 	QCOMPARE(error.error, QNetworkReply::ContentNotFoundError);
-	qDebug() << error.errorString;
+	qDebug() << "Error code:" << error.error;
+	qDebug() << "Error string:" << error.errorString;
 	QVERIFY(!error.errorString.isEmpty());
 	QCOMPARE(spies.baseRejected.count(), 1);
-	QCOMPARE(spies.baseRejected.first().first(), QVariant::fromValue(error));
+	QCOMPARE(spies.baseRejected.first().first().value<NetworkDeferred::Error>(), error);
 	QCOMPARE(spies.notified.count(), 0);
 	QCOMPARE(spies.baseNotified.count(), 0);
 }

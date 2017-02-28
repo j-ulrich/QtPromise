@@ -3,7 +3,7 @@
 namespace QtPromise {
 
 NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
-	: m_reply(reply), m_progress{{-1,-1},{-1,-1}}
+	: m_reply(reply)
 {
 	registerMetaTypes();
 

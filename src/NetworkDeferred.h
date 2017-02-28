@@ -25,24 +25,32 @@ public:
 	{
 		QByteArray data;
 		QList<QNetworkReply::RawHeaderPair> headers;
+
+		bool operator==(const ReplyData& other) const { return data == other.data && headers == other.headers; }
 	};
 
 	struct Progress
 	{
-		qint64 current;
-		qint64 total;
+		qint64 current = -1;
+		qint64 total = -1;
+
+		bool operator==(const Progress& other) const { return current == other.current && total == other.total; }
 	};
 
 	struct ReplyProgress
 	{
 		Progress download;
 		Progress upload;
+
+		bool operator==(const ReplyProgress& other) const { return download == other.download && upload == other.upload; }
 	};
 
 	struct Error
 	{
-		QNetworkReply::NetworkError error;
+		QNetworkReply::NetworkError error = QNetworkReply::NoError;
 		QString errorString;
+
+		bool operator==(const Error& other) const { return error == other.error && errorString == other.errorString; }
 	};
 
 	static Ptr create(QNetworkReply* reply);
