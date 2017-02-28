@@ -47,10 +47,10 @@ public:
 
 	struct Error
 	{
-		QNetworkReply::NetworkError error = QNetworkReply::NoError;
-		QString errorString;
+		QNetworkReply::NetworkError code = QNetworkReply::NoError;
+		QString message;
 
-		bool operator==(const Error& other) const { return error == other.error && errorString == other.errorString; }
+		bool operator==(const Error& other) const { return code == other.code && message == other.message; }
 	};
 
 	static Ptr create(QNetworkReply* reply);
