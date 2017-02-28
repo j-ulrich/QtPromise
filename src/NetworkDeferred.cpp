@@ -48,8 +48,8 @@ void NetworkDeferred::replyFinished()
 	if (m_reply->error() != QNetworkReply::NoError)
 	{
 		Error reason;
-		reason.error = m_reply->error();
-		reason.errorString = m_reply->errorString();
+		reason.code = m_reply->error();
+		reason.message = m_reply->errorString();
 		if (this->reject(QVariant::fromValue(reason)))
 			emit rejected(reason);
 	}
