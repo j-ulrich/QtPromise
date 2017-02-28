@@ -25,4 +25,4 @@ test:
     - cd tests
     - make # Build the tests
     - cd ..
-    - make test # Run the tests
+    - ctest --output-on-failure # Run the tests
