@@ -4,6 +4,16 @@
 
 ![Build status](https://gitlab.com/julrich/QtPromise/badges/master/build.svg)
 
+### Table of Contents ###
+> - [Motivation](#motivation)
+>   - [Other Implementations](#other-implementations)
+>   - [Further Reading](#further-reading)
+> - [Features](#features)
+> - [Example](#example)
+> - [Requirements](#requirements)
+> - [Documentation](#documentation)
+> - [License](#license)
+
 ## Motivation ##
 Working with asynchronous data (e.g. data fetched from web servers) can be cumbersome in Qt applications. Especially if the data needs to be processed before being usable by the application (think extracting specific information out of a JSON object) or if multiple data sources are involved.
 Typically, it leads to splitting the processing across multiple signals and slots and having member variables only to remember the state of the processing between the processing steps.
@@ -69,7 +79,7 @@ this->promise = fetchJson(reply)
 	// Do something with JSON document
 	this->print(data.toJsonDocument().toObject());
 }, [](const QVariant& error) {
-	this->logError("Error fetching JSON document: "+error.value<NetworkDeferred::Error>().message());
+	this->logError("Error fetching JSON document: "+error.value<NetworkDeferred::Error>().message;
 });
 ```
 
