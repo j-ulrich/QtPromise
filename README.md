@@ -55,6 +55,7 @@ However, they do not allow chaining, enforce using threads and do not support cu
 
 
 ## Example ##
+
 ```cpp
 using QtPromise;
 Promise::Ptr fetchJson(QNetworkReply* reply)
