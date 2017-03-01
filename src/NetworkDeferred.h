@@ -56,7 +56,7 @@ public:
 	static Ptr create(QNetworkReply* reply);
 
 	QByteArray data() const { QReadLocker locker(&m_lock); return m_buffer; }
-	QList<QNetworkReply::RawHeaderPair> headers() const { QReadLocker lokcer(&m_lock); return m_reply->rawHeaderPairs(); }
+	QList<QNetworkReply::RawHeaderPair> headers() const { QReadLocker locker(&m_lock); return m_reply->rawHeaderPairs(); }
 
 signals:
 	void resolved(const QtPromise::NetworkDeferred::ReplyData& data) const;
