@@ -77,11 +77,13 @@ public slots:
 protected:
 	Deferred();
 
-	void logInvalidActionMessage(const char* action) const;
-
 	mutable QReadWriteLock m_lock;
 	State m_state;
 	QVariant m_data;
+
+private:
+	void logInvalidActionMessage(const char* action) const;
+
 };
 
 }  // namespace QtPromise
