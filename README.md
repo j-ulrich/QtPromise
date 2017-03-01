@@ -23,7 +23,7 @@ Both do not integrate with Qt's signal & slot mechanism out of the box but provi
 Qt's [QFuture](http://doc.qt.io/qt-5.6/qfuture.html) and [QFutureWatcher](http://doc.qt.io/qt-5.6/qfuturewatcher.html) provide a similar functionality.
 However, they do not allow chaining, enforce using threads and do not support custom asynchronous operations wells (e.g. no progress reporting).
 
-### Further reading ### {#further_reading}
+### Further reading ###
 - [Wikipedia: Futures and Promises](https://en.wikipedia.org/wiki/Futures_and_promises)
 - [Promises/A+](https://promisesaplus.com)
 - [JavaScript Promise (MDN)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
