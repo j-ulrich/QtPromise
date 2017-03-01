@@ -9,7 +9,7 @@ Working with asynchronous data (e.g. data fetched from web servers) can be cumbe
 Typically, it leads to splitting the processing across multiple signals and slots and having member variables only to remember the state of the processing between the processing steps.
 
 The [promise pattern](https://en.wikipedia.org/wiki/Futures_and_promises) solves these problems by providing an object which represents the state of an asynchronous operation and allowing to chain processing steps to that object.
-For more information about the promise pattern, see the links in the [Further Reading](#further_reading) section.
+For more information about the promise pattern, see the links in the [Further Reading](#further-reading) section.
 
 > **Note:** There are different namings for the pattern and it's concepts.
 > Some use "future" and "promise" (especially the C++ implementations), others use "deferred" and "promise" (especially the JavaScript implementations), others use just "promise".
