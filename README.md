@@ -50,7 +50,7 @@ However, they do not allow chaining, enforce using threads and do not support cu
 - Can be used with any asynchronous operation
 - Supports signals & slots
 - Supports `QNetworkReply`
-
+- [Semantic versioning](http://semver.org/)
 > **Important Note:** The library currently does **not** provide binary compatibility between versions. Only source compatibility is guaranteed between minor and patch versions.
 
 
