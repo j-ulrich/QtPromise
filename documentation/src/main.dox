@@ -1,0 +1,23 @@
+/*!
+
+\mainpage Qt Promise
+
+> Promise Pattern for Qt
+
+## Introduction ##
+The Qt Promise library provides two main interfaces: \ref QtPromise::Promise "Promise"
+and \ref QtPromise::Deferred "Deferred".
+
+Deferred is the sending side of the communication (similar to a publisher in the
+publisher-subscriber pattern) and is used to deliver the outcome of an asynchronous operation
+to other components.
+
+Promise is the listening side of the communication (similar to a subscriber in the
+publisher-subscriber pattern) and is used to attach actions to the outcome of the asynchronous
+operation.
+
+
+## Further Reading ##
+See [Readme](md__r_e_a_d_m_e.html#further-reading)
+
+*/

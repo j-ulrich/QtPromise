@@ -18,6 +18,6 @@ set(CMAKE_MSVCIDE_RUN_PATH ${QT5_BIN_DIR})
 
 
 add_subdirectory(src)
-add_subdirectory(docs)
+add_subdirectory(documentation)
 enable_testing()
 add_subdirectory(tests)

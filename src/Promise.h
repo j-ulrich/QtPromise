@@ -33,6 +33,7 @@ void noop(const QVariant& ignored);
 
 /*! \brief Provides access to asynchronous data.
  *
+ *	\threadsafeClass
  */
 class Promise : public QObject
 {

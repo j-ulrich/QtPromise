@@ -40,9 +40,9 @@ private:
 #endif // QT_NO_EXCEPTIONS
 
 
-/*! \brief
+/*! \brief Allows
  *
- * \threadsafe
+ * \threadsafeClass
  */
 class Deferred : public QObject
 {
