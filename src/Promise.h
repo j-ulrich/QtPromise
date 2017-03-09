@@ -47,7 +47,6 @@ public:
 
 	Deferred::State state() const;
 	QVariant data() const;
-	virtual void reemitSignals() const;
 
 	template<typename ResolvedFunc, typename RejectedFunc = decltype(noop), typename NotifiedFunc = decltype(noop)>
 	Ptr then(ResolvedFunc&& resolvedFunc, RejectedFunc&& rejectedFunc = noop, NotifiedFunc&& notifiedFunc = noop ) const;
