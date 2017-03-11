@@ -17,6 +17,7 @@ private slots:
 	void rejectTest();
 	void notifyTest();
 	void destructorTest();
+	void cleanup();
 
 private:
 	struct DeferredSpies
@@ -37,9 +38,16 @@ DeferredTest::DeferredSpies::DeferredSpies(Deferred::Ptr deferred)
 {
 }
 
+void DeferredTest::cleanup()
+{
+	// Let deleteLater be executed to clean up
+	QTestEventLoop().enterLoopMSecs(100);
+}
+
 void DeferredTest::constructorTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
+	qDebug() << "Deferred:" << deferred.data();
 
 	QVERIFY(!deferred.isNull());
 	QCOMPARE(deferred->state(), Deferred::Pending);
@@ -99,6 +107,7 @@ void DeferredTest::rejectTest()
 void DeferredTest::notifyTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
+	qDebug() << "Deferred:" << deferred.data();
 
 	DeferredSpies spies(deferred);
 
@@ -126,6 +135,7 @@ void DeferredTest::notifyTest()
 void DeferredTest::destructorTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
+	qDebug() << "Deferred:" << deferred.data();
 
 	DeferredSpies spies(deferred);
 

@@ -26,6 +26,9 @@ public:
 		QByteArray data;
 		QList<QNetworkReply::RawHeaderPair> headers;
 
+		ReplyData() {}
+		ReplyData(QByteArray data, QList<QNetworkReply::RawHeaderPair> headers) : data(data), headers(headers) {}
+
 		bool operator==(const ReplyData& other) const { return data == other.data && headers == other.headers; }
 	};
 
@@ -47,16 +50,19 @@ public:
 
 	struct Error
 	{
-		QNetworkReply::NetworkError code = QNetworkReply::NoError;
+		QNetworkReply::NetworkError code;
 		QString message;
+
+		Error() : code(QNetworkReply::NoError) {}
+		Error(QNetworkReply::NetworkError code, const QString& message) : code(code), message(message) {}
 
 		bool operator==(const Error& other) const { return code == other.code && message == other.message; }
 	};
 
 	static Ptr create(QNetworkReply* reply);
 
-	QByteArray data() const { QReadLocker locker(&m_lock); return m_buffer; }
-	QList<QNetworkReply::RawHeaderPair> headers() const { QReadLocker locker(&m_lock); return m_reply->rawHeaderPairs(); }
+	ReplyData replyData() const { QReadLocker locker(&m_lock); return ReplyData{m_buffer, m_reply->rawHeaderPairs()}; }
+	Error error() const { QReadLocker locker(&m_lock); return Error{m_reply->error(), m_reply->errorString()}; }
 
 signals:
 	void resolved(const QtPromise::NetworkDeferred::ReplyData& data) const;
@@ -65,7 +71,6 @@ signals:
 
 protected slots:
 	void replyFinished();
-	void replyReadyRead();
 	void replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 	void replyUploadProgress(qint64 bytesSent, qint64 bytesTotal);
 

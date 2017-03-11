@@ -18,8 +18,9 @@ class NetworkPromiseTest : public QObject
 private slots:
 	void successTest();
 	void failTest();
-	void reemitSignalsTest_data();
-	void reemitSignalsTest();
+	void httpTest();
+	void finishedReplyTest_data();
+	void finishedReplyTest();
 
 private:
 	struct PromiseSpies
@@ -107,53 +108,80 @@ void NetworkPromiseTest::failTest()
 	QCOMPARE(spies.baseNotified.count(), 0);
 }
 
-void NetworkPromiseTest::reemitSignalsTest_data()
+void NetworkPromiseTest::httpTest()
 {
-	QTest::addColumn<QString>("dataPath");
+	QNetworkAccessManager qnam;
+	if(qnam.networkAccessible() == QNetworkAccessManager::NotAccessible)
+		QSKIP("Network not accessible");
 
-	QTest::newRow("success") << QFINDTESTDATA("data/DummyData.txt");
-	QTest::newRow("fail") << "Non_existent_File_45389045765.txt";
+	QNetworkRequest request(QUrl("http://www.google.com"));
+	QNetworkReply* reply = qnam.get(request);
+
+	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
+
+	PromiseSpies spies(promise);
+	spies.resolved.wait();
+	if (reply->error() == QNetworkReply::NoError)
+		QCOMPARE(spies.resolved.count(), 1);
+	else
+		QCOMPARE(spies.rejected.count(), 1);
 }
 
-void NetworkPromiseTest::reemitSignalsTest()
+void NetworkPromiseTest::finishedReplyTest_data()
+{
+	QTest::addColumn<QString>("dataPath");
+	QTest::addColumn<bool>("expectResolve");
+
+	QTest::newRow("success") << QFINDTESTDATA("data/DummyData.txt") << true;
+	QTest::newRow("fail") << "Non_existent_File_45389045765.txt" << false;
+}
+
+/*! \test Tests the NetworkPromise with a QNetworkReply which has finished
+ * and emitted it's events before the NetworkPromise is created.
+ */
+void NetworkPromiseTest::finishedReplyTest()
 {
 	QFETCH(QString, dataPath);
+	QFETCH(bool, expectResolve);
+
+	QByteArray expectedData;
+	QFile dataFile(dataPath);
+	if (dataFile.open(QIODevice::ReadOnly))
+	{
+		expectedData = dataFile.readAll();
+		dataFile.close();
+	}
 
 	QNetworkAccessManager qnam;
 	QNetworkRequest request(QUrl::fromLocalFile(dataPath));
 	QNetworkReply* reply = qnam.get(request);
 
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 500);
+	QVERIFY(reply->isFinished());
+
 	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
 
-	PromiseSpies expectedSpies(promise);
-	QTest::qWait(1000);
-	// Disconnect expectedSpies else they contain the signals twice after reemitSignals() was called
-	promise->disconnect(&expectedSpies.resolved);
-	promise->disconnect(&expectedSpies.rejected);
-	promise->disconnect(&expectedSpies.notified);
-	promise->disconnect(&expectedSpies.baseResolved);
-	promise->disconnect(&expectedSpies.baseRejected);
-	promise->disconnect(&expectedSpies.baseNotified);
-
-	// Slots connected after promise has been resolved/rejected/notified
 	PromiseSpies spies(promise);
 
-	QVERIFY(spies.resolved.isEmpty());
-	QVERIFY(spies.baseResolved.isEmpty());
-	QVERIFY(spies.rejected.isEmpty());
-	QVERIFY(spies.baseRejected.isEmpty());
-	QVERIFY(spies.notified.isEmpty());
-	QVERIFY(spies.baseNotified.isEmpty());
+	bool resolvedCalled = false;
+	QVariant resolvedData;
+	Promise::Ptr newPromise = promise->then([&](const QVariant& data) {
+		resolvedCalled = true;
+		resolvedData = data;
+	});
 
-	promise->reemitSignals();
-
-	QCOMPARE(spies.resolved, expectedSpies.resolved);
-	QCOMPARE(spies.baseResolved, expectedSpies.baseResolved);
-	QCOMPARE(spies.rejected, expectedSpies.rejected);
-	QCOMPARE(spies.baseRejected, expectedSpies.baseRejected);
-	// Notified signals are not reemitted.
-	QVERIFY(spies.notified.isEmpty());
-	QVERIFY(spies.baseNotified.isEmpty());
+	if (expectResolve)
+		QVERIFY(spies.resolved.wait(500));
+	else
+		QVERIFY(spies.rejected.wait(500));
+	QCOMPARE(spies.resolved.count(), expectResolve? 1 : 0);
+	QCOMPARE(spies.baseResolved.count(), expectResolve? 1 : 0);
+	QCOMPARE(spies.rejected.count(), expectResolve? 0 : 1);
+	QCOMPARE(spies.baseRejected.count(), expectResolve? 0 : 1);
+	QCOMPARE(spies.notified.count(), 0);
+	QCOMPARE(spies.baseNotified.count(), 0);
+	QCOMPARE(resolvedCalled, expectResolve);
+	QCOMPARE(resolvedData.value<NetworkDeferred::ReplyData>().data, expectedData);
 }
 
 

@@ -1,15 +1,35 @@
 #include "NetworkDeferred.h"
+#include <QTimer>
 
 namespace QtPromise {
 
 NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
-	: m_reply(reply)
+	: Deferred(), m_reply(reply)
 {
 	registerMetaTypes();
 
 	m_reply->setParent(this);
-	connect(m_reply, &QNetworkReply::readyRead, this, &NetworkDeferred::replyReadyRead);
-	connect(m_reply, &QNetworkReply::finished, this, &NetworkDeferred::replyFinished);
+
+	/* In case the reply is already finished, we cannot rely on the
+	 * QNetworkReply::finished() signal as it could have been fired already.
+	 * Therefore, we call replyFinished() asynchronously. So no matter if
+	 * QNetworkReply::finished() has already fired or not, the NetworkDeferred
+	 * will be resolved/rejected when control returns to the event loop.
+	 */
+	if (reply->isFinished())
+		QTimer::singleShot(0, this, &NetworkDeferred::replyFinished);
+	else
+		connect(m_reply, &QNetworkReply::finished, this, &NetworkDeferred::replyFinished);
+
+	/* For the progress signals, we stay in line with QNetworkReply:
+	 * if they have been fired before the caller connected slots to them,
+	 * the caller cannot get progress notifications anymore.
+	 *
+	 * In case the reply is already finished but the progress signals are still in the
+	 * event queue, the notifications will be triggered before the deferred is resolved/reject
+	 * since the call to NetworkDeferred::replyFinished() comes later in the event queue.
+	 * Hence, the notifications will work as expected.
+	 */
 	connect(m_reply, &QNetworkReply::downloadProgress, this, &NetworkDeferred::replyDownloadProgress);
 	connect(m_reply, &QNetworkReply::uploadProgress, this, &NetworkDeferred::replyUploadProgress);
 }
@@ -36,15 +56,11 @@ void NetworkDeferred::registerMetaTypes() const
 
 }
 
-void NetworkDeferred::replyReadyRead()
-{
-	QWriteLocker locker(&m_lock);
-	m_buffer += m_reply->readAll();
-}
-
 void NetworkDeferred::replyFinished()
 {
 	QWriteLocker locker(&m_lock);
+	// Save reply data since it will be removed from QNetworkReply when calling readAll()
+	m_buffer = m_reply->readAll();
 	if (m_reply->error() != QNetworkReply::NoError)
 	{
 		Error reason;
