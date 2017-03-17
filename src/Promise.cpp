@@ -1,5 +1,6 @@
 #include "Promise.h"
 #include "ChildDeferred.h"
+#include <QTimer>
 
 namespace QtPromise {
 
@@ -11,9 +12,25 @@ void noop(const QVariant&)
 Promise::Promise(QSharedPointer<Deferred> deferred)
 	: QObject(), m_deferred(deferred)
 {
-	connect(m_deferred.data(), &Deferred::resolved, this, &Promise::resolved);
-	connect(m_deferred.data(), &Deferred::rejected, this, &Promise::rejected);
-	connect(m_deferred.data(), &Deferred::notified, this, &Promise::notified);
+	switch (m_deferred->state())
+	{
+	case Deferred::Resolved:
+		QTimer::singleShot(0, this, [this]() {
+			emit resolved(this->m_deferred->data());
+		});
+		break;
+	case Deferred::Rejected:
+		QTimer::singleShot(0, this, [this]() {
+			emit rejected(this->m_deferred->data());
+		});
+		break;
+	case Deferred::Pending:
+	default:
+		connect(m_deferred.data(), &Deferred::resolved, this, &Promise::resolved);
+		connect(m_deferred.data(), &Deferred::rejected, this, &Promise::rejected);
+		connect(m_deferred.data(), &Deferred::notified, this, &Promise::notified);
+		break;
+	}
 }
 
 Promise::Promise(Deferred::State state, const QVariant& data)
@@ -55,22 +72,6 @@ Deferred::State Promise::state() const
 QVariant Promise::data() const
 {
 	return m_deferred->data();
-}
-
-void Promise::reemitSignals() const
-{
-	switch (state())
-	{
-	case Deferred::Resolved:
-		emit resolved(data());
-		break;
-	case Deferred::Rejected:
-		emit rejected(data());
-		break;
-	default:
-	case Deferred::Pending:
-		break;
-	}
 }
 
 QSharedPointer<Deferred> Promise::createChildDeferred() const

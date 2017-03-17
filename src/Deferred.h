@@ -42,6 +42,15 @@ private:
 
 /*! \brief Allows
  *
+ * As a general rule when deriving from Deferred:
+ * After construction, a Deferred must always be Pending.
+ * The Deferred may only be resolved/rejected when explicitly requested by
+ * the creator (i.e. calling resolve() or reject()) or when the control
+ * returns to the event loop.
+ * In other words: do not resolve/reject a Deferred in the constructor.
+ * Instead use a QTimer::singleShot() with a \c 0 timeout to resolve/reject
+ * the Deferred when the control returns to the event loop.
+ *
  * \threadsafeClass
  */
 class Deferred : public QObject

@@ -30,8 +30,7 @@ private slots:
 	void thenPromiseCallbackTest();
 	void alwaysTest_data();
 	void alwaysTest();
-	void reemitSignalsTest_data();
-	void reemitSignalsTest();
+	void cleanup();
 
 private:
 	struct PromiseSpies
@@ -71,6 +70,12 @@ void PromiseTest::callActionOnDeferred(Deferred::Ptr& deferred, const QString& a
 	}
 }
 
+void PromiseTest::cleanup()
+{
+	// Let deleteLater be executed to clean up
+	QTestEventLoop().enterLoopMSecs(100);
+}
+
 //####### Tests #######
 
 void PromiseTest::constructorTest()
@@ -89,8 +94,15 @@ void PromiseTest::constructorWithResolvedDeferredTest()
 	deferred->resolve(value);
 	Promise::Ptr promise = Promise::create(deferred);
 
+	PromiseSpies spies(promise);
+
 	QCOMPARE(promise->state(), Deferred::Resolved);
 	QCOMPARE(promise->data().toString(), value);
+
+	QVERIFY(spies.resolved.wait());
+	QCOMPARE(spies.resolved.count(), 1);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
 }
 
 void PromiseTest::constructorWithRejectedDeferredTest()
@@ -100,8 +112,15 @@ void PromiseTest::constructorWithRejectedDeferredTest()
 	deferred->reject(value);
 	Promise::Ptr promise = Promise::create(deferred);
 
+	PromiseSpies spies(promise);
+
 	QCOMPARE(promise->state(), Deferred::Rejected);
 	QCOMPARE(promise->data().toString(), value);
+
+	QVERIFY(spies.rejected.wait());
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 1);
+	QCOMPARE(spies.notified.count(), 0);
 }
 
 void PromiseTest::createResolvedPromiseTest()
@@ -375,7 +394,7 @@ void PromiseTest::thenPromiseCallbackTest()
 	QVariant deferredData("initial data");
 
 	if (!async)
-		callActionOnDeferred(deferred, action, deferredData, 2);
+		callActionOnDeferred(deferred, action, deferredData, 1);
 
 	Promise::Ptr promise = Promise::create(deferred);
 
@@ -407,7 +426,7 @@ void PromiseTest::thenPromiseCallbackTest()
 		QCOMPARE(promise->state(), Deferred::Pending);
 		QCOMPARE(newPromise->state(), Deferred::Pending);
 
-		callActionOnDeferred(deferred, action, deferredData, 2);
+		callActionOnDeferred(deferred, action, deferredData, 1);
 	}
 
 	QTEST(promise->state(), "expectedOriginalState");
@@ -444,55 +463,6 @@ void PromiseTest::alwaysTest()
 	QVERIFY(promise->state() == newPromise->state());
 	QCOMPARE(callbackCalls, QVariantList() << originalData);
 }
-
-void PromiseTest::reemitSignalsTest_data()
-{
-	QTest::addColumn<QString>("action");
-	QTest::addColumn<QVariant>("data");
-	QTest::addColumn<QVariantList>("expectedResolvedCalls");
-	QTest::addColumn<QVariantList>("expectedRejectedCalls");
-	QTest::addColumn<QVariantList>("expectedNotifiedCalls");
-
-	QVariant data("my string");
-	QTest::newRow("resolve") << "resolve" << data << (QVariantList() << data) << (QVariantList()) << (QVariantList());
-	QTest::newRow("reject") << "reject" << data << (QVariantList()) << (QVariantList() << data) << (QVariantList());
-	QTest::newRow("notify") << "notify" << data << (QVariantList()) << (QVariantList()) << (QVariantList());
-}
-
-void PromiseTest::reemitSignalsTest()
-{
-	QFETCH(QString, action);
-	QFETCH(QVariant, data);
-
-	Deferred::Ptr deferred = Deferred::create();
-	Promise::Ptr promise = Promise::create(deferred);
-
-	callActionOnDeferred(deferred, action, data, 2);
-
-	// Slots connected after deferred has been resolved/rejected/notified
-	PromiseSpies spies(promise);
-
-	QVERIFY(spies.resolved.isEmpty());
-	QVERIFY(spies.rejected.isEmpty());
-	QVERIFY(spies.notified.isEmpty());
-
-	promise->reemitSignals();
-
-	QVariantList resolvedCalls;
-	for (QVariantList parameters: spies.resolved)
-		resolvedCalls.push_back(parameters.first());
-	QVariantList rejectedCalls;
-	for (QVariantList parameters: spies.rejected)
-		rejectedCalls.push_back(parameters.first());
-	QVariantList notifiedCalls;
-	for (QVariantList parameters: spies.notified)
-		notifiedCalls.push_back(parameters.first());
-
-	QTEST(resolvedCalls, "expectedResolvedCalls");
-	QTEST(rejectedCalls, "expectedRejectedCalls");
-	QTEST(notifiedCalls, "expectedNotifiedCalls");
-}
-
 
 }  // namespace Tests
 }  // namespace QtPromise

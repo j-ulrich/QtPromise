@@ -8,6 +8,8 @@ set(QT5PROMISE_SOURCES
 	ChildDeferred.cpp
 	NetworkDeferred.h
 	NetworkDeferred.cpp
+	NetworkPromise.h
+	NetworkPromise.cpp
 )
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

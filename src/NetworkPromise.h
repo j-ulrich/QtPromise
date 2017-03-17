@@ -13,6 +13,11 @@
 namespace QtPromise
 {
 
+/*! \brief
+ *
+ * Similar to QNetworkReply, NetworkPromise ensures that the resolved() or rejected() signals
+ * are emitted
+ */
 class NetworkPromise : public Promise
 {
 	Q_OBJECT
@@ -23,12 +28,10 @@ public:
 
 	static Ptr create(QNetworkReply* reply);
 
-	virtual void reemitSignals() const;
-
 signals:
-	void resolved(const QByteArray& data) const;
-	void rejected(NetworkDeferred::Error reason) const;
-	void notified(NetworkDeferred::NetworkReplyProgress progress) const;
+	void resolved(const NetworkDeferred::ReplyData& data) const;
+	void rejected(const NetworkDeferred::Error& reason) const;
+	void notified(const NetworkDeferred::ReplyProgress& progress) const;
 
 protected:
 	/*!
