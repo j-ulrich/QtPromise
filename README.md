@@ -1,4 +1,6 @@
-# Qt Promise #
+# #
+
+# QtPromise #
 
 > Promise Pattern for Qt
 
@@ -29,11 +31,11 @@ For more information about the promise pattern, see the links in the [Further Re
 
 <a name="other-implementations"></a>
 ### Other Implementations ###
-[Boost::Future](http://www.boost.org/doc/libs/1_63_0/doc/html/thread/synchronization.html#thread.synchronization.futures.then) provides an implementation of the pattern.  
-The C++ Standard Library contains an experimental specification of the pattern: [std::experimental::future::then](http://en.cppreference.com/w/cpp/experimental/future/then).  
+[Boost::Future](http://www.boost.org/doc/libs/1_63_0/doc/html/thread/synchronization.html#thread.synchronization.futures.then) provides an implementation of the pattern.
+The C++ Standard Library contains an experimental specification of the pattern: [std::experimental::future::then](http://en.cppreference.com/w/cpp/experimental/future/then).
 Both do not integrate with Qt's signal & slot mechanism out of the box. On the other hand, they support exceptions.
 
-Qt's [QFuture](http://doc.qt.io/qt-5.6/qfuture.html) and [QFutureWatcher](http://doc.qt.io/qt-5.6/qfuturewatcher.html) provide a similar functionality.  
+Qt's [QFuture](http://doc.qt.io/qt-5.6/qfuture.html) and [QFutureWatcher](http://doc.qt.io/qt-5.6/qfuturewatcher.html) provide a similar functionality.
 However, they do not allow chaining, enforce using threads and do not support custom asynchronous operations well (e.g. no progress reporting).
 
 <a name="further-reading"></a>
@@ -42,7 +44,7 @@ However, they do not allow chaining, enforce using threads and do not support cu
 - [Wikipedia: Futures and Promises](https://en.wikipedia.org/wiki/Futures_and_promises)
 - [Promises/A+](https://promisesaplus.com)
 - [JavaScript Promise (MDN)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
-- [AngularJS: \$q](https://docs.angularjs.org/api/ng/service/$q)
+- [AngularJS: $q](https://docs.angularjs.org/api/ng/service/$q)
 - [jQuery: Deferred Object](https://api.jquery.com/category/deferred-object)
 - [Boost::Future](http://www.boost.org/doc/libs/1_63_0/doc/html/thread/synchronization.html#thread.synchronization.futures.then)
 - [std::experimental::future::then](http://en.cppreference.com/w/cpp/experimental/future/then)
@@ -66,6 +68,7 @@ However, they do not allow chaining, enforce using threads and do not support cu
 
 ```cpp
 using QtPromise;
+
 Promise::Ptr fetchJson(QNetworkReply* reply)
 {
 	return QtPromise::NetworkPromise::create(reply)
@@ -73,30 +76,32 @@ Promise::Ptr fetchJson(QNetworkReply* reply)
 		/* We could do more pre-processing here like
 		 * removing comments from the JSON etc.
 		 */
-		return QJsonDocument::fromJson(data.toByteArray());
+		return QJsonDocument::fromJson(data.value<NetworkDeferred::ReplyData>().data);
 	});
 }
 
 // ...
 
-QNetworkAccessManager qnam;
-QNetworkRequest request("http://www.example.com/getData");
-QNetworkReply* reply = qnam.get(request);
+void MyDataFetcher::printJsonData()
+{
+	QNetworkRequest request("http://api.example.com/getData");
+	QNetworkReply* reply = this->qnam->get(request);
 
-this->promise = fetchJson(reply)
-->then([](const QVariant& data) {
-	// Do something with JSON document
-	this->print(data.toJsonDocument().toObject());
-}, [](const QVariant& error) {
-	this->logError("Error fetching JSON document: "+error.value<NetworkDeferred::Error>().message);
-});
+	this->promise = fetchJson(reply)
+	->then([this](const QVariant& data) {
+		// Do something with JSON document
+		this->print(data.toJsonDocument().toObject());
+	}, [this](const QVariant& error) {
+		this->logError("Error fetching JSON document: "+error.value<NetworkDeferred::Error>().message);
+	});
+}
 ```
 
 
 <a name="requirements"></a>
 ## Requirements ##
  - Qt 5
- - Compiler supporting C++11 (tested with Microsoft Visual Studio 2015 and GCC 5.x and 6.x)
+ - Compiler supporting C++11 (tested with Microsoft Visual Studio 2015, GCC 4.9.2 and GCC 6.2.0)
 
 
 <a name="documentation"></a>
