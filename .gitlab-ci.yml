@@ -12,10 +12,11 @@ build:
     - cd "$BUILD_DIR"
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make qt5promise
+    - make docs
   #artifacts:
   #  paths:
   #    - mybinary
-
+  
 test:
   stage: test
   script:
