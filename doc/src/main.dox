@@ -1,11 +1,11 @@
 /*!
 
-\mainpage Qt Promise
+\mainpage %Qt Promise
 
-> Promise Pattern for Qt
+> Promise Pattern for %Qt
 
 ## Introduction ##
-The Qt Promise library provides two main interfaces: \ref QtPromise::Promise "Promise"
+The %Qt Promise library provides two main interfaces: \ref QtPromise::Promise "Promise"
 and \ref QtPromise::Deferred "Deferred".
 
 Deferred is the sending side of the communication (similar to a publisher in the
@@ -16,8 +16,19 @@ Promise is the listening side of the communication (similar to a subscriber in t
 publisher-subscriber pattern) and is used to attach actions to the outcome of the asynchronous
 operation.
 
+Accordingly, the common pattern when working with Promises and Deferreds is:
+- A Deferred is created.
+- The asynchronous operation is started.
+- It is ensured that the Deferred is resvoled/rejected depending on the outcome
+of the asynchronous operation.
+- A Promise is created based on the Deferred.
+- The Promise is returned to the caller.
+
+## Object Ownership and Smart Pointers ##
+The library makes heavy use of %Qt's QSharedPointer.
 
 ## Further Reading ##
-See [Readme](md__r_e_a_d_m_e.html#further-reading)
+For more information about the Promise/Deferred pattern, see the links in the
+[further reading section of the readme](md__r_e_a_d_m_e.html#further-reading).
 
 */
