@@ -67,6 +67,10 @@ public:
 		Rejected = -1
 	};
 
+	/*! Creates a pending Deferred object.
+	 *
+	 * @return QSharedPointer to a new, pending Deferred.
+	 */
 	static Ptr create();
 	virtual ~Deferred();
 
@@ -79,6 +83,12 @@ signals:
 	void notified(const QVariant& progress) const;
 
 public slots:
+	/*! Communicates success of the asynchronous operation.
+	 *
+	 * @param value The result of the asynchronous operation.
+	 * @return \c true if the Deferred has been set to Resolved.
+	 * \c false if the Deferred was not in the Pending state before.
+	 */
 	bool resolve(const QVariant& value);
 	bool reject(const QVariant& reason);
 	bool notify(const QVariant& progress);
