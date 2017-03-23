@@ -102,6 +102,7 @@ void MyDataFetcher::printJsonData()
 ## Requirements ##
  - Qt 5
  - Compiler supporting C++11 (tested with Microsoft Visual Studio 2015, GCC 4.9.2 and GCC 6.2.0)
+ - An event loop (e.g. `QCoreApplication::exec()` or `QEventLoop::exec()`)
 
 
 <a name="documentation"></a>
