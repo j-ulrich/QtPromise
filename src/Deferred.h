@@ -27,10 +27,19 @@ class Deferred;
 class DeferredDestroyed : public QException
 {
 public:
+	/*! Constructs the exception without a Deferred. */
 	DeferredDestroyed() : m_deferred(nullptr) {}
+	/*! Constructs the exception and saves the Deferred for debugging purposes.
+	 *
+	 * \param deferred Pointer to the Deferred being destroyed.
+	 */
 	DeferredDestroyed(const Deferred* const deferred) : m_deferred(deferred) {}
+	/*! Default destructor. */
 	virtual ~DeferredDestroyed() {};
 
+	/*! \return The pointer to the Deferred being destroyed.
+	 * Can be a \c nullptr, depending on how the exception was constructed.
+	 */
 	const Deferred* const deferred() const { return m_deferred; }
 
 private:
@@ -40,7 +49,7 @@ private:
 #endif // QT_NO_EXCEPTIONS
 
 
-/*! \brief Allows
+/*! \brief Reports the outcome of an operation.
  *
  * As a general rule when deriving from Deferred:
  * After construction, a Deferred must always be Pending.
