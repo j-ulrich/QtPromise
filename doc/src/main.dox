@@ -17,11 +17,10 @@ operation.
 Accordingly, the common pattern when working with Promises and Deferreds is:
 - A Deferred is created (\ref QtPromise::Deferred::create() "Deferred::create()")
 - The asynchronous operation is started
-- It is ensured that the Deferred is resvoled/rejected depending on the outcome
-of the asynchronous operation (\ref QtPromise::Deferred::resolve() "Deferred::resolve()"/
-\ref QtPromise::Deferred::reject() "Deferred::reject()")
+- The asynchronous operation is configured to resolve/reject the Deferred depending on its outcome
+(\ref QtPromise::Deferred::resolve() "Deferred::resolve()"/\ref QtPromise::Deferred::reject() "Deferred::reject()")
 - A Promise is created based on the Deferred (\ref QtPromise::Promise::create() "Promise::create()")
-- The Promise is returned to the caller
+- The Promise is returned to the caller/other components
 
 ## Signal Emission ##
 The Qt Promise library emits signals forcefully asynchronous. This means that an event loop is required to

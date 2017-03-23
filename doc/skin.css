@@ -3,20 +3,20 @@
 }
 
 .navpath li {
-	color: #41cd52;
+	color: #17a81a;
 }
 .navpath li.navelem a {
-	color: #41cd52;
+	color: #17a81a;
 	text-shadow: none;
 }
 .navpath li.navelem a:hover {
-	color: #70e67f;
+	color: #5ece5e;
 	text-shadow: none;
 }
 
 .sm-dox {
 	background-image: none;
-	background-color: #41cd52;
+	background-color: #17a81a;
 }
 
 .sm-dox a {
@@ -26,7 +26,7 @@
 }
 .sm-dox a:hover {
 	background-image: none;
-	background-color: #70e67f;
+	background-color: #5ece5e;
 	text-shadow: none;
 }
 
@@ -36,22 +36,22 @@
 }
 .sm-dox ul a:hover {
 	background-image: none;
-	background-color: #70e67f;
+	background-color: #5ece5e;
 	text-shadow: none;
 }
 
 .contents a {
-	color: #41cd52;
+	color: #17a81a;
 }
 .contents a:visited {
-	color: #158523;
+	color: #17a81a;
 }
 
 .icon {
-	background-color: #41cd52;
+	background-color: #17a81a;
 }
 
 div.ah {
 	background-image: none;
-	background-color: #41cd52;
+	background-color: #17a81a;
 }
