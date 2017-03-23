@@ -4,8 +4,8 @@
  * \author jochen.ulrich
  */
 
-#ifndef SRC_NETWORKPROMISE_H_
-#define SRC_NETWORKPROMISE_H_
+#ifndef QTPROMISE_NETWORKPROMISE_H_
+#define QTPROMISE_NETWORKPROMISE_H_
 
 #include "Promise.h"
 #include "NetworkDeferred.h"
@@ -45,4 +45,4 @@ protected:
 } /* namespace QtPromise */
 
 
-#endif /* SRC_NETWORKPROMISE_H_ */
+#endif /* QTPROMISE_NETWORKPROMISE_H_ */
