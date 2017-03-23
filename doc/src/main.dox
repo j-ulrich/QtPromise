@@ -2,8 +2,6 @@
 
 \mainpage %Qt Promise
 
-> Promise Pattern for %Qt
-
 ## Introduction ##
 The %Qt Promise library provides two main interfaces: \ref QtPromise::Promise "Promise"
 and \ref QtPromise::Deferred "Deferred".
@@ -23,18 +21,6 @@ Accordingly, the common pattern when working with Promises and Deferreds is:
 of the asynchronous operation (\ref QtPromise::Deferred::resolve() "Deferred::resolve()"/\ref QtPromise::Deferred::reject() "Deferred::reject()")
 - A Promise is created based on the Deferred (\ref QtPromise::Promise::create() "Promise::create()")
 - The Promise is returned to the caller
-
-## Object Ownership and Smart Pointers ##
-The library makes heavy use of %Qt's QSharedPointer. This helps avoiding memory leaks and
-access violations especially with promise chaining because:
-- intermediate promises could be created
-- multiple promises could be created based on the same deferred
-- all promises and deferreds in the chain need to exist as long as the last promise in
-the chain is in use
-
-Nevertheless, it is necessary to ensure that a QSharedPointer to the last promise
-in the chain exists until the promise is resolved/rejected. Else the promise chain will
-be destructed and the attached callbacks will not be executed. 
 
 ## Further Reading ##
 For more information about the Promise/Deferred pattern, see the links in the

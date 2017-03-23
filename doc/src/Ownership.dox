@@ -1,0 +1,21 @@
+/*!
+
+\page ownership Object Ownership and Smart Pointers
+
+\biref This page describes the handling of object ownership in the Qt Promise library.
+
+Since the ownership of most objects of Qt Promise is shared between multiple objects,
+the library uses %Qt's smart pointer class QSharedPointer to manage the lifetime of the objects.
+
+This helps avoiding memory leaks and access violations especially with promise chaining because:
+- intermediate promises could be created
+- multiple promises could be created based on the same deferred
+- all promises and deferreds in the chain need to exist as long as the last promise in
+the chain is in use
+
+Nevertheless, it is necessary to ensure that a QSharedPointer to the last promise
+in the chain exists until the promise is resolved/rejected. Else the promise chain will
+be destructed and the attached callbacks will not be executed. 
+
+
+*/
