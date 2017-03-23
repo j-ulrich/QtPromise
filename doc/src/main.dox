@@ -18,9 +18,22 @@ Accordingly, the common pattern when working with Promises and Deferreds is:
 - A Deferred is created (\ref QtPromise::Deferred::create() "Deferred::create()")
 - The asynchronous operation is started
 - It is ensured that the Deferred is resvoled/rejected depending on the outcome
-of the asynchronous operation (\ref QtPromise::Deferred::resolve() "Deferred::resolve()"/\ref QtPromise::Deferred::reject() "Deferred::reject()")
+of the asynchronous operation (\ref QtPromise::Deferred::resolve() "Deferred::resolve()"/
+\ref QtPromise::Deferred::reject() "Deferred::reject()")
 - A Promise is created based on the Deferred (\ref QtPromise::Promise::create() "Promise::create()")
 - The Promise is returned to the caller
+
+## Signal Emission ##
+The Qt Promise library emits signals forcefully asynchronous. This means that an event loop is required to
+emit the signals. This behavior is analogous to the behavior of QNetworkReply and ensures consistent behavior
+between cases when a Deferred is resolved/rejected right when it is created and when it is resolved/rejected
+asynchronously: in both cases, the caller will receive the signals when control returns to the event loop.
+
+Without this behavior, it would be impossible for the caller to receive the signals in cases when the Deferred
+is resolved/rejected right during construction because the signals would be emitted before control returns to
+the caller and thus before the caller could connect the slots.
+An example where this would happen is when creating a NetworkPromise/NetworkDeferred with an already finished
+QNetworkReply. 
 
 ## Further Reading ##
 For more information about the Promise/Deferred pattern, see the links in the
