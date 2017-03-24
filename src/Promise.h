@@ -4,8 +4,8 @@
  * \author jochen.ulrich
  */
 
-#ifndef SRC_PROMISE_H_
-#define SRC_PROMISE_H_
+#ifndef QTPROMISE_PROMISE_H_
+#define QTPROMISE_PROMISE_H_
 
 #include <QObject>
 #include <QVariant>
@@ -222,4 +222,4 @@ Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc 
 
 }  // namespace QtPromise
 
-#endif /* SRC_PROMISE_H_ */
+#endif /* QTPROMISE_PROMISE_H_ */

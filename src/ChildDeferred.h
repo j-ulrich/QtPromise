@@ -4,8 +4,8 @@
  * \author jochen.ulrich
  */
 
-#ifndef CHILDDEFERRED_H_
-#define CHILDDEFERRED_H_
+#ifndef QTPROMISE_CHILDDEFERRED_H_
+#define QTPROMISE_CHILDDEFERRED_H_
 
 #include "Deferred.h"
 
@@ -32,4 +32,4 @@ protected:
 
 } /* namespace QtPromise */
 
-#endif /* CHILDDEFERRED_H_ */
+#endif /* QTPROMISE_CHILDDEFERRED_H_ */

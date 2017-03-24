@@ -4,8 +4,8 @@
  * \author jochen.ulrich
  */
 
-#ifndef SRC_NETWORKDEFERRED_H_
-#define SRC_NETWORKDEFERRED_H_
+#ifndef QTPROMISE_NETWORKDEFERRED_H_
+#define QTPROMISE_NETWORKDEFERRED_H_
 
 #include <QNetworkReply>
 #include "Deferred.h"
@@ -93,4 +93,4 @@ Q_DECLARE_METATYPE(QtPromise::NetworkDeferred::ReplyProgress)
 Q_DECLARE_METATYPE(QtPromise::NetworkDeferred::Error)
 
 
-#endif /* SRC_NETWORKDEFERRED_H_ */
+#endif /* QTPROMISE_NETWORKDEFERRED_H_ */
