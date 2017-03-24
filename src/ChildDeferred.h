@@ -22,11 +22,13 @@ public:
 
 	static Ptr create(Deferred::Ptr parent);
 
-protected slots:
-	void onParentDestroyed() const;
-
 protected:
 	ChildDeferred(Deferred::Ptr parent);
+
+private slots:
+	void onParentDestroyed() const;
+
+private:
 	Deferred::Ptr m_parent;
 };
 

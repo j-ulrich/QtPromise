@@ -69,19 +69,20 @@ signals:
 	void rejected(const QtPromise::NetworkDeferred::Error& reason) const;
 	void notified(const QtPromise::NetworkDeferred::ReplyProgress& progress) const;
 
-protected slots:
+protected:
+	NetworkDeferred(QNetworkReply* reply);
+
+private slots:
 	void replyFinished();
 	void replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 	void replyUploadProgress(qint64 bytesSent, qint64 bytesTotal);
 
-protected:
-	NetworkDeferred(QNetworkReply* reply);
-
+private:
+	mutable QReadWriteLock m_lock;
 	QNetworkReply* m_reply;
 	QByteArray m_buffer;
 	ReplyProgress m_progress;
 
-private:
 	void registerMetaTypes() const;
 };
 
