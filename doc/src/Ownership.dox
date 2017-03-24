@@ -2,7 +2,7 @@
 
 \page ownership Object Ownership and Smart Pointers
 
-\brief This page describes the handling of object ownership in the Qt Promise library.
+\brief This page describes the handling of object ownership/lifetime in the Qt Promise library.
 
 Since the ownership of most objects of Qt Promise is shared between multiple objects,
 the library uses %Qt's smart pointer class QSharedPointer to manage the lifetime of the objects.
@@ -17,7 +17,15 @@ Therefore, the promises hold QSharedPointers to the promises/deferreds they depe
 
 Nevertheless, it is necessary to ensure that a QSharedPointer to the last promise
 in the chain exists until the promise is resolved/rejected. Else the promise chain will
-be destructed and the attached callbacks will not be executed. 
+be destructed and the attached callbacks will not be executed.
 
+### Object Deletion ###
+Another thing to note is that the objects are deleted using QObject::deleteLater().
+Therefore, the objects continue to exist until control returns to the event loop even
+if their QSharedPointer goes out of scope. 
+
+This also means that callbacks can be called even after QSharedPointer::clear() has been
+called when the QObject::deleteLater() is handled after the resolved/rejected/notified signal
+in the event loop.
 
 */
