@@ -45,6 +45,8 @@ public:
 	static Ptr createResolved(const QVariant& value);
 	static Ptr createRejected(const QVariant& reason);
 
+	virtual ~Promise() = default;
+
 	Deferred::State state() const;
 	QVariant data() const;
 
@@ -119,9 +121,9 @@ Promise::Ptr Promise::then(ResolvedFunc&& resolvedFunc, RejectedFunc&& rejectedF
 	case Deferred::Pending:
 	default:
 		Deferred::Ptr newDeferred = createChildDeferred();
-		connect(this, &Promise::resolved, createThenFuncWrapper(newDeferred, resolvedFunc, Deferred::Resolved));
-		connect(this, &Promise::rejected, createThenFuncWrapper(newDeferred, rejectedFunc, Deferred::Rejected));
-		connect(this, &Promise::notified, createNotifyFuncWrapper(newDeferred, notifiedFunc));
+		connect(m_deferred.data(), &Deferred::resolved, createThenFuncWrapper(newDeferred, resolvedFunc, Deferred::Resolved));
+		connect(m_deferred.data(), &Deferred::rejected, createThenFuncWrapper(newDeferred, rejectedFunc, Deferred::Rejected));
+		connect(m_deferred.data(), &Deferred::notified, createNotifyFuncWrapper(newDeferred, notifiedFunc));
 		return create(newDeferred);
 	}
 }
