@@ -4,8 +4,8 @@
  * \author jochen.ulrich
  */
 
-#ifndef SRC_DEFERRED_H_
-#define SRC_DEFERRED_H_
+#ifndef QTPROMISE_DEFERRED_H_
+#define QTPROMISE_DEFERRED_H_
 
 #include <QObject>
 #include <QVariant>
@@ -158,12 +158,12 @@ protected:
 	 */
 	Deferred();
 
+private:
+	void logInvalidActionMessage(const char* action) const;
+	
 	mutable QReadWriteLock m_lock;
 	State m_state;
 	QVariant m_data;
-
-private:
-	void logInvalidActionMessage(const char* action) const;
 
 };
 
@@ -172,4 +172,4 @@ private:
 Q_DECLARE_METATYPE(QtPromise::DeferredDestroyed)
 Q_DECLARE_METATYPE(QtPromise::Deferred::State)
 
-#endif /* SRC_DEFERRED_H_ */
+#endif /* QTPROMISE_DEFERRED_H_ */

@@ -4,8 +4,8 @@
  * \author jochen.ulrich
  */
 
-#ifndef CHILDDEFERRED_H_
-#define CHILDDEFERRED_H_
+#ifndef QTPROMISE_CHILDDEFERRED_H_
+#define QTPROMISE_CHILDDEFERRED_H_
 
 #include "Deferred.h"
 
@@ -42,15 +42,17 @@ public:
 	 */
 	static Ptr create(Deferred::Ptr parent);
 
-protected slots:
-	void onParentDestroyed() const;
-
 protected:
 	/*! Creates a pending ChildDeferred object holding a pointer to a parent Deferred.
 	 *
 	 * \param parent The Deferred which should exist as long as this ChildDeferred exists.
 	 */
 	ChildDeferred(Deferred::Ptr parent);
+
+private slots:
+	void onParentDestroyed() const;
+
+private:
 	Deferred::Ptr m_parent;
 };
 
@@ -60,4 +62,4 @@ protected:
 
 } /* namespace QtPromise */
 
-#endif /* CHILDDEFERRED_H_ */
+#endif /* QTPROMISE_CHILDDEFERRED_H_ */
