@@ -9,6 +9,10 @@ namespace QtPromise
 namespace Tests
 {
 
+/*! Unit tests for the Promise class.
+ *
+ * \author jochen.ulrich
+ */
 class PromiseTest : public QObject
 {
 	Q_OBJECT
@@ -30,6 +34,7 @@ private slots:
 	void thenPromiseCallbackTest();
 	void alwaysTest_data();
 	void alwaysTest();
+	void threeLevelChainTest();
 	void cleanup();
 
 private:
@@ -462,6 +467,30 @@ void PromiseTest::alwaysTest()
 
 	QVERIFY(promise->state() == newPromise->state());
 	QCOMPARE(callbackCalls, QVariantList() << originalData);
+}
+
+/*! \test Tests if a Promise chain survives deletion of intermediate
+ * Promises.
+ */
+void PromiseTest::threeLevelChainTest()
+{
+	Deferred::Ptr deferred = Deferred::create();
+	Promise::Ptr originalPromise = Promise::create(deferred);
+
+	QVariantList callbackCalls;
+
+	Promise::Ptr finalPromise = originalPromise->then([&](const QVariant& data) {
+		callbackCalls.push_back(data);
+	})->then([&](const QVariant& data) {
+		callbackCalls.push_back(data);
+	});
+
+	// Ensure deleteLater can be called on intermediate Promise
+	QTestEventLoop().enterLoopMSecs(100);
+
+	QVariant data("my data");
+	callActionOnDeferred(deferred, "resolve", data, 1);
+	QCOMPARE(callbackCalls, QVariantList() << data << data);
 }
 
 }  // namespace Tests
