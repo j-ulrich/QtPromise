@@ -86,6 +86,7 @@ public slots:
 protected:
 	Deferred();
 
+private:
 	void logInvalidActionMessage(const char* action) const;
 
 	mutable QReadWriteLock m_lock;
