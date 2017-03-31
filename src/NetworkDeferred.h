@@ -13,12 +13,31 @@
 
 namespace QtPromise {
 
+/*! \brief Creates a Deferred for a QNetworkReply.
+ *
+ * A NetworkDeferred is resolved with a ReplyData object when the QNetworkReply
+ * finishes without errors, meaning QNetworkReply::error() returns
+ * QNetworkReply::NoError. Else, the deferred is rejected with an Error object.
+ * Additionally, the deferred is notified with a ReplyProgress object whenever
+ * there is download or upload progress.
+ *
+ * In most cases, it is not necessary to create a NetworkDeferred but instead use
+ * the convenience method NetworkPromise::create(QNetworkReply*) which directly
+ * returns a promise on a NetworkDeferred.
+ * Creating a NetworkDeferred directly is only needed if the deferred should be
+ * resolved/rejected/notified independently of the QNetworkReply, which should be
+ * a very rare use case.
+ *
+ * \author jochen.ulrich
+ *
+ * \sa NetworkPromise
+ */
 class NetworkDeferred : public Deferred
 {
 	Q_OBJECT
 
 public:
-
+	/*! Smart pointer to NetworkDeferred. */
 	typedef QSharedPointer<NetworkDeferred> Ptr;
 
 	struct ReplyData

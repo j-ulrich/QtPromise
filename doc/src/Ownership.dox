@@ -15,7 +15,7 @@ the chain is in use
 
 Therefore, the promises hold QSharedPointers to the promises/deferreds they depend on.
 
-Nevertheless, it is necessary to ensure that a QSharedPointer to the last promise
+\note Nevertheless, it is necessary to ensure that a QSharedPointer to the last promise
 in the chain exists until the promise is resolved/rejected. Else the promise chain will
 be destructed and the attached callbacks will not be executed.
 
