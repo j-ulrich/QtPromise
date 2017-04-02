@@ -1,4 +1,5 @@
 #include "ChildDeferred.h"
+#include <QTimer>
 
 namespace QtPromise
 {
@@ -15,8 +16,23 @@ ChildDeferred::ChildDeferred(QList<Deferred::Ptr> parents, bool trackResults)
 	{
 		for (Deferred::Ptr parent : m_parents)
 		{
-			connect(parent.data(), &Deferred::resolved, this, &ChildDeferred::onParentResolved);
-			connect(parent.data(), &Deferred::rejected, this, &ChildDeferred::onParentRejected);
+			switch(parent->state())
+			{
+			case Resolved:
+				QTimer::singleShot(0, this, [this, parent]() {
+					this->onParentResolved(parent->data());
+				});
+				break;
+			case Rejected:
+				QTimer::singleShot(0, this, [this, parent]() {
+					this->onParentRejected(parent->data());
+				});
+				break;
+			case Pending:
+			default:
+				connect(parent.data(), &Deferred::resolved, this, &ChildDeferred::onParentResolved);
+				connect(parent.data(), &Deferred::rejected, this, &ChildDeferred::onParentRejected);
+			}
 		}
 	}
 

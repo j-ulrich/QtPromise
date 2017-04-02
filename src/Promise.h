@@ -225,12 +225,9 @@ Promise::Ptr Promise::all(PromiseContainer promises)
 		deferreds.append(promise->m_deferred);
 	ChildDeferred::Ptr combinedDeferred = ChildDeferred::create(deferreds, true);
 
-	for (Deferred::Ptr deferred : deferreds)
-	{
-		QObject::connect(combinedDeferred.data(), &ChildDeferred::parentsResolved, combinedDeferred.data(), &Deferred::resolve);
-		QObject::connect(combinedDeferred.data(), &ChildDeferred::parentRejected, combinedDeferred.data(), &Deferred::reject);
-	}
-
+	QObject::connect(combinedDeferred.data(), &ChildDeferred::parentsResolved, combinedDeferred.data(), &Deferred::resolve);
+	QObject::connect(combinedDeferred.data(), &ChildDeferred::parentRejected, combinedDeferred.data(), &Deferred::reject);
+	
 	return create(combinedDeferred);
 }
 
@@ -242,11 +239,8 @@ Promise::Ptr Promise::any(PromiseContainer promises)
 		deferreds.append(promise->m_deferred);
 	ChildDeferred::Ptr combinedDeferred = ChildDeferred::create(deferreds, true);
 	
-	for (Deferred::Ptr deferred : deferreds)
-	{
-		QObject::connect(combinedDeferred.data(), &ChildDeferred::parentResolved, combinedDeferred.data(), &Deferred::resolve);
-		QObject::connect(combinedDeferred.data(), &ChildDeferred::parentsRejected, combinedDeferred.data(), &Deferred::reject);
-	}
+	QObject::connect(combinedDeferred.data(), &ChildDeferred::parentResolved, combinedDeferred.data(), &Deferred::resolve);
+	QObject::connect(combinedDeferred.data(), &ChildDeferred::parentsRejected, combinedDeferred.data(), &Deferred::reject);
 	
 	return create(combinedDeferred);
 }
