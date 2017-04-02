@@ -1,9 +1,11 @@
 #include "Deferred.h"
 
+#include <QHash>
+
 namespace QtPromise {
 
 Deferred::Deferred()
-	: QObject(nullptr), m_state(Pending)
+	: QObject(nullptr), m_state(Pending), m_lock(QMutex::Recursive)
 {
 	qRegisterMetaType<DeferredDestroyed>();
 	qRegisterMetaType<DeferredDestroyed>("QtPromise::DeferredDestroyed");
@@ -31,14 +33,20 @@ Deferred::~Deferred()
 	}
 }
 
+void Deferred::setLogInvalidActionMessage(bool logInvalidActionMessage)
+{
+	m_logInvalidActionMessage = logInvalidActionMessage;
+}
+
 void Deferred::logInvalidActionMessage(const char* action) const
 {
-	qDebug("Cannot %s Deferred %08p which is already %s", action, this, m_state==Resolved?"resolved":"rejected");
+	if (m_logInvalidActionMessage)
+		qDebug("Cannot %s Deferred %08p which is already %s", action, this, m_state==Resolved?"resolved":"rejected");
 }
 
 bool Deferred::resolve(const QVariant& value)
 {
-	QWriteLocker locker(&m_lock);
+	QMutexLocker locker(&m_lock);
 
 	if (m_state == Pending)
 	{
@@ -56,7 +64,7 @@ bool Deferred::resolve(const QVariant& value)
 
 bool Deferred::reject(const QVariant& reason)
 {
-	QWriteLocker locker(&m_lock);
+	QMutexLocker locker(&m_lock);
 
 	if (m_state == Pending)
 	{
@@ -74,7 +82,7 @@ bool Deferred::reject(const QVariant& reason)
 
 bool Deferred::notify(const QVariant& progress)
 {
-	QReadLocker locker(&m_lock);
+	QMutexLocker locker(&m_lock);
 
 	if (m_state == Pending)
 	{
@@ -88,4 +96,11 @@ bool Deferred::notify(const QVariant& progress)
 	}
 }
 
+
 }  // namespace QtPromise
+
+
+uint qHash(const QtPromise::Deferred::Ptr deferredPtr, uint seed)
+{
+	return qHash(deferredPtr.data(), seed);
+}

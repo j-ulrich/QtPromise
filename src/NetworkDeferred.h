@@ -61,8 +61,8 @@ public:
 
 	static Ptr create(QNetworkReply* reply);
 
-	ReplyData replyData() const { QReadLocker locker(&m_lock); return ReplyData{m_buffer, m_reply->rawHeaderPairs()}; }
-	Error error() const { QReadLocker locker(&m_lock); return Error{m_reply->error(), m_reply->errorString()}; }
+	ReplyData replyData() const { QMutexLocker locker(&m_lock); return ReplyData{m_buffer, m_reply->rawHeaderPairs()}; }
+	Error error() const { QMutexLocker locker(&m_lock); return Error{m_reply->error(), m_reply->errorString()}; }
 
 signals:
 	void resolved(const QtPromise::NetworkDeferred::ReplyData& data) const;
@@ -78,7 +78,7 @@ private slots:
 	void replyUploadProgress(qint64 bytesSent, qint64 bytesTotal);
 
 private:
-	mutable QReadWriteLock m_lock;
+	mutable QMutex m_lock;
 	QNetworkReply* m_reply;
 	QByteArray m_buffer;
 	ReplyProgress m_progress;

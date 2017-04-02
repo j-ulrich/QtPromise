@@ -9,7 +9,7 @@
 
 #include <QObject>
 #include <QVariant>
-#include <QReadWriteLock>
+#include <QMutex>
 #include <QException>
 #include <QSharedPointer>
 
@@ -70,8 +70,8 @@ public:
 	static Ptr create();
 	virtual ~Deferred();
 
-	Deferred::State state() const { QReadLocker locker(&m_lock); return m_state; }
-	QVariant data() const { QReadLocker locker(&m_lock); return m_data; }
+	Deferred::State state() const { QMutexLocker locker(&m_lock); return m_state; }
+	QVariant data() const { QMutexLocker locker(&m_lock); return m_data; }
 
 signals:
 	void resolved(const QVariant& value) const;
@@ -85,18 +85,36 @@ public slots:
 
 protected:
 	Deferred();
+	/*! Defines whether the Deferred logs a debug message when resolve() or
+	 * reject() is called when the Deferred is already resolved/rejected.
+	 *
+	 * By default, the debug message is logged.
+	 *
+	 * @param logInvalidActionMessage If \c true, the message is logged.
+	 * If \c false, no message is logged when resolve() / reject() is called
+	 * multiple times.
+	 */
+	void setLogInvalidActionMessage(bool logInvalidActionMessage);
 
 private:
 	void logInvalidActionMessage(const char* action) const;
 
-	mutable QReadWriteLock m_lock;
+	mutable QMutex m_lock;
 	State m_state;
 	QVariant m_data;
+	bool m_logInvalidActionMessage = true;
 };
 
 }  // namespace QtPromise
 
 Q_DECLARE_METATYPE(QtPromise::DeferredDestroyed)
 Q_DECLARE_METATYPE(QtPromise::Deferred::State)
+
+/*! Returns the hash value for a Deferred smart pointer.
+ * @param deferredPtr The QSharedPointer who's hash value should be returned.
+ * @param seed The seed used for the calculation.
+ * @return The hash value based on the address of the pointer.
+ */
+uint qHash(const QtPromise::Deferred::Ptr deferredPtr, uint seed = 0);
 
 #endif /* QTPROMISE_DEFERRED_H_ */

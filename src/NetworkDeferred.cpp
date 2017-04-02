@@ -4,7 +4,7 @@
 namespace QtPromise {
 
 NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
-	: Deferred(), m_reply(reply)
+	: Deferred(), m_reply(reply), m_lock(QMutex::Recursive)
 {
 	registerMetaTypes();
 
@@ -58,7 +58,7 @@ void NetworkDeferred::registerMetaTypes() const
 
 void NetworkDeferred::replyFinished()
 {
-	QWriteLocker locker(&m_lock);
+	QMutexLocker locker(&m_lock);
 	// Save reply data since it will be removed from QNetworkReply when calling readAll()
 	m_buffer = m_reply->readAll();
 	if (m_reply->error() != QNetworkReply::NoError)
@@ -81,7 +81,7 @@ void NetworkDeferred::replyFinished()
 
 void NetworkDeferred::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-	QWriteLocker locker(&m_lock);
+	QMutexLocker locker(&m_lock);
 	m_progress.download.current = bytesReceived;
 	m_progress.download.total = bytesTotal;
 	if (this->notify(QVariant::fromValue(m_progress)))
@@ -90,7 +90,7 @@ void NetworkDeferred::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTo
 
 void NetworkDeferred::replyUploadProgress(qint64 bytesSent, qint64 bytesTotal)
 {
-	QWriteLocker locker(&m_lock);
+	QMutexLocker locker(&m_lock);
 	m_progress.upload.current = bytesSent;
 	m_progress.upload.total = bytesTotal;
 	if (this->notify(QVariant::fromValue(m_progress)))

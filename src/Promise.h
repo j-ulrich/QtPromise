@@ -13,6 +13,7 @@
 #include <functional>
 #include <type_traits>
 #include "Deferred.h"
+#include "ChildDeferred.h"
 
 namespace QtPromise {
 
@@ -44,6 +45,10 @@ public:
 	static Ptr create(Deferred::Ptr deferred);
 	static Ptr createResolved(const QVariant& value);
 	static Ptr createRejected(const QVariant& reason);
+	template<typename PromiseContainer>
+	static Ptr all(PromiseContainer promises);
+	template<typename PromiseContainer>
+	static Ptr any(PromiseContainer promises);
 
 	virtual ~Promise() = default;
 
@@ -79,8 +84,6 @@ private:
 	template<typename PromiseCallbackFunc>
 	typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, Promise::Ptr>::type
 	callThenFunc(PromiseCallbackFunc func) const;
-
-	Deferred::Ptr createChildDeferred() const;
 
 	template <typename VoidCallbackFunc>
 	typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, WrappedCallbackFunc>::type
@@ -120,7 +123,7 @@ Promise::Ptr Promise::then(ResolvedFunc&& resolvedFunc, RejectedFunc&& rejectedF
 		return callThenFunc(rejectedFunc);
 	case Deferred::Pending:
 	default:
-		Deferred::Ptr newDeferred = createChildDeferred();
+		Deferred::Ptr newDeferred = ChildDeferred::create(m_deferred).staticCast<Deferred>();
 		connect(m_deferred.data(), &Deferred::resolved, createThenFuncWrapper(newDeferred, resolvedFunc, Deferred::Resolved));
 		connect(m_deferred.data(), &Deferred::rejected, createThenFuncWrapper(newDeferred, rejectedFunc, Deferred::Rejected));
 		connect(m_deferred.data(), &Deferred::notified, createNotifyFuncWrapper(newDeferred, notifiedFunc));
@@ -161,7 +164,6 @@ template <typename VoidCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, Promise::WrappedCallbackFunc>::type
 Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state) const
 {
-	// We may not access m_deferred here to avoid deadlocks!
 	return [state, newDeferred, func](const QVariant& data) {
 		func(data);
 		if (state == Deferred::Resolved)
@@ -175,7 +177,6 @@ template<typename VariantCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, Promise::WrappedCallbackFunc>::type
 Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State state) const
 {
-	// We may not access m_deferred here to avoid deadlocks!
 	Q_UNUSED(state)
 	return [newDeferred, func](const QVariant& data) {
 		QVariant newValue = QVariant::fromValue(func(data));
@@ -190,7 +191,6 @@ template<typename PromiseCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, Promise::WrappedCallbackFunc>::type
 Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State state) const
 {
-	// We may not access m_deferred here to avoid deadlocks!
 	Q_UNUSED(state)
 	return [newDeferred, func](const QVariant& data) {
 		Promise::Ptr intermediatePromise = func(data);
@@ -203,7 +203,6 @@ template <typename VoidCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, Promise::WrappedCallbackFunc>::type
 Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func) const
 {
-	// We may not access m_deferred here to avoid deadlocks!
 	return [newDeferred, func](const QVariant& data) {
 		func(data);
 	};
@@ -213,15 +212,47 @@ template<typename VariantCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, Promise::WrappedCallbackFunc>::type
 Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func) const
 {
-	// We may not access m_deferred here to avoid deadlocks!
 	return [newDeferred, func](const QVariant& data) {
 		newDeferred->notify(func(data));
 	};
 }
 
+template<typename PromiseContainer>
+Promise::Ptr Promise::all(PromiseContainer promises)
+{
+	QList<Deferred::Ptr> deferreds;
+	for (Promise::Ptr promise : promises)
+		deferreds.append(promise->m_deferred);
+	ChildDeferred::Ptr combinedDeferred = ChildDeferred::create(deferreds, true);
 
+	QObject::connect(combinedDeferred.data(), &ChildDeferred::parentsResolved, combinedDeferred.data(), &Deferred::resolve);
+	QObject::connect(combinedDeferred.data(), &ChildDeferred::parentRejected, combinedDeferred.data(), &Deferred::reject);
+	
+	return create(combinedDeferred);
+}
+
+template<typename PromiseContainer>
+Promise::Ptr Promise::any(PromiseContainer promises)
+{
+	QList<Deferred::Ptr> deferreds;
+	for (Promise::Ptr promise : promises)
+		deferreds.append(promise->m_deferred);
+	ChildDeferred::Ptr combinedDeferred = ChildDeferred::create(deferreds, true);
+	
+	QObject::connect(combinedDeferred.data(), &ChildDeferred::parentResolved, combinedDeferred.data(), &Deferred::resolve);
+	QObject::connect(combinedDeferred.data(), &ChildDeferred::parentsRejected, combinedDeferred.data(), &Deferred::reject);
+	
+	return create(combinedDeferred);
+}
 
 
 }  // namespace QtPromise
+
+/*! Returns the hash value for a Promise smart pointer.
+ * @param deferredPtr The QSharedPointer who's hash value should be returned.
+ * @param seed The seed used for the calculation.
+ * @return The hash value based on the address of the pointer.
+ */
+uint qHash(QtPromise::Promise::Ptr promisePtr, uint seed = 0);
 
 #endif /* QTPROMISE_PROMISE_H_ */
