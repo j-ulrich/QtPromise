@@ -164,7 +164,6 @@ template <typename VoidCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, Promise::WrappedCallbackFunc>::type
 Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state) const
 {
-	// We may not access m_deferred here to avoid deadlocks!
 	return [state, newDeferred, func](const QVariant& data) {
 		func(data);
 		if (state == Deferred::Resolved)
@@ -178,7 +177,6 @@ template<typename VariantCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, Promise::WrappedCallbackFunc>::type
 Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State state) const
 {
-	// We may not access m_deferred here to avoid deadlocks!
 	Q_UNUSED(state)
 	return [newDeferred, func](const QVariant& data) {
 		QVariant newValue = QVariant::fromValue(func(data));
@@ -193,7 +191,6 @@ template<typename PromiseCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, Promise::WrappedCallbackFunc>::type
 Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State state) const
 {
-	// We may not access m_deferred here to avoid deadlocks!
 	Q_UNUSED(state)
 	return [newDeferred, func](const QVariant& data) {
 		Promise::Ptr intermediatePromise = func(data);
@@ -206,7 +203,6 @@ template <typename VoidCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, Promise::WrappedCallbackFunc>::type
 Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func) const
 {
-	// We may not access m_deferred here to avoid deadlocks!
 	return [newDeferred, func](const QVariant& data) {
 		func(data);
 	};
@@ -216,7 +212,6 @@ template<typename VariantCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, Promise::WrappedCallbackFunc>::type
 Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func) const
 {
-	// We may not access m_deferred here to avoid deadlocks!
 	return [newDeferred, func](const QVariant& data) {
 		newDeferred->notify(func(data));
 	};

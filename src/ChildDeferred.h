@@ -62,6 +62,7 @@ private slots:
 	void onParentRejected(const QVariant& reason);
 
 private:
+	mutable QMutex m_lock;
 	QList<Deferred::Ptr> m_parents;
 	int m_resolvedCount;
 	int m_rejectedCount;

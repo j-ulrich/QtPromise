@@ -9,7 +9,7 @@
 
 #include <QObject>
 #include <QVariant>
-#include <QReadWriteLock>
+#include <QMutex>
 #include <QException>
 #include <QSharedPointer>
 
@@ -70,8 +70,8 @@ public:
 	static Ptr create();
 	virtual ~Deferred();
 
-	Deferred::State state() const { QReadLocker locker(&m_lock); return m_state; }
-	QVariant data() const { QReadLocker locker(&m_lock); return m_data; }
+	Deferred::State state() const { QMutexLocker locker(&m_lock); return m_state; }
+	QVariant data() const { QMutexLocker locker(&m_lock); return m_data; }
 
 signals:
 	void resolved(const QVariant& value) const;
@@ -99,7 +99,7 @@ protected:
 private:
 	void logInvalidActionMessage(const char* action) const;
 
-	mutable QReadWriteLock m_lock;
+	mutable QMutex m_lock;
 	State m_state;
 	QVariant m_data;
 	bool m_logInvalidActionMessage = true;

@@ -4,7 +4,7 @@ namespace QtPromise
 {
 
 ChildDeferred::ChildDeferred(QList<Deferred::Ptr> parents, bool trackResults)
-	: Deferred(), m_parents(parents), m_resolvedCount(0), m_rejectedCount(0)
+	: Deferred(), m_lock(QMutex::Recursive), m_parents(parents), m_resolvedCount(0), m_rejectedCount(0)
 {
 	setLogInvalidActionMessage(false);
 
@@ -39,6 +39,7 @@ void ChildDeferred::onParentDestroyed(QObject* parent) const
 
 void ChildDeferred::onParentResolved(const QVariant& value)
 {
+	QMutexLocker locker(&m_lock);
 	m_resolvedCount += 1;
 	emit parentResolved(value);
 	if (m_resolvedCount == m_parents.size())
@@ -52,6 +53,7 @@ void ChildDeferred::onParentResolved(const QVariant& value)
 
 void ChildDeferred::onParentRejected(const QVariant& reason)
 {
+	QMutexLocker locker(&m_lock);
 	m_rejectedCount += 1;
 	emit parentRejected(reason);
 	if (m_rejectedCount == m_parents.size())

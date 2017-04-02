@@ -5,7 +5,7 @@
 namespace QtPromise {
 
 Deferred::Deferred()
-	: QObject(nullptr), m_state(Pending)
+	: QObject(nullptr), m_state(Pending), m_lock(QMutex::Recursive)
 {
 	qRegisterMetaType<DeferredDestroyed>();
 	qRegisterMetaType<DeferredDestroyed>("QtPromise::DeferredDestroyed");
@@ -46,7 +46,7 @@ void Deferred::logInvalidActionMessage(const char* action) const
 
 bool Deferred::resolve(const QVariant& value)
 {
-	QWriteLocker locker(&m_lock);
+	QMutexLocker locker(&m_lock);
 
 	if (m_state == Pending)
 	{
@@ -64,7 +64,7 @@ bool Deferred::resolve(const QVariant& value)
 
 bool Deferred::reject(const QVariant& reason)
 {
-	QWriteLocker locker(&m_lock);
+	QMutexLocker locker(&m_lock);
 
 	if (m_state == Pending)
 	{
@@ -82,7 +82,7 @@ bool Deferred::reject(const QVariant& reason)
 
 bool Deferred::notify(const QVariant& progress)
 {
-	QReadLocker locker(&m_lock);
+	QMutexLocker locker(&m_lock);
 
 	if (m_state == Pending)
 	{
