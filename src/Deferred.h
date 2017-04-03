@@ -133,24 +133,33 @@ signals:
 public slots:
 	/*! Communicates success of the asynchronous operation.
 	 *
-	 * Calls this slot when the asynchronous operation succeeded to submit
+	 * Call this slot when the asynchronous operation succeeded to submit
 	 * the result to the promises.
 	 * It is important to make the actual type of the value clear for the promises
 	 * as QVariant::value() requires the exact type to be able to convert the value.
 	 *
 	 * \param value The result of the asynchronous operation.
 	 * \return \c true if the Deferred has been set to \ref Resolved.
-	 * \c false if the Deferred was not in the \ref Pending state before.
+	 * \c false if the Deferred was not in the \ref Pending state.
 	 */
 	bool resolve(const QVariant& value = QVariant());
 	/*! Communicates failure of the asynchronous operation.
 	 *
-	 * Call this slot when the asynchronous operation failed to
-	 * \param reason
+	 * Call this slot when the asynchronous operation failed and provide a reason
+	 * describing why the operation failed.
+	 * \param reason An object indicating why the operation failed.
 	 * \return \c true if the Deferred has been set to \ref Rejected.
-	 * \c false if the Deferred was not in the \ref Pending state before.
+	 * \c false if the Deferred was not in the \ref Pending state.
 	 */
 	bool reject(const QVariant& reason = QVariant());
+	/*! Communicates progress of the asynchronous operation.
+	 *
+	 * Call this slot when you want to inform the promises about progress
+	 * of the asynchronous operation.
+	 * \param progress An object representing the progress of the operation.
+	 * \return \c true if the Deferred has been notified.
+	 * \c false if the Deferred was not in the \ref Pending state.
+	 */
 	bool notify(const QVariant& progress);
 
 protected:

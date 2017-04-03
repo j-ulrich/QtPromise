@@ -13,7 +13,7 @@
 namespace QtPromise
 {
 
-/*! \brief
+/*! \brief A promise to a NetworkDeferred.
  *
  * Similar to QNetworkReply, NetworkPromise ensures that the resolved() or rejected() signals
  * are emitted
