@@ -61,21 +61,20 @@ void NetworkDeferred::replyFinished()
 	QMutexLocker locker(&m_lock);
 	// Save reply data since it will be removed from QNetworkReply when calling readAll()
 	m_buffer = m_reply->readAll();
+
+	ReplyData replyData;
+	replyData.data = m_buffer;
+	replyData.qReply = m_reply;
 	if (m_reply->error() != QNetworkReply::NoError)
 	{
-		Error reason;
-		reason.code = m_reply->error();
-		reason.message = m_reply->errorString();
+		Error reason(replyData);
 		if (this->reject(QVariant::fromValue(reason)))
 			emit rejected(reason);
 	}
 	else
 	{
-		ReplyData data;
-		data.data = m_buffer;
-		data.headers = m_reply->rawHeaderPairs();
-		if (this->resolve(QVariant::fromValue(data)))
-			emit resolved(data);
+		if (this->resolve(QVariant::fromValue(replyData)))
+			emit resolved(replyData);
 	}
 }
 

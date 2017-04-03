@@ -24,12 +24,12 @@ public:
 	struct ReplyData
 	{
 		QByteArray data;
-		QList<QNetworkReply::RawHeaderPair> headers;
+		const QNetworkReply* qReply;
 
-		ReplyData() {}
-		ReplyData(QByteArray data, QList<QNetworkReply::RawHeaderPair> headers) : data(data), headers(headers) {}
+		ReplyData() : qReply(nullptr) {}
+		ReplyData(QByteArray data, const QNetworkReply* qReply) : data(data), qReply(qReply) {}
 
-		bool operator==(const ReplyData& other) const { return data == other.data && headers == other.headers; }
+		bool operator==(const ReplyData& other) const { return data == other.data && qReply == other.qReply; }
 	};
 
 	struct Progress
@@ -52,9 +52,10 @@ public:
 	{
 		QNetworkReply::NetworkError code;
 		QString message;
+		ReplyData replyData;
 
 		Error() : code(QNetworkReply::NoError) {}
-		Error(QNetworkReply::NetworkError code, const QString& message) : code(code), message(message) {}
+		Error(const ReplyData& replyData) : code(replyData.qReply->error()), message(replyData.qReply->errorString()), replyData(replyData) {}
 
 		bool operator==(const Error& other) const { return code == other.code && message == other.message; }
 	};
