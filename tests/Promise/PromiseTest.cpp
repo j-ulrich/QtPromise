@@ -4,6 +4,9 @@
 #include <string>
 #include "Promise.h"
 
+Q_DECLARE_METATYPE(QList<QtPromise::Deferred::Ptr>)
+Q_DECLARE_METATYPE(QList<int>)
+
 namespace QtPromise
 {
 namespace Tests
@@ -35,6 +38,12 @@ private slots:
 	void alwaysTest_data();
 	void alwaysTest();
 	void threeLevelChainTest();
+	void allTest();
+	void allRejectTest();
+	void anyTest();
+	void anyRejectTest();
+	void allAnySyncTest_data();
+	void allAnySyncTest();
 	void cleanup();
 
 private:
@@ -50,6 +59,7 @@ private:
 	void callActionOnDeferred(Deferred::Ptr& deferred, const QString& action, const QVariant& data, int repetitions);
 
 };
+
 
 //####### Helper #######
 
@@ -326,8 +336,10 @@ void PromiseTest::thenVariantCallbackTest()
 	QVariantList originalNotifiedCalls;
 
 	Promise::Ptr newPromise = promise->then([&](const QVariant& value) -> QVariant {
+		Q_UNUSED(value)
 		return chainedData;
 	}, [&](const QVariant& reason) -> QVariant {
+		Q_UNUSED(reason)
 		return chainedData;
 	}, [&](const QVariant& progress) -> QVariant {
 		originalNotifiedCalls.push_back(progress);
@@ -405,6 +417,7 @@ void PromiseTest::thenPromiseCallbackTest()
 	Promise::Ptr promise = Promise::create(deferred);
 
 	auto callback = [&](const QVariant& value) -> Promise::Ptr {
+		Q_UNUSED(value)
 		if (callbackAction == "resolve")
 			return Promise::createResolved(callbackData);
 		else if (callbackAction == "reject")
@@ -493,6 +506,241 @@ void PromiseTest::threeLevelChainTest()
 	callActionOnDeferred(deferred, "resolve", data, 1);
 	QCOMPARE(callbackCalls, QVariantList() << data << data);
 }
+
+/*! \test Tests resolving Promise::all().
+ */
+void PromiseTest::allTest()
+{
+	QList<Deferred::Ptr> deferreds;
+	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
+
+	QList<Promise::Ptr> promises;
+	for (Deferred::Ptr deferred : deferreds)
+		promises << Promise::create(deferred);
+
+	Promise::Ptr combinedPromise = Promise::all(promises);
+
+	PromiseSpies spies(combinedPromise);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+
+	QList<QVariant> results;
+	results << "My string" << 15 << QVariant::fromValue(QList<int>() << 7 << 13);
+
+	deferreds[0]->resolve(results[0]);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+
+	deferreds[2]->resolve(results[2]);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+
+	deferreds[1]->resolve(results[1]);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 1);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+	QCOMPARE(spies.resolved.first().first(), QVariant::fromValue(results));
+}
+
+/*! \test Tests rejecting Promise::all().
+ */
+void PromiseTest::allRejectTest()
+{
+	QList<Deferred::Ptr> deferreds;
+	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
+
+	QList<Promise::Ptr> promises;
+	for (Deferred::Ptr deferred : deferreds)
+		promises << Promise::create(deferred);
+
+	Promise::Ptr combinedPromise = Promise::all(promises);
+
+	PromiseSpies spies(combinedPromise);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+
+	QVariant rejectReason = "Error string";
+
+	deferreds[0]->resolve(13);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+
+	deferreds[1]->reject(rejectReason);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 1);
+	QCOMPARE(spies.notified.count(), 0);
+	QCOMPARE(spies.rejected.first().first(), rejectReason);
+}
+
+/*! \test Tests resolving Promise::any().
+ */
+void PromiseTest::anyTest()
+{
+	QList<Deferred::Ptr> deferreds;
+	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
+
+	QList<Promise::Ptr> promises;
+	for (Deferred::Ptr deferred : deferreds)
+		promises << Promise::create(deferred);
+
+	Promise::Ptr combinedPromise = Promise::any(promises);
+
+	PromiseSpies spies(combinedPromise);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+
+	QVariant rejectReason = "Error string";
+	QVariant result = 13;
+
+	deferreds[0]->reject(rejectReason);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+
+	deferreds[1]->resolve(result);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 1);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+	QCOMPARE(spies.resolved.first().first(), QVariant::fromValue(result));
+}
+
+/*! \test Tests rejecting Promise::any().
+ */
+void PromiseTest::anyRejectTest()
+{
+	QList<Deferred::Ptr> deferreds;
+	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
+
+	QList<Promise::Ptr> promises;
+	for (Deferred::Ptr deferred : deferreds)
+		promises << Promise::create(deferred);
+
+	Promise::Ptr combinedPromise = Promise::any(promises);
+
+	PromiseSpies spies(combinedPromise);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+
+	QList<QVariant> rejectReasons;
+	rejectReasons << "My string" << 15 << QVariant::fromValue(QList<int>() << 7 << 13);
+
+	deferreds[0]->reject(rejectReasons[0]);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+
+	deferreds[2]->reject(rejectReasons[2]);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 0);
+	QCOMPARE(spies.notified.count(), 0);
+
+	deferreds[1]->reject(rejectReasons[1]);
+
+	QTest::qWait(100);
+	QCOMPARE(spies.resolved.count(), 0);
+	QCOMPARE(spies.rejected.count(), 1);
+	QCOMPARE(spies.notified.count(), 0);
+	QCOMPARE(spies.rejected.first().first(), QVariant::fromValue(rejectReasons));
+}
+
+/*! Provides the data for the PromiseTest::allAnySyncTest().
+ */
+void PromiseTest::allAnySyncTest_data()
+{
+	QTest::addColumn<QList<Deferred::Ptr>>("deferreds");
+	QTest::addColumn<QList<int>>("expectedAllSignalCounts");
+	QTest::addColumn<QList<int>>("expectedAnySignalCounts");
+
+	QList<Deferred::Ptr> oneResolvedDeferreds;
+	oneResolvedDeferreds << Deferred::create() << Deferred::create() << Deferred::create();
+	oneResolvedDeferreds[0]->resolve("foo");
+	
+	QTest::newRow("one resolved") << oneResolvedDeferreds << (QList<int>() << 0 << 0 << 0) << (QList<int>() << 1 << 0 << 0);
+	
+	QList<Deferred::Ptr> allResolvedDeferreds;
+	allResolvedDeferreds << Deferred::create() << Deferred::create() << Deferred::create();
+	allResolvedDeferreds[0]->resolve("foo");
+	allResolvedDeferreds[1]->resolve(17);
+	allResolvedDeferreds[2]->resolve(true);
+
+	QTest::newRow("all resolved") << allResolvedDeferreds << (QList<int>() << 1 << 0 << 0) << (QList<int>() << 1 << 0 << 0);
+
+	QList<Deferred::Ptr> oneRejectedDeferreds;
+	oneRejectedDeferreds << Deferred::create() << Deferred::create() << Deferred::create();
+	oneRejectedDeferreds[0]->reject("foo");
+	
+	QTest::newRow("one rejected") << oneRejectedDeferreds << (QList<int>() << 0 << 1 << 0) << (QList<int>() << 0 << 0 << 0);
+
+	QList<Deferred::Ptr> allRejectedDeferreds;
+	allRejectedDeferreds << Deferred::create() << Deferred::create() << Deferred::create();
+	allRejectedDeferreds[0]->reject("foo");
+	allRejectedDeferreds[1]->reject(21);
+	allRejectedDeferreds[2]->reject(false);
+	
+	QTest::newRow("all rejected") << allRejectedDeferreds << (QList<int>() << 0 << 1 << 0) << (QList<int>() << 0 << 1 << 0);
+}
+
+/*! \test Tests Promise::all() and Promise::any()
+ * when created with already resolved promises.
+ */
+void PromiseTest::allAnySyncTest()
+{
+	QFETCH(QList<Deferred::Ptr>, deferreds);
+	QFETCH(QList<int>, expectedAllSignalCounts);
+	QFETCH(QList<int>, expectedAnySignalCounts);
+
+	QList<Promise::Ptr> promises;
+	for (Deferred::Ptr deferred : deferreds)
+		promises << Promise::create(deferred);
+	
+	Promise::Ptr allPromise = Promise::all(promises);
+	Promise::Ptr anyPromise = Promise::any(promises);
+	
+	PromiseSpies allSpies(allPromise);
+	PromiseSpies anySpies(anyPromise);
+	
+	QTest::qWait(100);
+	QCOMPARE(allSpies.resolved.count(), expectedAllSignalCounts[0]);
+	QCOMPARE(allSpies.rejected.count(), expectedAllSignalCounts[1]);
+	QCOMPARE(allSpies.notified.count(), expectedAllSignalCounts[2]);
+	QCOMPARE(anySpies.resolved.count(), expectedAnySignalCounts[0]);
+	QCOMPARE(anySpies.rejected.count(), expectedAnySignalCounts[1]);
+	QCOMPARE(anySpies.notified.count(), expectedAnySignalCounts[2]);
+}
+
 
 }  // namespace Tests
 }  // namespace QtPromise

@@ -1,6 +1,7 @@
 #include "Promise.h"
 #include "ChildDeferred.h"
 #include <QTimer>
+#include <QHash>
 
 namespace QtPromise {
 
@@ -74,12 +75,13 @@ QVariant Promise::data() const
 	return m_deferred->data();
 }
 
-QSharedPointer<Deferred> Promise::createChildDeferred() const
-{
-	return ChildDeferred::create(m_deferred).staticCast<Deferred>();
-}
-
 
 
 }  // namespace QtPromise
+
+
+uint qHash(QtPromise::Promise::Ptr promisePtr, uint seed)
+{
+	return qHash(promisePtr.data(), seed);
+}
 
