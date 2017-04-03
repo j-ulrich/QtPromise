@@ -253,6 +253,6 @@ Promise::Ptr Promise::any(PromiseContainer promises)
  * @param seed The seed used for the calculation.
  * @return The hash value based on the address of the pointer.
  */
-uint qHash(QtPromise::Promise::Ptr promisePtr, uint seed = 0);
+uint qHash(const QtPromise::Promise::Ptr& promisePtr, uint seed = 0);
 
 #endif /* QTPROMISE_PROMISE_H_ */
