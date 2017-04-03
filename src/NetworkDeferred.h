@@ -62,8 +62,8 @@ public:
 
 	static Ptr create(QNetworkReply* reply);
 
-	ReplyData replyData() const { QMutexLocker locker(&m_lock); return ReplyData{m_buffer, m_reply->rawHeaderPairs()}; }
-	Error error() const { QMutexLocker locker(&m_lock); return Error{m_reply->error(), m_reply->errorString()}; }
+	ReplyData replyData() const { QMutexLocker locker(&m_lock); return ReplyData(m_buffer, m_reply); }
+	Error error() const { QMutexLocker locker(&m_lock); return Error(ReplyData(m_buffer, m_reply)); }
 
 signals:
 	void resolved(const QtPromise::NetworkDeferred::ReplyData& data) const;

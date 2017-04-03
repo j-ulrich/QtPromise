@@ -62,17 +62,16 @@ void NetworkDeferred::replyFinished()
 	// Save reply data since it will be removed from QNetworkReply when calling readAll()
 	m_buffer = m_reply->readAll();
 
-	ReplyData replyData;
-	replyData.data = m_buffer;
-	replyData.qReply = m_reply;
+	
 	if (m_reply->error() != QNetworkReply::NoError)
 	{
-		Error reason(replyData);
+		Error reason = this->error();
 		if (this->reject(QVariant::fromValue(reason)))
 			emit rejected(reason);
 	}
 	else
 	{
+		ReplyData replyData = this->replyData();
 		if (this->resolve(QVariant::fromValue(replyData)))
 			emit resolved(replyData);
 	}
