@@ -3,6 +3,7 @@
 #include <QtDebug>
 #include <QSignalSpy>
 #include <QNetworkAccessManager>
+#include <QNetworkDiskCache>
 #include "NetworkPromise.h"
 
 
@@ -21,6 +22,7 @@ private slots:
 	void httpTest();
 	void finishedReplyTest_data();
 	void finishedReplyTest();
+	void cachedDataTest();
 
 private:
 	struct PromiseSpies
@@ -182,6 +184,28 @@ void NetworkPromiseTest::finishedReplyTest()
 	QCOMPARE(spies.baseNotified.count(), 0);
 	QCOMPARE(resolvedCalled, expectResolve);
 	QCOMPARE(resolvedData.value<NetworkDeferred::ReplyData>().data, expectedData);
+}
+
+/*! \test Tests that the NetworkPromise works with cached data.
+ */
+void NetworkPromiseTest::cachedDataTest()
+{
+	QNetworkAccessManager qnam;
+	QNetworkDiskCache diskCache(&qnam);
+	diskCache.setCacheDirectory(QDir(qApp->applicationDirPath()).filePath("cache"));
+	qnam.setCache(&diskCache);
+	
+	// Load the data for the first time to cache it
+	QString dataPath = QFINDTESTDATA("data/DummyData.txt");
+	QNetworkRequest request(QUrl::fromLocalFile(dataPath));
+	QNetworkReply* firstReply = qnam.get(request);
+	QTRY_VERIFY(firstReply->isFinished());
+	
+	// Load the data for the second time.
+	QNetworkReply* secondReply = qnam.get(request);
+	NetworkPromise::Ptr promise = NetworkPromise::create(secondReply);
+	QTRY_VERIFY(secondReply->isFinished());
+	QTRY_COMPARE(promise->state(), Deferred::Resolved);
 }
 
 
