@@ -86,21 +86,26 @@ private:
 	callThenFunc(PromiseCallbackFunc func) const;
 
 	template <typename VoidCallbackFunc>
+	static
 	typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, WrappedCallbackFunc>::type
-	createThenFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state) const;
+	createThenFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state);
 	template<typename VariantCallbackFunc>
+	static
 	typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, WrappedCallbackFunc>::type
-	createThenFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State state) const;
+	createThenFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State state);
 	template<typename PromiseCallbackFunc>
+	static
 	typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, WrappedCallbackFunc>::type
-	createThenFuncWrapper(Deferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State state) const;
+	createThenFuncWrapper(Deferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State state);
 
 	template <typename VoidCallbackFunc>
+	static
 	typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, WrappedCallbackFunc>::type
-	createNotifyFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func) const;
+	createNotifyFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func);
 	template<typename VariantCallbackFunc>
+	static
 	typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, WrappedCallbackFunc>::type
-	createNotifyFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func) const;
+	createNotifyFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func);
 
 };
 
@@ -162,20 +167,24 @@ Promise::callThenFunc(PromiseCallbackFunc func) const
 
 template <typename VoidCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, Promise::WrappedCallbackFunc>::type
-Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state) const
+Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state)
 {
-	return [state, newDeferred, func](const QVariant& data) {
-		func(data);
-		if (state == Deferred::Resolved)
+	Q_ASSERT_X(state != Deferred::Pending, "Promise::createThenFuncWrapper()", "state must not be Pending (this is a bug in QtPromise)");
+	if (state == Deferred::Resolved)
+		return [newDeferred, func](const QVariant& data) {
+			func(data);
 			newDeferred->resolve(data);
-		else if (state == Deferred::Rejected)
+		};
+	else // state == Deferred::Rejected
+		return [newDeferred, func](const QVariant& data) {
+			func(data);
 			newDeferred->reject(data);
-	};
+		};
 }
 
 template<typename VariantCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, Promise::WrappedCallbackFunc>::type
-Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State state) const
+Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State state)
 {
 	Q_UNUSED(state)
 	return [newDeferred, func](const QVariant& data) {
@@ -189,7 +198,7 @@ Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc fu
 
 template<typename PromiseCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, Promise::WrappedCallbackFunc>::type
-Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State state) const
+Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State state)
 {
 	Q_UNUSED(state)
 	return [newDeferred, func](const QVariant& data) {
@@ -201,7 +210,7 @@ Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, PromiseCallbackFunc fu
 
 template <typename VoidCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, Promise::WrappedCallbackFunc>::type
-Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func) const
+Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func)
 {
 	return [newDeferred, func](const QVariant& data) {
 		func(data);
@@ -210,7 +219,7 @@ Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc fun
 
 template<typename VariantCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, Promise::WrappedCallbackFunc>::type
-Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func) const
+Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func)
 {
 	return [newDeferred, func](const QVariant& data) {
 		newDeferred->notify(func(data));
