@@ -77,6 +77,7 @@ private slots:
 	void replyFinished();
 	void replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 	void replyUploadProgress(qint64 bytesSent, qint64 bytesTotal);
+	void replyDestroyed();
 
 private:
 	mutable QMutex m_lock;
