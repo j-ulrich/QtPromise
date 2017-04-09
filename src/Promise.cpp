@@ -80,7 +80,7 @@ QVariant Promise::data() const
 }  // namespace QtPromise
 
 
-uint qHash(QtPromise::Promise::Ptr promisePtr, uint seed)
+uint qHash(const QtPromise::Promise::Ptr& promisePtr, uint seed)
 {
 	return qHash(promisePtr.data(), seed);
 }
