@@ -101,7 +101,7 @@ void NetworkDeferred::replyDestroyed()
 	QMutexLocker locker(&m_lock);
 	if (this->state() == Deferred::Pending)
 	{
-		QString errorMessage = QString("QNetworkReply 0x%1 destroyed while NetworkDeferred 0x%2 still pending")
+		QString errorMessage = QString("QNetworkReply 0x%1 destroyed while owning NetworkDeferred 0x%2 still pending")
 		.arg((quintptr)m_reply, QT_POINTER_SIZE * 2, 16, QChar('0'))
 		.arg((quintptr)this, QT_POINTER_SIZE * 2, 16, QChar('0'));
 		qDebug(errorMessage.toLatin1().data());
