@@ -55,7 +55,6 @@ public:
 		ReplyData replyData;
 
 		Error() : code(QNetworkReply::NoError) {}
-		Error(const ReplyData& replyData) : code(replyData.qReply->error()), message(replyData.qReply->errorString()), replyData(replyData) {}
 
 		bool operator==(const Error& other) const { return code == other.code && message == other.message; }
 	};
