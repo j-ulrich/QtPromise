@@ -1,0 +1,17 @@
+/*!
+
+\page page_signalEmission Signal Emission and Event Loop
+
+The %Qt Promise library emits signals forcefully asynchronous. This means that an event loop is required to
+emit the signals. This behavior is analogous to the behavior of QNetworkReply and ensures consistent behavior
+between cases when a Deferred is resolved/rejected right when it is created and when it is resolved/rejected
+asynchronously: in both cases, the caller will receive the signals when control returns to the event loop.
+
+Without this behavior, it would be impossible for the caller to receive the signals in cases when the Deferred
+is resolved/rejected right during construction because the signals would be emitted before control returns to
+the caller and thus before the caller could connect the slots.
+An example where this would happen is when creating a NetworkPromise/NetworkDeferred with an already finished
+QNetworkReply.
+
+
+*/

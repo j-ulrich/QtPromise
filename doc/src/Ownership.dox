@@ -1,6 +1,6 @@
 /*!
 
-\page ownership Object Ownership and Smart Pointers
+\page page_ownership Object Ownership and Smart Pointers
 
 \brief This page describes the handling of object ownership/lifetime in the Qt Promise library.
 

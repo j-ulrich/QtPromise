@@ -4,35 +4,24 @@
 
 ## Introduction ##
 The %Qt Promise library provides two main interfaces: \ref QtPromise::Promise "Promise"
-and \ref QtPromise::Deferred "Deferred".
-
+and \ref QtPromise::Deferred "Deferred".\n
 Deferred is the sending side of the communication (similar to a publisher in the
 publisher-subscriber pattern) and is used to deliver the outcome of an asynchronous operation
-to other components.
-
+to other components.\n
 Promise is the listening side of the communication (similar to a subscriber in the
 publisher-subscriber pattern) and is used to attach actions to the outcome of the asynchronous
 operation.
 
 Accordingly, the common pattern when working with Promises and Deferreds is:
-- A Deferred is created (\ref QtPromise::Deferred::create() "Deferred::create()")
+- A Deferred is created: \ref QtPromise::Deferred::create() "Deferred::create()"
 - The asynchronous operation is started
-- The asynchronous operation is configured to resolve/reject the Deferred depending on its outcome
-(\ref QtPromise::Deferred::resolve() "Deferred::resolve()"/\ref QtPromise::Deferred::reject() "Deferred::reject()")
-- A Promise is created based on the Deferred (\ref QtPromise::Promise::create() "Promise::create()")
+- The asynchronous operation is configured to resolve/reject the Deferred depending on its outcome:
+\ref QtPromise::Deferred::resolve() "Deferred::resolve()"/\ref QtPromise::Deferred::reject() "Deferred::reject()"
+- A Promise is created based on the Deferred: \ref QtPromise::Promise::create() "Promise::create()"
 - The Promise is returned to the caller/other components
-
-## Signal Emission ##
-The Qt Promise library emits signals forcefully asynchronous. This means that an event loop is required to
-emit the signals. This behavior is analogous to the behavior of QNetworkReply and ensures consistent behavior
-between cases when a Deferred is resolved/rejected right when it is created and when it is resolved/rejected
-asynchronously: in both cases, the caller will receive the signals when control returns to the event loop.
-
-Without this behavior, it would be impossible for the caller to receive the signals in cases when the Deferred
-is resolved/rejected right during construction because the signals would be emitted before control returns to
-the caller and thus before the caller could connect the slots.
-An example where this would happen is when creating a NetworkPromise/NetworkDeferred with an already finished
-QNetworkReply. 
+- The caller/other components attach actions to the Promise:
+\ref QtPromise::Promise::then() "Promise::then()" or using the signals
+\ref QtPromise::Promise::resolved() "Promise::resolved()"/\ref QtPromise::Promise::rejected() "Promise::rejected()"
 
 ## Further Reading ##
 For more information about the Promise/Deferred pattern, see the links in the
