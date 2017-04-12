@@ -149,8 +149,8 @@ public:
 		 * response (e.g. in case of a QNetworkReply::ContentAccessDenied).
 		 *
 		 * ReplyData::qReply allows accessing more details (like the response headers).
-		 * \warning ReplyData::qReply will be a \c nullptr in case the QNetworkReply is destroyed
-		 * before it is finished.
+		 * \warning ReplyData::qReply can be a \c nullptr (for example in case the QNetworkReply
+		 * is destroyed before it is finished). So check the pointer before using it.
 		 */
 		ReplyData replyData;
 
