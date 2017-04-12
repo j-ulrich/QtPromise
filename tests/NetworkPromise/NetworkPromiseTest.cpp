@@ -21,6 +21,7 @@ private slots:
 	void httpTest();
 	void finishedReplyTest_data();
 	void finishedReplyTest();
+	void destroyReplyTest();
 
 private:
 	struct PromiseSpies
@@ -182,6 +183,24 @@ void NetworkPromiseTest::finishedReplyTest()
 	QCOMPARE(spies.baseNotified.count(), 0);
 	QCOMPARE(resolvedCalled, expectResolve);
 	QCOMPARE(resolvedData.value<NetworkDeferred::ReplyData>().data, expectedData);
+}
+
+void NetworkPromiseTest::destroyReplyTest()
+{
+	QNetworkAccessManager qnam;
+	if(qnam.networkAccessible() == QNetworkAccessManager::NotAccessible)
+		QSKIP("Network not accessible");
+
+	QNetworkRequest request(QUrl("http://www.google.com"));
+	QNetworkReply* reply = qnam.get(request);
+
+	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
+
+	QCOMPARE(promise->state(), Deferred::Pending);
+
+	delete reply;
+
+	QCOMPARE(promise->state(), Deferred::Rejected);
 }
 
 

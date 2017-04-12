@@ -32,6 +32,7 @@ NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 	 */
 	connect(m_reply, &QNetworkReply::downloadProgress, this, &NetworkDeferred::replyDownloadProgress);
 	connect(m_reply, &QNetworkReply::uploadProgress, this, &NetworkDeferred::replyUploadProgress);
+	connect(m_reply, &QObject::destroyed, this, &NetworkDeferred::replyDestroyed);
 }
 
 NetworkDeferred::Ptr NetworkDeferred::create(QNetworkReply* reply)
@@ -61,21 +62,19 @@ void NetworkDeferred::replyFinished()
 	QMutexLocker locker(&m_lock);
 	// Save reply data since it will be removed from QNetworkReply when calling readAll()
 	m_buffer = m_reply->readAll();
+
+	
 	if (m_reply->error() != QNetworkReply::NoError)
 	{
-		Error reason;
-		reason.code = m_reply->error();
-		reason.message = m_reply->errorString();
+		Error reason = this->error();
 		if (this->reject(QVariant::fromValue(reason)))
 			emit rejected(reason);
 	}
 	else
 	{
-		ReplyData data;
-		data.data = m_buffer;
-		data.headers = m_reply->rawHeaderPairs();
-		if (this->resolve(QVariant::fromValue(data)))
-			emit resolved(data);
+		ReplyData replyData = this->replyData();
+		if (this->resolve(QVariant::fromValue(replyData)))
+			emit resolved(replyData);
 	}
 }
 
@@ -95,6 +94,24 @@ void NetworkDeferred::replyUploadProgress(qint64 bytesSent, qint64 bytesTotal)
 	m_progress.upload.total = bytesTotal;
 	if (this->notify(QVariant::fromValue(m_progress)))
 		emit notified(m_progress);
+}
+
+void NetworkDeferred::replyDestroyed()
+{
+	QMutexLocker locker(&m_lock);
+	if (this->state() == Deferred::Pending)
+	{
+		QString errorMessage = QString("QNetworkReply 0x%1 destroyed while owning NetworkDeferred 0x%2 still pending")
+		.arg((quintptr)m_reply, QT_POINTER_SIZE * 2, 16, QChar('0'))
+		.arg((quintptr)this, QT_POINTER_SIZE * 2, 16, QChar('0'));
+		qDebug(errorMessage.toLatin1().data());
+
+		Error reason;
+		reason.code = static_cast<QNetworkReply::NetworkError>(-1);
+		reason.message = errorMessage;
+		if (this->reject(QVariant::fromValue(reason)))
+			emit rejected(reason);
+	}
 }
 
 

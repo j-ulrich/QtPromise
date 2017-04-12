@@ -100,7 +100,7 @@ bool Deferred::notify(const QVariant& progress)
 }  // namespace QtPromise
 
 
-uint qHash(const QtPromise::Deferred::Ptr deferredPtr, uint seed)
+uint qHash(const QtPromise::Deferred::Ptr& deferredPtr, uint seed)
 {
 	return qHash(deferredPtr.data(), seed);
 }
