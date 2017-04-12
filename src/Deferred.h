@@ -196,6 +196,6 @@ Q_DECLARE_METATYPE(QtPromise::Deferred::State)
  * @param seed The seed used for the calculation.
  * @return The hash value based on the address of the pointer.
  */
-uint qHash(const QtPromise::Deferred::Ptr deferredPtr, uint seed = 0);
+uint qHash(const QtPromise::Deferred::Ptr& deferredPtr, uint seed = 0);
 
 #endif /* QTPROMISE_DEFERRED_H_ */

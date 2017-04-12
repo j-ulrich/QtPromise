@@ -44,6 +44,7 @@ private slots:
 	void anyRejectTest();
 	void allAnySyncTest_data();
 	void allAnySyncTest();
+	void allAnyInitializerListTest();
 	void cleanup();
 
 private:
@@ -740,6 +741,23 @@ void PromiseTest::allAnySyncTest()
 	QCOMPARE(anySpies.rejected.count(), expectedAnySignalCounts[1]);
 	QCOMPARE(anySpies.notified.count(), expectedAnySignalCounts[2]);
 }
+
+/*! \test Tests Promise::all() and Promise::any()
+ * with initializer lists.
+ */
+void PromiseTest::allAnyInitializerListTest()
+{
+	Promise::Ptr firstPromise = Promise::createResolved(17);
+	Promise::Ptr secondPromise = Promise::createResolved(4);
+
+	Promise::Ptr allPromise = Promise::all({firstPromise, secondPromise});
+	Promise::Ptr anyPromise = Promise::any({firstPromise, secondPromise});
+
+	QTest::qWait(100);
+	QCOMPARE(allPromise->state(), Deferred::Resolved);
+	QCOMPARE(anyPromise->state(), Deferred::Resolved);
+}
+
 
 
 }  // namespace Tests

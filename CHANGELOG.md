@@ -15,6 +15,7 @@ Initial release.
 
 ### Added ###
 - Basic Promise and Deferred functionality
+- Combining promises using Promise::all() and Promise::any()
 - Support for QNetworkReply: NetworkPromise and NetworkDeferred
 - Documentation
 
