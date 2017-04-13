@@ -28,6 +28,7 @@ namespace QtPromise {
  * resolved/rejected/notified independently of the QNetworkReply, which should be
  * a very rare use case.
  *
+ * \threadsafeClass
  * \author jochen.ulrich
  *
  * \sa NetworkPromise
@@ -158,6 +159,8 @@ public:
 		/*! Default constructor.
 		 * Sets the \p code to QNetworkReply::NoError. The other members are default
 		 * constructed.
+		 *
+		 * \sa ReplyData()
 		 */
 		Error() : code(QNetworkReply::NoError) {}
 
@@ -175,17 +178,54 @@ public:
 		}
 	};
 
+	/*! Creates a NetworkDeferred for a QNetworkReply.
+	 *
+	 * \param reply The QNetworkReply performing the transmission.
+	 * \return QSharedPointer to a new, pending NetworkDeferred.
+	 */
 	static Ptr create(QNetworkReply* reply);
 
+	/*! Returns the current ReplyData.
+	 *
+	 * \return A ReplyData object representing the current state of the reply.
+	 */
 	ReplyData replyData() const { QMutexLocker locker(&m_lock); return ReplyData(m_buffer, m_reply); }
+	/*! Returns the current Error object.
+	 *
+	 * \return An Error object representing the current error state of the reply.
+	 * If there was no error, the returned Error object will be default constructed.
+	 * Note that this means the ReplyData::qReply of the Error::replyData will be
+	 * a \c nullptr!
+	 *
+	 * \sa Error()
+	 */
 	Error error() const { QMutexLocker locker(&m_lock); return m_error; }
 
 signals:
+	/*! Emitted when the QNetworkReply finishes successfully.
+	 *
+	 * \param data The NetworkDeferred::ReplyData.
+	 */
 	void resolved(const QtPromise::NetworkDeferred::ReplyData& data) const;
+	/*! Emitted when the QNetworkReply failed.
+	 *
+	 * \param reason The NetworkDeferred::Error.
+	 */
 	void rejected(const QtPromise::NetworkDeferred::Error& reason) const;
+	/*! Emitted when the download or upload progresses.
+	 *
+	 * \param progress A NetworkDeferred::ReplyProgress object.
+	 * Note that the ReplyProgress::download or ReplyProgress::upload can contain values of
+	 * \c -1 if there was no corresponding progress yet or if the request does not involve
+	 * download or upload.
+	 */
 	void notified(const QtPromise::NetworkDeferred::ReplyProgress& progress) const;
 
 protected:
+	/*! Creates a NetworkDeferred for a given QNetworkReply.
+	 *
+	 * \param reply The QNetworkReply which is represented by the created NetworkDeferred.
+	 */
 	NetworkDeferred(QNetworkReply* reply);
 
 private slots:
