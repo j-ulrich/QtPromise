@@ -107,7 +107,6 @@ void NetworkDeferred::replyDestroyed()
 		.arg((quintptr)this, QT_POINTER_SIZE * 2, 16, QChar('0'));
 		qDebug(errorMessage.toLatin1().data());
 
-		m_buffer = m_reply->readAll();
 		m_error.code = static_cast<QNetworkReply::NetworkError>(-1);
 		m_error.message = errorMessage;
 		m_error.replyData = ReplyData(m_buffer, nullptr);
