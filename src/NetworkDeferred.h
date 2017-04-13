@@ -140,6 +140,7 @@ public:
 		/*! The error message.
 		 * This is identical to \c replyData.qReply->errorString() except for the case
 		 * when the QNetworkReply is destroyed before it is finished.
+		 * In that case, this will be a "custom" error message.
 		 */
 		QString message;
 		/*! Represents the state of the reply when the error occurred.
