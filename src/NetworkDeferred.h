@@ -160,24 +160,6 @@ public:
 		 * constructed.
 		 */
 		Error() : code(QNetworkReply::NoError) {}
-		/*! Creates an Error object for a given ReplyData object.
-		 *
-		 * \param replyData The ReplyData object representing the state
-		 * of the QNetworkReply at the time when the error occurred.
-		 */
-		Error(const ReplyData& replyData) : replyData(replyData)
-		{
-			if (replyData.qReply)
-			{
-				code = replyData.qReply->error();
-				message = replyData.qReply->errorString();
-			}
-			else
-			{
-				code = -1;
-			}
-
-		}
 
 		/*! Compares two Error objects for equality.
 		 *
@@ -196,7 +178,7 @@ public:
 	static Ptr create(QNetworkReply* reply);
 
 	ReplyData replyData() const { QMutexLocker locker(&m_lock); return ReplyData(m_buffer, m_reply); }
-	Error error() const { QMutexLocker locker(&m_lock); return Error(ReplyData(m_buffer, m_reply)); }
+	Error error() const { QMutexLocker locker(&m_lock); return m_error; }
 
 signals:
 	void resolved(const QtPromise::NetworkDeferred::ReplyData& data) const;
@@ -217,6 +199,7 @@ private:
 	QNetworkReply* m_reply;
 	QByteArray m_buffer;
 	ReplyProgress m_progress;
+	Error m_error;
 
 	void registerMetaTypes() const;
 };
