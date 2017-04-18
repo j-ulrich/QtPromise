@@ -33,4 +33,15 @@ NetworkPromise::Ptr NetworkPromise::create(QNetworkReply* reply)
 	return Ptr(new NetworkPromise(reply), &QObject::deleteLater);
 }
 
+NetworkDeferred::ReplyData NetworkPromise::replyData() const
+{
+	return m_deferred.staticCast<NetworkDeferred>()->replyData();
+}
+
+NetworkDeferred::Error NetworkPromise::error() const
+{
+	return m_deferred.staticCast<NetworkDeferred>()->error();
+}
+
+
 } /* namespace QtPromise */

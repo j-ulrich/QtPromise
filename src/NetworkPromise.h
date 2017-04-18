@@ -28,6 +28,9 @@ public:
 
 	static Ptr create(QNetworkReply* reply);
 
+	NetworkDeferred::ReplyData replyData() const;
+	NetworkDeferred::Error error() const;
+
 signals:
 	void resolved(const NetworkDeferred::ReplyData& data) const;
 	void rejected(const NetworkDeferred::Error& reason) const;
