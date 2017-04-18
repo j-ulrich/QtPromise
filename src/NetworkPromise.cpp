@@ -4,9 +4,13 @@ namespace QtPromise
 {
 
 NetworkPromise::NetworkPromise(QNetworkReply* reply)
-	: Promise(NetworkDeferred::create(reply))
+	: NetworkPromise(NetworkDeferred::create(reply))
 {
-	NetworkDeferred::Ptr deferred = m_deferred.staticCast<NetworkDeferred>();
+}
+
+NetworkPromise::NetworkPromise(NetworkDeferred::Ptr deferred)
+	: Promise(deferred)
+{
 	switch (deferred->state())
 	{
 	case Deferred::Resolved:
