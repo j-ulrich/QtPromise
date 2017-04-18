@@ -21,6 +21,10 @@ namespace QtPromise {
  * Additionally, the deferred is notified with a ReplyProgress object whenever
  * there is download or upload progress.
  *
+ * Similar to QNetworkReply, NetwordDeferred emits its signals when the control
+ * returns to the event loop. This ensures that the signals can be handled even if
+ * the QNetworkReply is already finished when the NetworkDeferred is created.
+ *
  * In most cases, it is not necessary to create a NetworkDeferred directly but instead
  * use the convenience method NetworkPromise::create(QNetworkReply*) which returns a
  * promise on a NetworkDeferred.
@@ -32,6 +36,7 @@ namespace QtPromise {
  * \author jochen.ulrich
  *
  * \sa NetworkPromise
+ * \sa \ref page_signalEmission
  */
 class NetworkDeferred : public Deferred
 {

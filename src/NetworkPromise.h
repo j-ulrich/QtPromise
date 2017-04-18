@@ -15,8 +15,7 @@ namespace QtPromise
 
 /*! \brief A promise to a NetworkDeferred.
  *
- * Similar to QNetworkReply, NetworkPromise ensures that the resolved() or rejected() signals
- * are emitted
+ * \sa NetworkDeferred
  */
 class NetworkPromise : public Promise
 {
@@ -24,8 +23,15 @@ class NetworkPromise : public Promise
 
 public:
 
+	/*! Smart pointer to a NetworkPromise */
 	typedef QSharedPointer<NetworkPromise> Ptr;
 
+	/*! Creates a NetworkPromise for a QNetworkReply
+	 *
+	 * \param reply The QNetworkReply performing the transmission.
+	 * \return A NetworkPromise to a new, pending NetworkDeferred for the given
+	 * \p reply.
+	 */
 	static Ptr create(QNetworkReply* reply);
 
 signals:
