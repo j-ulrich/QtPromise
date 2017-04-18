@@ -35,15 +35,24 @@ public:
 	static Ptr create(QNetworkReply* reply);
 
 signals:
+	/*! \copydoc NetworkDeferred::resolved()
+	 * \sa NetworkDeferred::resolved()
+	 */
 	void resolved(const NetworkDeferred::ReplyData& data) const;
+	/*! \copydoc NetworkDeferred::rejected()
+	 * \sa NetworkDeferred::rejected()
+	 */
 	void rejected(const NetworkDeferred::Error& reason) const;
+	/*! \copydoc NetworkDeferred::notified()
+	 * \sa NetworkDeferred::notified()
+	 */
 	void notified(const NetworkDeferred::ReplyProgress& progress) const;
 
 protected:
-	/*!
+	/*! Creates a NetworkDeferred for a QNetworkReply and
+	 * then create a NetworkPromise for that new NetworkDeferred.
 	 *
-	 * \param reply The promise chain takes ownership of the \p reply.
-	 * \param parent QObject parent.
+	 * \sa NetworkDeferred()
 	 */
 	NetworkPromise(QNetworkReply* reply);
 };
