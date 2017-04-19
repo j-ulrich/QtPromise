@@ -32,17 +32,30 @@ myPromise.then(QtPromise::noop, [](const QVariant& reason) {
  */
 void noop(const QVariant& ignored);
 
-/*! \brief Provides access to asynchronous data.
+
+/*! \brief Provides read-only access to the outcome of an asynchronous operation.
+ *
+ * There are two main usage patterns of Promise objects:
+ * - promise chaining using Promise::then()
+ * - using the signals
  *
  *	\threadsafeClass
+ *	\author jochen.ulrich
  */
 class Promise : public QObject
 {
 	Q_OBJECT
 
 public:
+	/*! Smart pointer to a Promise. */
 	typedef QSharedPointer<Promise> Ptr;
 
+	/*! Creates a Promise for a given Deferred.
+	 *
+	 * \param deferred The Deferred whose state is communicated
+	 * by the created Promise.
+	 * \return QSharedPointer to a new Promise for the given \p deferred.
+	 */
 	static Ptr create(Deferred::Ptr deferred);
 	static Ptr createResolved(const QVariant& value);
 	static Ptr createRejected(const QVariant& reason);
