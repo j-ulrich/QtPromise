@@ -49,7 +49,31 @@ private:
 #endif // QT_NO_EXCEPTIONS
 
 
-/*! \brief Reports the outcome of an operation.
+/*! \brief Communicates the outcome of an asynchronous operation.
+ *
+ * The usage pattern of Deferred is:
+ * - Create a new Deferred
+ * - Prepare the asynchronous operation
+ * - Configure that the Deferred is resolved or rejected when the
+ * result of the asynchronous operation is available
+ * - Possibly: configure that the Deferred is notified when the
+ * asynchronous operation progresses
+ * - Start the asynchronous operation
+ * - Create a Promise for the Deferred and return it
+ *
+ * For example:
+\code
+using namespace QtPromise;
+
+Deferred::Ptr deferred = Deferred::create();
+MyAsyncObject* asyncObj = new MyAsyncObject(deferred.data()); // We use the Deferred as parent of
+                                                              // asyncObj so we do not leak memory.
+connect(asyncObj, &MyAsyncObject::success, deferred.data(), &Deferred::resolve);
+connect(asyncObj, &MyAsyncObject::failure, deferred.data(), &Deferred::reject);
+connect(asyncObj, &MyAsyncObject::progress, deferred.data(), &Deferred::notify);
+asyncObj->start();
+return Promise::create(deferred);
+\endcode
  *
  * ## Subclassing ##
  * As a general rule when deriving from Deferred:
