@@ -27,6 +27,10 @@ public:
 	typedef QSharedPointer<NetworkPromise> Ptr;
 
 	static Ptr create(QNetworkReply* reply);
+	static Ptr create(NetworkDeferred::Ptr deferred);
+
+	NetworkDeferred::ReplyData replyData() const;
+	NetworkDeferred::Error error() const;
 
 signals:
 	void resolved(const NetworkDeferred::ReplyData& data) const;
@@ -40,6 +44,7 @@ protected:
 	 * \param parent QObject parent.
 	 */
 	NetworkPromise(QNetworkReply* reply);
+	NetworkPromise(NetworkDeferred::Ptr deferred);
 };
 
 } /* namespace QtPromise */
