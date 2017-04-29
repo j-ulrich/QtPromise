@@ -57,20 +57,88 @@ public:
 	 * \return QSharedPointer to a new Promise for the given \p deferred.
 	 */
 	static Ptr create(Deferred::Ptr deferred);
-	static Ptr createResolved(const QVariant& value);
-	static Ptr createRejected(const QVariant& reason);
+	/*! Creates a resolved Promise.
+	 * 
+	 * Creates a Deferred, resolves it with the given \p value and returns
+	 * a Promise on the Deferred.
+	 * 
+	 * \param value The value used to resolve the Promise.
+	 * \return QSharedPointer to a new, resolved Promise.
+	 */
+	static Ptr createResolved(const QVariant& value = QVariant());
+	/*! Creates a rejected Promise.
+	 *
+	 * Creates a Deferred, rejects it with the given \p reason and returns
+	 * a Promise on the Deferred.
+	 * 
+	 * \param reason The reason used to reject the Promise.
+	 * \return QSharedPointer to a new, rejected Promise.
+	 */
+	static Ptr createRejected(const QVariant& reason = QVariant());
+
+	/*! Combines multiple Promises using "and" semantics.
+	 *
+	 * Creates a Promise which is resolved when *all* provided promises
+	 * are resolved and rejected when any of the promises is rejected.
+	 * When resolved, the value is a QList<QVariant> of the values of promises
+	 * in the order of the \p promises.
+	 * When rejected, the reason is the rejection reason of the first rejected
+	 * promise.
+	 *
+	 * \tparam PromiseContainer A container type of Promise::Ptr objects.
+	 * The container type must be iterable using a range-based for loop.
+	 * \param promises A \p PromiseContainer of the promises which should
+	 * be combined.
+	 * \return A QSharedPointer to a new Promise which is resolved when all
+	 * \p promises are resolved and rejected when any of the \p promises is rejected.
+	 * The returned Promise is *not* notified.
+	 */
 	template<typename PromiseContainer>
 	static Ptr all(PromiseContainer promises) { return Promise::all_impl(promises); }
+	/*! \overload
+	 * Overload for initializer lists.
+	 */
 	template<typename ListType>
 	static Ptr all(std::initializer_list<ListType> promises) { return Promise::all_impl(promises); }
+
+	/*! Combines multiple Promises using "or" semantics.
+	 *
+	 * Creates a Promise which is resolved when *any* provided promise
+	 * is resolved and rejected when all of the promises are rejected.
+	 * When resolved, the value is the resolve value of the first resolved
+	 * promise.
+	 * When rejected, the reason is a QList<QVariant> of the rejection reasons
+	 * of the promises in the order of the \p promises.
+	 *
+	 * \tparam PromiseContainer A container type of Promise::Ptr objects.
+	 * The container type must be iterable using a range-based for loop.
+	 * \param promises A \p PromiseContainer of the promises which should
+	 * be combined.
+	 * \return A QSharedPointer to a new Promise which is resolved when any
+	 * promise of the \p promises is resolved and rejected when all the \p promises
+	 * are rejected.
+	 * The returned Promise is *not* notified.
+	 */
 	template<typename PromiseContainer>
 	static Ptr any(PromiseContainer promises) { return Promise::any_impl(promises); }
+	/*! \overload
+	 * Overload for initializer lists.
+	 */
 	template<typename ListType>
 	static Ptr any(std::initializer_list<ListType> promises) { return Promise::any_impl(promises); }
 
+	/*! Default destructor */
 	virtual ~Promise() = default;
 
+	/*! \return The current state of the Promise's Deferred.
+	 *
+	 * \sa Deferred::state()
+	 */
 	Deferred::State state() const;
+	/*! \return The current data of the Promise's Deferred.
+	 *
+	 * \sa Deferred::data()
+	 */
 	QVariant data() const;
 
 	template<typename ResolvedFunc, typename RejectedFunc = decltype(noop), typename NotifiedFunc = decltype(noop)>
@@ -81,7 +149,7 @@ public:
 
 	typedef std::function<void(const QVariant&)> WrappedCallbackFunc;
 
-	signals:
+signals:
 	void resolved(const QVariant& value) const;
 	void rejected(const QVariant& reason) const;
 	void notified(const QVariant& progress) const;

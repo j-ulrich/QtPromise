@@ -127,7 +127,8 @@ public:
 	/*! \return The current state of the Deferred. */
 	Deferred::State state() const { QMutexLocker locker(&m_lock); return m_state; }
 	/*! \return The current data of the Deferred.
-	 * Will be an invalid QVariant when the Deferred is still pending.
+	 * Depending on the state of the Deferred, this is either the resolve value,
+	 * the rejection reason or an invalid QVariant when the Deferred is still pending.
 	 */
 	QVariant data() const { QMutexLocker locker(&m_lock); return m_data; }
 
