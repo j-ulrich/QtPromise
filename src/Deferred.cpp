@@ -19,6 +19,22 @@ Deferred::Ptr Deferred::create()
 	return Deferred::Ptr(new Deferred(), &QObject::deleteLater);
 }
 
+Deferred::Ptr Deferred::create(State state, const QVariant& data)
+{
+	Deferred::Ptr deferred = create();
+	switch (state)
+	{
+	case Rejected:
+		deferred->reject(data);
+		break;
+	case Resolved:
+	default:
+		deferred->resolve(data);
+		break;
+	}
+	return deferred;
+}
+
 
 Deferred::~Deferred()
 {

@@ -33,6 +33,10 @@ public:
 	 * \p reply.
 	 */
 	static Ptr create(QNetworkReply* reply);
+	static Ptr create(NetworkDeferred::Ptr deferred);
+
+	NetworkDeferred::ReplyData replyData() const;
+	NetworkDeferred::Error error() const;
 
 signals:
 	/*! \copydoc NetworkDeferred::resolved()
@@ -55,6 +59,7 @@ protected:
 	 * \sa NetworkDeferred()
 	 */
 	NetworkPromise(QNetworkReply* reply);
+	NetworkPromise(NetworkDeferred::Ptr deferred);
 };
 
 } /* namespace QtPromise */

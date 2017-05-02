@@ -115,6 +115,18 @@ public:
 	 * \return QSharedPointer to a new, pending Deferred.
 	 */
 	static Ptr create();
+	/*! Creates a resolved or rejected Deferred.
+	 *
+	 * This is a convenience method which creates a Deferred and directly
+	 * resolves or rejects it with \p data according to \p state.
+	 *
+	 * \param state Defines whether the Deferred should resolved or rejected.
+	 * Should be either Resolved or Rejected. Pending will be treated like Resolved.
+	 * \param data The value or rejection reason used to resolve or reject
+	 * the Deferred depending on \p state.
+	 * \return A QSharedPointer to a new, resolved or rejected Deferred.
+	 */
+	static Ptr create(State state, const QVariant& data);
 	/*! Destroys a Deferred.
 	 *
 	 * When the Deferred is still pending when being destroyed,
