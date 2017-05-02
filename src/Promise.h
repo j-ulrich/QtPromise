@@ -147,18 +147,65 @@ public:
 	template <typename AlwaysFunc>
 	Ptr always(AlwaysFunc&& alwaysFunc) const { return this->then(alwaysFunc, alwaysFunc); }
 
-	typedef std::function<void(const QVariant&)> WrappedCallbackFunc;
 
 signals:
+	/*! Emitted when the Promise's Deferred is resolved.
+	 *
+	 * \param value The result of the asynchronous operation.
+	 * The actual type of the value depends on the asynchronous operation
+	 * and should be documented by the creator of the Promise.
+	 *
+	 * \sa Deferred::resolved()
+	 */
 	void resolved(const QVariant& value) const;
+
+	/*! Emitted when the Promise's Deferred is rejected.
+	 *
+	 * \param reason Indication of the reason why the operation failed.
+	 * The actual type of the value depends on the asynchronous operation
+	 * and should be documented by the creator of the Promise.
+	 *
+	 * \sa Deferred::rejected()
+	 */
 	void rejected(const QVariant& reason) const;
+	/*! Emitted when the Promise's Deferred is notified.
+	 *
+	 * \param progress Information about the progress of the operation.
+	 * The actual type of the progress depends on the asynchronous operation
+	 * and should be documented by the creator of the Promise.
+	 *
+	 * \sa Deferred::notified()
+	 */
 	void notified(const QVariant& progress) const;
 
+
 protected:
+
+	/*! Defines the type of functions returned by createThenFuncWrapper() and createNotifyFuncWrapper()
+	 */
+	typedef std::function<void(const QVariant&)> WrappedCallbackFunc;
+
+	/*! Creates a Promise object for a Deferred.
+	 *
+	 * \param deferred The Deferred which should be represented by the Promise.
+	 */
 	Promise(Deferred::Ptr deferred);
+
+	/*! Convenience constructor to create a resolved or rejected Promise.
+	 *
+	 * Creates a Deferred, creates a Promise on that Deferred and
+	 * resolves or rejects it with \p data depending on \p state.
+	 *
+	 * \param state Defines whether the created Promise's Deferred
+	 * should resolved or rejected.
+	 * \param data The value or rejection reason according to \p state.
+	 */
 	Promise(Deferred::State state, const QVariant& data);
 
+	/*! The Deferred represented by this Promise.
+	 */
 	Deferred::Ptr m_deferred;
+
 
 private:
 	template<typename VoidCallbackFunc>
