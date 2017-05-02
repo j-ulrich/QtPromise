@@ -68,6 +68,17 @@ public:
 	};
 
 	static Ptr create();
+	/*! Creates a resolved or rejected Deferred.
+	 *
+	 * This is a convenience method which creates a Deferred and directly
+	 * resolves or rejects it with \p data according to \p state.
+	 *
+	 * \param state Defines whether the Deferred should resolved or rejected.
+	 * Should be either Resolved or Rejected. Pending will be treated like Resolved.
+	 * \param data The value or rejection reason depending on \p state.
+	 * \return A QSharedPointer to a Deferred being resolved or rejected with \p data.
+	 */
+	static Ptr create(State state, const QVariant& data);
 	virtual ~Deferred();
 
 	Deferred::State state() const { QMutexLocker locker(&m_lock); return m_state; }
