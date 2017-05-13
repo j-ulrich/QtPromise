@@ -12,7 +12,7 @@
 #include <QReadWriteLock>
 #include "Promise.h"
 
-class Promise;
+namespace QtPromise {
 
 /*! \brief Holds Promises until they are resolved or rejected.
  *
@@ -48,7 +48,7 @@ public:
 	 *
 	 * \param parent The parent QObject.
 	 */
-	PromiseSitter(QObject* parent = nullptr) : QObject(parent) {};
+	PromiseSitter(QObject* parent = nullptr) : QObject(parent) {}
 	/*! Default destructor.
 	 */
 	virtual ~PromiseSitter() = default;
@@ -63,20 +63,33 @@ public:
 	 *
 	 * The PromiseSitter tracks the added promises based on the actual pointer
 	 * (i.e. QSharedPointer::data()). Therefore, it will keep the promise only
-	 * once even when add() is called multiple times with QSharedPointers to the
-	 * same Promise.
+	 * once even when add() is called multiple times with different QSharedPointers
+	 * to the same Promise.
+	 *
+	 * \note It is pointless to store already resolved or rejected promises as their
+	 * actions have already been executed. Therefore, trying to add a resolved or
+	 * rejected Promise will do nothing.
 	 *
 	 * \param promise The Promise::Ptr which should be kept until the Promise is
 	 * resolved or rejected.
 	 */
 	void add(QSharedPointer<Promise> promise);
+
 	/*! Explicitly removes a Promise from this PromiseSitter.
+	 *
+	 * \param promise A raw Pointer to the Promise to be removed from the PromiseSitter.
+	 * \return \c true if the PromiseSitter contained the \p promise. \c false otherwise.
+	 */
+	bool remove(const Promise* promise);
+
+	/*! \overload
 	 *
 	 * \param promise The Promise::Ptr to be removed from the PromiseSitter.
 	 * \return \c true if the PromiseSitter contained a Promise::Ptr to that Promise.
 	 * \c false otherwise.
 	 */
-	bool remove(QSharedPointer<Promise> promise);
+	bool remove(QSharedPointer<Promise> promise) { return remove(promise.data()); }
+
 	/*! Checks if a Promise is hold by this PromiseSitter.
 	 *
 	 * \param promise The Promise::Ptr to the Promise.
@@ -87,7 +100,9 @@ public:
 
 private:
 	mutable QReadWriteLock m_lock;
-	QMap<Promise*, QSharedPointer<Promise> > m_promises;
+	QMap<const Promise*, QSharedPointer<Promise> > m_promises;
 };
+
+}  // namespace QtPromise
 
 #endif /* QTPROMISE_PROMISESITTER_H_ */
