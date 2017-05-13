@@ -90,9 +90,9 @@ signals:
 	void notified(const QVariant& progress) const;
 
 public slots:
-	bool resolve(const QVariant& value);
-	bool reject(const QVariant& reason);
-	bool notify(const QVariant& progress);
+	bool resolve(const QVariant& value = QVariant());
+	bool reject(const QVariant& reason = QVariant());
+	bool notify(const QVariant& progress = QVariant());
 
 protected:
 	Deferred();
