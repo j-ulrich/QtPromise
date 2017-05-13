@@ -197,7 +197,7 @@ public slots:
 	 * \return \c true if the Deferred has been notified.
 	 * \c false if the Deferred was not in the \ref Pending state.
 	 */
-	bool notify(const QVariant& progress);
+	bool notify(const QVariant& progress = QVariant());
 
 protected:
 	/*! Creates a pending Deferred object.
