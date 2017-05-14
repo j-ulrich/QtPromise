@@ -1,10 +1,12 @@
+namespace QtPromise {
+
 /*!
 
 \page page_ownership Object Ownership and Smart Pointers
 
-\brief This page describes the handling of object ownership/lifetime in the Qt Promise library.
+\brief This page describes the handling of object ownership/lifetime in the %Qt %Promise library.
 
-Since the ownership of most objects of Qt Promise is shared between multiple objects,
+Since the ownership of most objects of %Qt %Promise is shared between multiple objects,
 the library uses %Qt's smart pointer class QSharedPointer to manage the lifetime of the objects.
 
 This helps avoiding memory leaks and access violations especially with promise chaining because:
@@ -29,3 +31,5 @@ called when the QObject::deleteLater() is handled after the resolved/rejected/no
 in the event loop.
 
 */
+
+} // namespace QtPromise

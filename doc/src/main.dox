@@ -1,10 +1,11 @@
+namespace QtPromise {
+
 /*!
 
 \mainpage %Qt Promise
 
 ## Introduction ##
-The %Qt Promise library provides two main interfaces: \ref QtPromise::Promise "Promise"
-and \ref QtPromise::Deferred "Deferred".\n
+The %Qt %Promise library provides two main interfaces: Promise and Deferred.\n
 Deferred is the sending side of the communication (similar to a publisher in the
 publisher-subscriber pattern) and is used to deliver the outcome of an asynchronous operation
 to other components.\n
@@ -13,18 +14,22 @@ publisher-subscriber pattern) and is used to attach actions to the outcome of th
 operation.
 
 Accordingly, the common pattern when working with Promises and Deferreds is:
-- A Deferred is created: \ref QtPromise::Deferred::create() "Deferred::create()"
+- A Deferred is created: Deferred::create()
 - The asynchronous operation is started
 - The asynchronous operation is configured to resolve/reject the Deferred depending on its outcome:
-\ref QtPromise::Deferred::resolve() "Deferred::resolve()"/\ref QtPromise::Deferred::reject() "Deferred::reject()"
-- A Promise is created based on the Deferred: \ref QtPromise::Promise::create() "Promise::create()"
+Deferred::resolve() / Deferred::reject()
+- A Promise is created based on the Deferred: Promise::create()
 - The Promise is returned to the caller/other components
 - The caller/other components attach actions to the Promise:
-\ref QtPromise::Promise::then() "Promise::then()" or using the signals
-\ref QtPromise::Promise::resolved() "Promise::resolved()"/\ref QtPromise::Promise::rejected() "Promise::rejected()"
+Promise::then() or using the signals Promise::resolved() / Promise::rejected()
+
+For more details, have a look at the [related pages](pages.html) list which contains
+articles covering several interessting topics like \ref page_promiseChaining.
 
 ## Further Reading ##
 For more information about the Promise/Deferred pattern, see the links in the
 [further reading section of the readme](md__r_e_a_d_m_e.html#further-reading).
 
 */
+
+} // namespace QtPromise
