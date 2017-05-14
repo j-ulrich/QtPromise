@@ -1,3 +1,10 @@
+
+/* Fixes the large empty space produced by GitLab badge when it cannot be loaded. */
+[alt="Build status"] {
+	max-height: 20px;
+}
+
+
 .navpath ul {
 	background-image: none;
 }
