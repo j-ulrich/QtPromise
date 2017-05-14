@@ -1,3 +1,5 @@
+/*! \file
+ */
 
 #include <QtTest>
 #include <QtDebug>
@@ -11,9 +13,9 @@ namespace QtPromise
 namespace Tests
 {
 
-    const QString ACTION_RESOLVE = "resolve";
-	const QString ACTION_REJECT = "reject";
-	const QString ACTION_NOTIFY = "notify";
+const QString ACTION_RESOLVE = "resolve";
+const QString ACTION_REJECT = "reject";
+const QString ACTION_NOTIFY = "notify";
 
 /*! Unit tests for the PromiseSitter class.
  *
@@ -61,6 +63,9 @@ void PromiseSitterTest::cleanup()
 
 //####### Tests #######
 
+/*! \test Tests the PromiseSitter::add(), PromiseSitter::contains()
+ * and PromiseSitter::remove() methods.
+ */
 void PromiseSitterTest::testAddContainsRemove()
 {
 	PromiseSitter sitter;
@@ -88,6 +93,8 @@ void PromiseSitterTest::testAddContainsRemove()
 	QVERIFY(!promisePointer.isNull());
 }
 
+/*! Provides the data for the testPromiseLifetime() test.
+ */
 void PromiseSitterTest::testPromiseLifetime_data()
 {
 	QTest::addColumn<QString>("action");
@@ -97,6 +104,8 @@ void PromiseSitterTest::testPromiseLifetime_data()
 	QTest::newRow("notify") << ACTION_NOTIFY;
 }
 
+/*! \test Tests the releasing of Promises from the PromiseSitter.
+ */
 void PromiseSitterTest::testPromiseLifetime()
 {
 	QFETCH(QString, action);
@@ -162,6 +171,8 @@ void PromiseSitterTest::testPromiseLifetime()
 		QVERIFY(chainedActionTriggered);
 }
 
+/*! Provides the data for the testGlobalInstance() test.
+ */
 void PromiseSitterTest::testGlobalInstance_data()
 {
 	QTest::addColumn<Deferred::Ptr>("deferred");
@@ -173,7 +184,8 @@ void PromiseSitterTest::testGlobalInstance_data()
 	PromiseSitter::instance()->add(promise);
 }
 
-
+/*! \test Tests the global instance of the PromiseSitter.
+ */
 void PromiseSitterTest::testGlobalInstance()
 {
 	QFETCH(Deferred::Ptr, deferred);

@@ -23,6 +23,8 @@ class Deferred;
 /*! \brief Exception indicating that a Deferred was destroyed while still pending.
  *
  * This exception is used to reject a Deferred when it is still pending when being destroyed.
+ *
+ * \note If QtPromise is compiled with \c QT_NO_EXCEPTIONS defined, this class is omitted.
  */
 class DeferredDestroyed : public QException
 {
@@ -35,7 +37,7 @@ public:
 	 */
 	DeferredDestroyed(const Deferred* const deferred) : m_deferred(deferred) {}
 	/*! Default destructor. */
-	virtual ~DeferredDestroyed() {};
+	virtual ~DeferredDestroyed() = default;
 
 	/*! \return The pointer to the Deferred being destroyed.
 	 * Can be a \c nullptr, depending on how the exception was constructed.
@@ -132,7 +134,7 @@ public:
 	 * When the Deferred is still pending when being destroyed,
 	 * it logs a warning using qDebug() and rejects the Deferred with either
 	 * a DeferredDestroyed exception if exceptions are enabled or
-	 * a QString if exceptions are disabled.
+	 * a QString if exceptions are disabled (\c QT_NO_EXCEPTIONS is defined).
 	 */
 	virtual ~Deferred();
 
