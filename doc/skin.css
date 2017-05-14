@@ -30,6 +30,14 @@
 	text-shadow: none;
 }
 
+.sm-dox a,
+.sm-dox a:focus,
+.sm-dox a:active,
+.sm-dox a:hover,
+.sm-dox a.highlighted {
+	background-image: none;
+}
+
 .sm-dox ul a {
 	background-image: none;
 	text-shadow: none;
