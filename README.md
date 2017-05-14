@@ -38,6 +38,9 @@ Both do not integrate with Qt's signal & slot mechanism out of the box. On the o
 Qt's [QFuture](http://doc.qt.io/qt-5.6/qfuture.html) and [QFutureWatcher](http://doc.qt.io/qt-5.6/qfuturewatcher.html) provide a similar functionality.
 However, they do not allow chaining, enforce using threads and do not support custom asynchronous operations well (e.g. no progress reporting).
 
+Ben Lau's [AsyncFuture](https://github.com/benlau/asyncfuture) is based on QFuture and adds some of the missing functionality.
+However, it is using a different API, more oriented to the Observable pattern, and does not support progress reporting (yet?).
+
 <a name="further-reading"></a>
 ### Further reading ###
 
@@ -67,16 +70,14 @@ However, they do not allow chaining, enforce using threads and do not support cu
 ## Example ##
 
 ```cpp
-using QtPromise;
-
-Promise::Ptr fetchJson(QNetworkReply* reply)
+QtPromise::Promise::Ptr fetchJson(QNetworkReply* reply)
 {
 	return QtPromise::NetworkPromise::create(reply)
 	->then([](const QVariant& data) -> QVariant {
 		/* We could do more pre-processing here like
 		 * removing comments from the JSON etc.
 		 */
-		return QJsonDocument::fromJson(data.value<NetworkDeferred::ReplyData>().data);
+		return QJsonDocument::fromJson(data.value<QtPromise::NetworkDeferred::ReplyData>().data);
 	});
 }
 
@@ -92,7 +93,7 @@ void MyDataFetcher::printJsonData()
 		// Do something with JSON document
 		this->print(data.toJsonDocument().toObject());
 	}, [this](const QVariant& error) {
-		this->logError("Error fetching JSON document: "+error.value<NetworkDeferred::Error>().message);
+		this->logError("Error fetching JSON document: "+error.value<QtPromise::NetworkDeferred::Error>().message);
 	});
 }
 ```
