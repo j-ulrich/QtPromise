@@ -186,6 +186,9 @@ public slots:
 	 *
 	 * Call this slot when the asynchronous operation failed and provide a reason
 	 * describing why the operation failed.
+	 * It is important to make the actual type of the value clear for the promises
+	 * as QVariant::value() requires the exact type to be able to convert the value.
+	 *
 	 * \param reason An object indicating why the operation failed.
 	 * \return \c true if the Deferred has been set to \ref Rejected.
 	 * \c false if the Deferred was not in the \ref Pending state.
@@ -195,6 +198,9 @@ public slots:
 	 *
 	 * Call this slot when you want to inform the promises about progress
 	 * of the asynchronous operation.
+	 * It is important to make the actual type of the value clear for the promises
+	 * as QVariant::value() requires the exact type to be able to convert the value.
+	 *
 	 * \param progress An object representing the progress of the operation.
 	 * \return \c true if the Deferred has been notified.
 	 * \c false if the Deferred was not in the \ref Pending state.
