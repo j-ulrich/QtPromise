@@ -26,6 +26,9 @@ Promise::then() or using the signals Promise::resolved() / Promise::rejected()
 For more details, have a look at the [related pages](pages.html) list which contains
 articles covering several interessting topics like \ref page_promiseChaining.
 
+\note It is highly recommended to read the \ref page_ownership page before using the
+%Qt %Promise library.
+
 ## Further Reading ##
 For more information about the Promise/Deferred pattern, see the links in the
 [further reading section of the readme](md__r_e_a_d_m_e.html#further-reading).

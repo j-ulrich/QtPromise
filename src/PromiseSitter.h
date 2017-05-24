@@ -26,6 +26,7 @@ namespace QtPromise {
  * using PromiseSitter::instance().
  *
  * ### Example ###
+ *
 \code
 void MyClass::attachAction(Promise::Ptr promise)
 {
