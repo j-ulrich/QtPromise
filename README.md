@@ -63,7 +63,7 @@ However, it is using a different API, more oriented to the Observable pattern, a
 - Supports signals & slots
 - Supports `QNetworkReply`
 - [Semantic versioning](http://semver.org/)
-> **Important Note:** The library currently does **not** provide binary compatibility between versions. Only source compatibility is guaranteed between minor and patch versions.
+> **Important note:** The library currently does **not** provide binary compatibility between versions. Only source compatibility is guaranteed between minor and patch versions.
 
 
 <a name="example"></a>

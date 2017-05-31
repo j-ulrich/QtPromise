@@ -18,5 +18,5 @@ Initial release.
 - Combining promises using Promise::all() and Promise::any()
 - Support for QNetworkReply: NetworkPromise and NetworkDeferred
 - Documentation
-- PromiseSitter (#3): stores Promises to ensure attached actions are executed
+- [#3] PromiseSitter: stores Promises to ensure attached actions are executed
 
