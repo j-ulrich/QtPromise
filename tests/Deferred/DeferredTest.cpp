@@ -7,6 +7,10 @@ namespace QtPromise
 namespace Tests
 {
 
+/*! \brief Unit tests for the Deferred class.
+ *
+ * \author jochen.ulrich
+ */
 class DeferredTest : public QObject
 {
 	Q_OBJECT
@@ -44,6 +48,8 @@ void DeferredTest::cleanup()
 	QTestEventLoop().enterLoopMSecs(100);
 }
 
+/*! \test Tests the Deferred::create() method.
+ */
 void DeferredTest::constructorTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
@@ -54,6 +60,8 @@ void DeferredTest::constructorTest()
 	QVERIFY(deferred->data().isNull());
 }
 
+/*! \test Tests the Deferred::resolve() method.
+ */
 void DeferredTest::resolveTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
@@ -79,6 +87,8 @@ void DeferredTest::resolveTest()
 	QCOMPARE(spies.notified.count(), 0);
 }
 
+/*! \test Tests the Deferred::reject() method.
+ */
 void DeferredTest::rejectTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
@@ -104,6 +114,8 @@ void DeferredTest::rejectTest()
 	QCOMPARE(spies.notified.count(), 0);
 }
 
+/*! \test Tests the Deferred::notify() method.
+ */
 void DeferredTest::notifyTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
@@ -132,6 +144,8 @@ void DeferredTest::notifyTest()
 	QCOMPARE(spies.notified.at(1).first().toInt(), secondValue);
 }
 
+/*! \test Tests the destructor Deferred::~Deferred().
+ */
 void DeferredTest::destructorTest()
 {
 	Deferred::Ptr deferred = Deferred::create();

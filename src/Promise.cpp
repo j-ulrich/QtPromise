@@ -10,7 +10,7 @@ void noop(const QVariant&)
 
 }
 
-Promise::Promise(QSharedPointer<Deferred> deferred)
+Promise::Promise(Deferred::Ptr deferred)
 	: QObject(), m_deferred(deferred)
 {
 	switch (m_deferred->state())

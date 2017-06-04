@@ -1,0 +1,55 @@
+namespace QtPromise {
+
+/*!
+
+\page page_ownership Object Ownership and Smart Pointers
+
+\brief This page describes the handling of object ownership/lifetime in the %Qt %Promise library.
+
+Since the ownership of most objects of %Qt %Promise is shared between multiple objects,
+the library uses %Qt's smart pointer class QSharedPointer to manage the lifetime of the objects.
+
+This helps avoiding memory leaks and access violations especially with promise chaining because:
+- intermediate promises could be created which would be annoying if needed to be deleted explicitly
+- multiple promises could be created based on the same (shared) deferred
+- all promises and deferreds in the chain need to exist as long as the last promise in
+the chain is in use
+
+Therefore, the promises hold QSharedPointers to the promises/deferreds they depend on.
+
+\note Nevertheless, it is necessary to ensure that a QSharedPointer to the last promise
+in the chain exists until the promise is resolved/rejected. Else the promise chain will
+be destructed and the attached callbacks will not be executed.\n
+The PromiseSitter class can be used to store those pointers.
+
+### Object Deletion ###
+Another thing to note is that the objects are deleted using QObject::deleteLater().
+Therefore, the objects continue to exist until control returns to the event loop even
+if their QSharedPointer goes out of scope. 
+
+This also means that callbacks can be called even after QSharedPointer::clear() has been
+called when the QObject::deleteLater() is handled after the resolved/rejected/notified signal
+in the event loop.
+
+### Memory Leaks with QSharedPointer and Lambdas ###
+Be careful when passing QSharedPointers of QObject derived classes to lambdas connected to
+the object's slots as this creates a memory leak.
+This applies for the objects from the %Qt %Promise library as well:
+\code
+Promise::Ptr myPromise = startAsyncOperation();
+// DON'T DO THIS! THIS CREATES A MEMORY LEAK!
+connect(myPromise.data(), &Promise::notified, [myPromise](const QVariant& data) {
+	//  ^^^^^^^^^                              ^^^^^^^^^ MEMORY LEAK!
+});
+\endcode
+`myPromise` will never be released since the lambda holds a reference to it and the lambda
+exists as long as `myPromise` exists due to QObject::connect().
+
+In case the lambda will be called only once (e.g. when connected to Promise::resolved() or
+Promise::rejected()), one can work around the memory leak calling QSharedPointer::clear() at
+the end of the lambda. But this will not work for signals which will be emitted multiple times
+as the QSharedPointer will be null in subsequent calls.
+
+*/
+
+} // namespace QtPromise

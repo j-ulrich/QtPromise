@@ -13,10 +13,9 @@
 namespace QtPromise
 {
 
-/*! \brief
+/*! \brief A promise to a NetworkDeferred.
  *
- * Similar to QNetworkReply, NetworkPromise ensures that the resolved() or rejected() signals
- * are emitted
+ * \sa NetworkDeferred
  */
 class NetworkPromise : public Promise
 {
@@ -24,8 +23,15 @@ class NetworkPromise : public Promise
 
 public:
 
+	/*! Smart pointer to a NetworkPromise */
 	typedef QSharedPointer<NetworkPromise> Ptr;
 
+	/*! Creates a NetworkPromise for a QNetworkReply
+	 *
+	 * \param reply The QNetworkReply performing the transmission.
+	 * \return A NetworkPromise to a new, pending NetworkDeferred for the given
+	 * \p reply.
+	 */
 	static Ptr create(QNetworkReply* reply);
 	static Ptr create(NetworkDeferred::Ptr deferred);
 
@@ -33,15 +39,24 @@ public:
 	NetworkDeferred::Error error() const;
 
 signals:
+	/*! \copydoc NetworkDeferred::resolved()
+	 * \sa NetworkDeferred::resolved()
+	 */
 	void resolved(const NetworkDeferred::ReplyData& data) const;
+	/*! \copydoc NetworkDeferred::rejected()
+	 * \sa NetworkDeferred::rejected()
+	 */
 	void rejected(const NetworkDeferred::Error& reason) const;
+	/*! \copydoc NetworkDeferred::notified()
+	 * \sa NetworkDeferred::notified()
+	 */
 	void notified(const NetworkDeferred::ReplyProgress& progress) const;
 
 protected:
-	/*!
+	/*! Creates a NetworkDeferred for a QNetworkReply and
+	 * then create a NetworkPromise for that new NetworkDeferred.
 	 *
-	 * \param reply The promise chain takes ownership of the \p reply.
-	 * \param parent QObject parent.
+	 * \sa NetworkDeferred()
 	 */
 	NetworkPromise(QNetworkReply* reply);
 	NetworkPromise(NetworkDeferred::Ptr deferred);

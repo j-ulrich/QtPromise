@@ -11,6 +11,10 @@ namespace QtPromise
 namespace Tests
 {
 
+/*! \brief Unit tests for the NetworkPromise class.
+ *
+ * \author jochen.ulrich
+ */
 class NetworkPromiseTest : public QObject
 {
 	Q_OBJECT
@@ -50,6 +54,8 @@ NetworkPromiseTest::PromiseSpies::PromiseSpies(NetworkPromise::Ptr promise)
 }
 
 //####### Tests #######
+/*! \test Tests a successful request with a NetworkPromise.
+ */
 void NetworkPromiseTest::successTest()
 {
 	QString dataPath = QFINDTESTDATA("data/DummyData.txt");
@@ -82,6 +88,8 @@ void NetworkPromiseTest::successTest()
 	QCOMPARE(spies.baseNotified.first().first(), QVariant::fromValue(progress));
 }
 
+/*! \test Tests a failed request with a NetworkPromise.
+ */
 void NetworkPromiseTest::failTest()
 {
 	QString dataPath("A_File_that_doesnt_exist_9831874375377535764532134848337483.txt");
@@ -109,6 +117,8 @@ void NetworkPromiseTest::failTest()
 	QCOMPARE(spies.baseNotified.count(), 0);
 }
 
+/*! \test Tests a HTTP request with a NetworkPromise.
+ */
 void NetworkPromiseTest::httpTest()
 {
 	QNetworkAccessManager qnam;
@@ -128,6 +138,8 @@ void NetworkPromiseTest::httpTest()
 		QCOMPARE(spies.rejected.count(), 1);
 }
 
+/*! Provides the data for the finishedReplyTest()
+ */
 void NetworkPromiseTest::finishedReplyTest_data()
 {
 	QTest::addColumn<QString>("dataPath");
@@ -185,6 +197,8 @@ void NetworkPromiseTest::finishedReplyTest()
 	QCOMPARE(resolvedData.value<NetworkDeferred::ReplyData>().data, expectedData);
 }
 
+/*! \test Tests destroying a QNetworkReply while it is attached to a NetworkPromise.
+ */
 void NetworkPromiseTest::destroyReplyTest()
 {
 	QNetworkAccessManager qnam;

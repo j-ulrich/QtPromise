@@ -12,6 +12,10 @@ namespace QtPromise
 namespace Tests
 {
 
+const QString ACTION_RESOLVE = "resolve";
+const QString ACTION_REJECT = "reject";
+const QString ACTION_NOTIFY = "notify";
+
 /*! Unit tests for the Promise class.
  *
  * \author jochen.ulrich
@@ -71,15 +75,22 @@ PromiseTest::PromiseSpies::PromiseSpies(Promise::Ptr promise)
 {
 }
 
+/*! Helper method which calls an action on a Deferred.
+ *
+ * \param deferred The Deferred on which the action should be executed.
+ * \param action The action to be executed.
+ * \param data The data to be passed to the action.
+ * \param repetitions The number of times the action should be called.
+ */
 void PromiseTest::callActionOnDeferred(Deferred::Ptr& deferred, const QString& action, const QVariant& data, int repetitions)
 {
 	for (int i=0; i < repetitions; ++i)
 	{
-		if (action == "resolve")
+		if (action == ACTION_RESOLVE)
 			deferred->resolve(data);
-		else if (action == "reject")
+		else if (action == ACTION_REJECT)
 			deferred->reject(data);
-		else if (action == "notify")
+		else if (action == ACTION_NOTIFY)
 			deferred->notify(data);
 		else
 			throw std::invalid_argument(std::string("Unknown action: ") + action.toStdString());
@@ -94,6 +105,8 @@ void PromiseTest::cleanup()
 
 //####### Tests #######
 
+/*! \test Tests the Promise::create() method.
+ */
 void PromiseTest::constructorTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
@@ -103,6 +116,9 @@ void PromiseTest::constructorTest()
 	QVERIFY(promise->data().isNull());
 }
 
+/*! \test Tests the Promise::create() method with
+ * an already resolved Deferred.
+ */
 void PromiseTest::constructorWithResolvedDeferredTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
@@ -121,6 +137,9 @@ void PromiseTest::constructorWithResolvedDeferredTest()
 	QCOMPARE(spies.notified.count(), 0);
 }
 
+/*! \test Tests the Promise::create() method with
+ * an already rejected Deferred.
+ */
 void PromiseTest::constructorWithRejectedDeferredTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
@@ -139,6 +158,8 @@ void PromiseTest::constructorWithRejectedDeferredTest()
 	QCOMPARE(spies.notified.count(), 0);
 }
 
+/*! \test Tests the Promise::createResolved() method.
+ */
 void PromiseTest::createResolvedPromiseTest()
 {
 	QString myString = "String";
@@ -148,6 +169,8 @@ void PromiseTest::createResolvedPromiseTest()
 	QCOMPARE(promise->data().toString(), myString);
 }
 
+/*! \test Tests the Promise::createRejected() method.
+ */
 void PromiseTest::createRejectedPromiseTest()
 {
 	QString myString = "String";
@@ -157,6 +180,8 @@ void PromiseTest::createRejectedPromiseTest()
 	QCOMPARE(promise->data().toString(), myString);
 }
 
+/*! \test Tests resolving a Promise.
+ */
 void PromiseTest::resolveTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
@@ -175,6 +200,8 @@ void PromiseTest::resolveTest()
 	QCOMPARE(spies.resolved.first().first().toString(), value);
 }
 
+/*! \test Tests rejecting a Promise.
+ */
 void PromiseTest::rejectTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
@@ -193,6 +220,8 @@ void PromiseTest::rejectTest()
 	QCOMPARE(spies.rejected.first().first().toString(), value);
 }
 
+/*! \test Tests notifying a Promise.
+ */
 void PromiseTest::notifyTest()
 {
 	Deferred::Ptr deferred = Deferred::create();
@@ -221,6 +250,8 @@ void PromiseTest::notifyTest()
 	QCOMPARE(spies.notified.at(1).first().toInt(), secondValue);
 }
 
+/*! Provides the data for the thenVoidCallbackTest() method.
+ */
 void PromiseTest::thenVoidCallbackTest_data()
 {
 	QTest::addColumn<bool>("async");
@@ -233,14 +264,17 @@ void PromiseTest::thenVoidCallbackTest_data()
 	QTest::addColumn<QVariantList>("expectedNotifiedCalls");
 
 	QVariant data("my string value");
-	QTest::newRow("sync resolve") << false << "resolve" << data << Deferred::Resolved << data << (QVariantList() << data) << (QVariantList()) << (QVariantList());
-	QTest::newRow("sync reject") << false << "reject" << data << Deferred::Rejected << data << (QVariantList()) << (QVariantList() << data) << (QVariantList());
-	QTest::newRow("sync notify") << false << "notify" << data << Deferred::Pending << QVariant() << (QVariantList()) << (QVariantList()) << (QVariantList());
-	QTest::newRow("async resolve") << true << "resolve" << data << Deferred::Resolved << data << (QVariantList() << data) << (QVariantList()) << (QVariantList());
-	QTest::newRow("async reject") << true << "reject" << data << Deferred::Rejected << data << (QVariantList()) << (QVariantList() << data) << (QVariantList());
-	QTest::newRow("async notify") << true << "notify" << data << Deferred::Pending << QVariant() << (QVariantList()) << (QVariantList()) << (QVariantList() << data << data);
+	//                              // async // action         // data // expectedState      // expectedData // expectedResolvedCalls    // expectedRejectedCalls    // expectedNotifiedCalls
+	QTest::newRow("sync resolve")  << false  << ACTION_RESOLVE << data << Deferred::Resolved << data         << (QVariantList() << data) << (QVariantList())         << (QVariantList());
+	QTest::newRow("sync reject")   << false  << ACTION_REJECT  << data << Deferred::Rejected << data         << (QVariantList())         << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("sync notify")   << false  << ACTION_NOTIFY  << data << Deferred::Pending  << QVariant()   << (QVariantList())         << (QVariantList())         << (QVariantList());
+	QTest::newRow("async resolve") << true   << ACTION_RESOLVE << data << Deferred::Resolved << data         << (QVariantList() << data) << (QVariantList())         << (QVariantList());
+	QTest::newRow("async reject")  << true   << ACTION_REJECT  << data << Deferred::Rejected << data         << (QVariantList())         << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("async notify")  << true   << ACTION_NOTIFY  << data << Deferred::Pending  << QVariant()   << (QVariantList())         << (QVariantList())         << (QVariantList() << data << data);
 }
 
+/*! \test Tests the Promise::then() method with a callback returning void.
+ */
 void PromiseTest::thenVoidCallbackTest()
 {
 	QFETCH(bool, async);
@@ -294,6 +328,8 @@ void PromiseTest::thenVoidCallbackTest()
 	QVERIFY(chainedNotifiedCalls.isEmpty());
 }
 
+/*! Provides the data for the tehnVariantCallbackTest().
+ */
 void PromiseTest::thenVariantCallbackTest_data()
 {
 	QTest::addColumn<bool>("async");
@@ -311,14 +347,17 @@ void PromiseTest::thenVariantCallbackTest_data()
 
 	QVariant originalData(42);
 	QVariant chainedData("my string value");
-	QTest::newRow("sync resolve") << false << "resolve" << originalData << chainedData << Deferred::Resolved << (QVariantList()) << Deferred::Resolved << chainedData << (QVariantList() << chainedData) << (QVariantList()) << (QVariantList());
-	QTest::newRow("sync reject") << false << "reject" << originalData << chainedData << Deferred::Rejected << (QVariantList()) << Deferred::Resolved << chainedData << (QVariantList() << chainedData) << (QVariantList()) << (QVariantList());
-	QTest::newRow("sync notify") << false << "notify" << originalData << chainedData << Deferred::Pending << (QVariantList()) << Deferred::Pending << QVariant() << (QVariantList()) << (QVariantList()) << (QVariantList());
-	QTest::newRow("async resolve") << true << "resolve" << originalData << chainedData << Deferred::Resolved << (QVariantList()) << Deferred::Resolved << chainedData << (QVariantList() << chainedData) << (QVariantList()) << (QVariantList());
-	QTest::newRow("async reject") << true << "reject" << originalData << chainedData << Deferred::Rejected << (QVariantList()) << Deferred::Resolved << chainedData << (QVariantList() << chainedData) << (QVariantList()) << (QVariantList());
-	QTest::newRow("async notify") << true << "notify" << originalData << chainedData << Deferred::Pending << (QVariantList() << originalData << originalData) << Deferred::Pending << QVariant() << (QVariantList()) << (QVariantList()) << (QVariantList() << chainedData << chainedData);
+	//                             // async // action         // originalData // chainedData // expectedOriginalState // expectedOriginalNotifiedCalls                    // expectedChainedState // expectedChainedData // expectedResolvedCalls           // expectedRejectedCalls // expectedNotifiedCalls
+	QTest::newRow("sync resolve")  << false << ACTION_RESOLVE << originalData << chainedData << Deferred::Resolved    << (QVariantList())                                 << Deferred::Resolved   << chainedData         << (QVariantList() << chainedData) << (QVariantList())      << (QVariantList());
+	QTest::newRow("sync reject")   << false << ACTION_REJECT  << originalData << chainedData << Deferred::Rejected    << (QVariantList())                                 << Deferred::Resolved   << chainedData         << (QVariantList() << chainedData) << (QVariantList())      << (QVariantList());
+	QTest::newRow("sync notify")   << false << ACTION_NOTIFY  << originalData << chainedData << Deferred::Pending     << (QVariantList())                                 << Deferred::Pending    << QVariant()          << (QVariantList())                << (QVariantList())      << (QVariantList());
+	QTest::newRow("async resolve") << true  << ACTION_RESOLVE << originalData << chainedData << Deferred::Resolved    << (QVariantList())                                 << Deferred::Resolved   << chainedData         << (QVariantList() << chainedData) << (QVariantList())      << (QVariantList());
+	QTest::newRow("async reject")  << true  << ACTION_REJECT  << originalData << chainedData << Deferred::Rejected    << (QVariantList())                                 << Deferred::Resolved   << chainedData         << (QVariantList() << chainedData) << (QVariantList())      << (QVariantList());
+	QTest::newRow("async notify")  << true  << ACTION_NOTIFY  << originalData << chainedData << Deferred::Pending     << (QVariantList() << originalData << originalData) << Deferred::Pending    << QVariant()          << (QVariantList())                << (QVariantList())      << (QVariantList() << chainedData << chainedData);
 }
 
+/*! \test Tests the Promise::then() method with a callback returning QVariant.
+ */
 void PromiseTest::thenVariantCallbackTest()
 {
 	QFETCH(bool, async);
@@ -376,6 +415,8 @@ void PromiseTest::thenVariantCallbackTest()
 	QTEST(notifiedCalls, "expectedNotifiedCalls");
 }
 
+/*! Provides the data for the thenPromiseCallbackTest()
+ */
 void PromiseTest::thenPromiseCallbackTest_data()
 {
 	QTest::addColumn<bool>("async");
@@ -390,16 +431,19 @@ void PromiseTest::thenPromiseCallbackTest_data()
 
 
 	QVariant data("my string value");
-	QTest::newRow("sync resolve -> reject") << false << "resolve" << "reject" << data << Deferred::Resolved << Deferred::Rejected << data << (QVariantList()) << (QVariantList() << data);
-	QTest::newRow("sync resolve -> resolve") << false << "resolve" << "resolve" << data << Deferred::Resolved << Deferred::Resolved << data << (QVariantList() << data) << (QVariantList());
-	QTest::newRow("sync reject -> resolve") << false << "reject" << "resolve" << data << Deferred::Rejected << Deferred::Resolved << data << (QVariantList() << data) << (QVariantList());
-	QTest::newRow("sync reject -> reject") << false << "reject" << "reject" << data << Deferred::Rejected << Deferred::Rejected << data << (QVariantList()) << (QVariantList() << data);
-	QTest::newRow("async resolve -> reject") << true << "resolve" << "reject" << data << Deferred::Resolved << Deferred::Rejected << data << (QVariantList()) << (QVariantList() << data);
-	QTest::newRow("async resolve -> resolve") << true << "resolve" << "resolve" << data << Deferred::Resolved << Deferred::Resolved << data << (QVariantList() << data) << (QVariantList());
-	QTest::newRow("async reject -> resolve") << true << "reject" << "resolve" << data << Deferred::Rejected << Deferred::Resolved << data << (QVariantList() << data) << (QVariantList());
-	QTest::newRow("async reject -> reject") << true << "reject" << "reject" << data << Deferred::Rejected << Deferred::Rejected << data << (QVariantList()) << (QVariantList() << data);
+	//                                        // async // action         // callbackAction      // callbackData // expectedOriginalState // expectedChainedState expectedChainedData // expectedResolvedCalls    // expectedRejectedCalls
+	QTest::newRow("sync resolve -> reject")   << false << ACTION_RESOLVE << ACTION_REJECT       << data         << Deferred::Resolved    << Deferred::Rejected   << data             << (QVariantList())         << (QVariantList() << data);
+	QTest::newRow("sync resolve -> resolve")  << false << ACTION_RESOLVE << ACTION_RESOLVE      << data         << Deferred::Resolved    << Deferred::Resolved   << data             << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("sync reject -> resolve")   << false << ACTION_REJECT  << ACTION_RESOLVE      << data         << Deferred::Rejected    << Deferred::Resolved   << data             << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("sync reject -> reject")    << false << ACTION_REJECT  << ACTION_REJECT       << data         << Deferred::Rejected    << Deferred::Rejected   << data             << (QVariantList())         << (QVariantList() << data);
+	QTest::newRow("async resolve -> reject")  << true  << ACTION_RESOLVE << ACTION_REJECT       << data         << Deferred::Resolved    << Deferred::Rejected   << data             << (QVariantList())         << (QVariantList() << data);
+	QTest::newRow("async resolve -> resolve") << true  << ACTION_RESOLVE << ACTION_RESOLVE      << data         << Deferred::Resolved    << Deferred::Resolved   << data             << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("async reject -> resolve")  << true  << ACTION_REJECT  << ACTION_RESOLVE      << data         << Deferred::Rejected    << Deferred::Resolved   << data             << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("async reject -> reject")   << true  << ACTION_REJECT  << ACTION_REJECT       << data         << Deferred::Rejected    << Deferred::Rejected   << data             << (QVariantList())         << (QVariantList() << data);
 }
 
+/*! \test Tests the Promise::then() method with a callback returning Promise::Ptr.
+ */
 void PromiseTest::thenPromiseCallbackTest()
 {
 	QFETCH(bool, async);
@@ -418,9 +462,9 @@ void PromiseTest::thenPromiseCallbackTest()
 
 	auto callback = [&](const QVariant& value) -> Promise::Ptr {
 		Q_UNUSED(value)
-		if (callbackAction == "resolve")
+		if (callbackAction == ACTION_RESOLVE)
 			return Promise::createResolved(callbackData);
-		else if (callbackAction == "reject")
+		else if (callbackAction == ACTION_REJECT)
 			return Promise::createRejected(callbackData);
 		else
 		{
@@ -455,14 +499,19 @@ void PromiseTest::thenPromiseCallbackTest()
 	QTEST(rejectedCalls, "expectedRejectedCalls");
 }
 
+/*! Provides the data for the alwaysTest().
+ */
 void PromiseTest::alwaysTest_data()
 {
 	QTest::addColumn<QString>("action");
 
-	QTest::newRow("resolve") << "resolve";
-	QTest::newRow("reject") << "reject";
+	//                       // action
+	QTest::newRow("resolve") << ACTION_RESOLVE;
+	QTest::newRow("reject")  << ACTION_REJECT;
 }
 
+/*! \test Tests the Promise::always() method.
+ */
 void PromiseTest::alwaysTest()
 {
 	QFETCH(QString, action);
@@ -503,11 +552,11 @@ void PromiseTest::threeLevelChainTest()
 	QTestEventLoop().enterLoopMSecs(100);
 
 	QVariant data("my data");
-	callActionOnDeferred(deferred, "resolve", data, 1);
+	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);
 	QCOMPARE(callbackCalls, QVariantList() << data << data);
 }
 
-/*! \test Tests resolving Promise::all().
+/*! \test Tests resolving a combined Promise created with Promise::all().
  */
 void PromiseTest::allTest()
 {
@@ -553,7 +602,7 @@ void PromiseTest::allTest()
 	QCOMPARE(spies.resolved.first().first(), QVariant::fromValue(results));
 }
 
-/*! \test Tests rejecting Promise::all().
+/*! \test Tests rejecting a combined Promise created with Promise::all().
  */
 void PromiseTest::allRejectTest()
 {
@@ -591,7 +640,7 @@ void PromiseTest::allRejectTest()
 	QCOMPARE(spies.rejected.first().first(), rejectReason);
 }
 
-/*! \test Tests resolving Promise::any().
+/*! \test Tests resolving a combined Promise created with Promise::any().
  */
 void PromiseTest::anyTest()
 {
@@ -630,7 +679,7 @@ void PromiseTest::anyTest()
 	QCOMPARE(spies.resolved.first().first(), QVariant::fromValue(result));
 }
 
-/*! \test Tests rejecting Promise::any().
+/*! \test Tests rejecting a combined Promise created with Promise::any().
  */
 void PromiseTest::anyRejectTest()
 {
@@ -687,21 +736,21 @@ void PromiseTest::allAnySyncTest_data()
 	QList<Deferred::Ptr> oneResolvedDeferreds;
 	oneResolvedDeferreds << Deferred::create() << Deferred::create() << Deferred::create();
 	oneResolvedDeferreds[0]->resolve("foo");
-	
+	//                            // deferreds            // expectedAllSignalCounts       // expectedAnySignalCounts
 	QTest::newRow("one resolved") << oneResolvedDeferreds << (QList<int>() << 0 << 0 << 0) << (QList<int>() << 1 << 0 << 0);
-	
+
 	QList<Deferred::Ptr> allResolvedDeferreds;
 	allResolvedDeferreds << Deferred::create() << Deferred::create() << Deferred::create();
 	allResolvedDeferreds[0]->resolve("foo");
 	allResolvedDeferreds[1]->resolve(17);
 	allResolvedDeferreds[2]->resolve(true);
-
+	//                            // deferreds            // expectedAllSignalCounts       // expectedAnySignalCounts
 	QTest::newRow("all resolved") << allResolvedDeferreds << (QList<int>() << 1 << 0 << 0) << (QList<int>() << 1 << 0 << 0);
 
 	QList<Deferred::Ptr> oneRejectedDeferreds;
 	oneRejectedDeferreds << Deferred::create() << Deferred::create() << Deferred::create();
 	oneRejectedDeferreds[0]->reject("foo");
-	
+	//                            // deferreds            // expectedAllSignalCounts       // expectedAnySignalCounts
 	QTest::newRow("one rejected") << oneRejectedDeferreds << (QList<int>() << 0 << 1 << 0) << (QList<int>() << 0 << 0 << 0);
 
 	QList<Deferred::Ptr> allRejectedDeferreds;
@@ -709,7 +758,7 @@ void PromiseTest::allAnySyncTest_data()
 	allRejectedDeferreds[0]->reject("foo");
 	allRejectedDeferreds[1]->reject(21);
 	allRejectedDeferreds[2]->reject(false);
-	
+	//                            // deferreds            // expectedAllSignalCounts       // expectedAnySignalCounts
 	QTest::newRow("all rejected") << allRejectedDeferreds << (QList<int>() << 0 << 1 << 0) << (QList<int>() << 0 << 1 << 0);
 }
 
