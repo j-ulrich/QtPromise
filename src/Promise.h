@@ -147,7 +147,8 @@ public:
 	 * This method ensures that the provided callback functions are called when this
 	 * Promise is resolved, rejected or notified. This method then returns a new Promise
 	 * which is resolved, rejected and notified depending on the types of the callbacks
-	 * and their returned values.\n
+	 * and their returned values.
+	 *
 	 * For the \p resolvedCallback and \p rejectedCallback, the following rules apply:
 	 * - If the callback returns `void`, the returned Promise is resolved or rejected
 	 * identical to this Promise.
@@ -156,14 +157,34 @@ public:
 	 * To make this absolute clear: returning a `QVariant` from a \p rejectedCallback
 	 * will **resolve** the returned Promise.
 	 * - If the callback returns `Promise::Ptr`, the returned Promise is resolved or
-	 * rejected
+	 * rejected identical to the Promise returned by the callback.
+	 * Once this Promise has been resolved or rejected, notifying the Promise returned
+	 * by the callback will notify the returned Promise.
+	 *
+	 * For the \p notifiedCallback, the following rules apply:
+	 * - If the callback returns `void`, the returned Promise is notified identical to
+	 * this Promise.
+	 * - If the callback return `QVariant`, the returned Promise is notified with the
+	 * returned value.
+	 * - If the callback returns `Promise::Ptr`, the returned Promise is notified identical
+	 * to the Promise returned by the callback.
+	 * Resolving or rejected the Promise returned by the callback only has the effect that
+	 * the returned Promise does not receive any notifications anymore but it has no effect
+	 * on the state of the returned Promise.
+	 *
+	 * Note the special behavior of notifications:\n
+	 * Before this Promise is resolved or rejected, the Promise returned by then() will be notified
+	 * with the notifications from this Promise, possibly changed by the \p notifiedCallback.
+	 * Once this Promise is resolved or rejected, if the corresponding callback (\p resolvedCallback
+	 * or \p rejectedCallback) returns a Promise::Ptr, the Promise returned by then() will be
+	 * notified with the notifications from that Promise.
 	 *
 	 * \tparam ResolvedFunc A callback function type expecting a `const QVariant&` as parameter
 	 * and returning either `void`, `QVariant` or `Promise::Ptr`.
 	 * \tparam RejectedFunc A callback function type expecting a `const QVariant&` as parameter
 	 * and returning either `void`, `QVariant` or `Promise::Ptr`.
 	 * \tparam NotifiedFunc A callback function type expecting a `const QVariant&` as parameter
-	 * and returning either `void` or `QVariant`.
+	 * and returning either `void` or `QVariant` or `Promise::Ptr`.
 	 * \param resolvedCallback A callback which is executed when the Promise's Deferred is resolved.
 	 * The callback will receive the data passed to Deferred::resolve() as parameter.
 	 * \param rejectedCallback A callback which is executed when the Promise's Deferred is rejected.
@@ -285,6 +306,11 @@ private:
 	static
 	typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, WrappedCallbackFunc>::type
 	createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, VariantCallbackFunc func);
+	template<typename PromiseCallbackFunc>
+	static
+	typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, WrappedCallbackFunc>::type
+	createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFunc func);
+
 
 	template<typename PromiseContainer>
 	static Ptr all_impl(PromiseContainer promises);
@@ -405,6 +431,7 @@ Promise::createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, VoidCallbackFun
 {
 	return [newDeferred, func](const QVariant& data) {
 		func(data);
+		newDeferred->notify(data);
 	};
 }
 
@@ -414,6 +441,20 @@ Promise::createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, VariantCallback
 {
 	return [newDeferred, func](const QVariant& data) {
 		newDeferred->notify(func(data));
+	};
+}
+
+template<typename PromiseCallbackFunc>
+typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, Promise::WrappedCallbackFunc>::type
+Promise::createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFunc func)
+{
+	return [newDeferred, func](const QVariant& data) {
+		Deferred::Ptr intermedDeferred = func(data)->m_deferred;
+		if (intermedDeferred->state() == Deferred::Pending)
+		{
+			newDeferred->setParent(intermedDeferred);
+			connect(intermedDeferred.data(), &Deferred::notified, newDeferred.data(), &Deferred::notify);
+		}
 	};
 }
 

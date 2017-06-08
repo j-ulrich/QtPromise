@@ -326,7 +326,7 @@ void PromiseTest::testThenVoidCallback()
 	QTEST(resolvedCalls, "expectedResolvedCalls");
 	QTEST(rejectedCalls, "expectedRejectedCalls");
 	QTEST(notifiedCalls, "expectedNotifiedCalls");
-	QVERIFY(chainedNotifiedCalls.isEmpty());
+	QTEST(chainedNotifiedCalls, "expectedNotifiedCalls");
 }
 
 /*! Provides the data for the testThenVariantCallback() test.
