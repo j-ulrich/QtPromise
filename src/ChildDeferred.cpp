@@ -5,16 +5,38 @@ namespace QtPromise
 {
 
 ChildDeferred::ChildDeferred(QList<Deferred::Ptr> parents, bool trackResults)
-	: Deferred(), m_lock(QMutex::Recursive), m_parents(parents), m_resolvedCount(0), m_rejectedCount(0)
+	: Deferred(), m_lock(QMutex::Recursive), m_resolvedCount(0), m_rejectedCount(0)
 {
 	setLogInvalidActionMessage(false);
+	setParents(parents, trackResults);
+}
+
+ChildDeferred::Ptr ChildDeferred::create(Deferred::Ptr parent, bool trackResults)
+{
+	return create(QList<Deferred::Ptr>({parent}), trackResults);
+}
+
+ChildDeferred::Ptr ChildDeferred::create(QList<Deferred::Ptr> parents, bool trackResults)
+{
+	return Ptr(new ChildDeferred(parents, trackResults), &QObject::deleteLater);
+}
+
+void ChildDeferred::setParent(Deferred::Ptr parent, bool trackResults)
+{
+	setParents(QList<Deferred::Ptr>({parent}), trackResults);
+}
+
+void ChildDeferred::setParents(QList<Deferred::Ptr> parents, bool trackResults)
+{
+	for (Deferred::Ptr oldParent : m_parents)
+		disconnect(oldParent.data(), 0 , this, 0);
 
 	for (Deferred::Ptr parent : parents)
 		connect(parent.data(), &QObject::destroyed, this, &ChildDeferred::onParentDestroyed);
 
 	if (trackResults)
 	{
-		for (Deferred::Ptr parent : m_parents)
+		for (Deferred::Ptr parent : parents)
 		{
 			switch(parent->state())
 			{
@@ -36,16 +58,7 @@ ChildDeferred::ChildDeferred(QList<Deferred::Ptr> parents, bool trackResults)
 		}
 	}
 
-}
-
-ChildDeferred::Ptr ChildDeferred::create(Deferred::Ptr parent, bool trackResults)
-{
-	return create(QList<Deferred::Ptr>({parent}), trackResults);
-}
-
-ChildDeferred::Ptr ChildDeferred::create(QList<Deferred::Ptr> parents, bool trackResults)
-{
-	return Ptr(new ChildDeferred(parents, trackResults), &QObject::deleteLater);
+	m_parents = parents;
 }
 
 void ChildDeferred::onParentDestroyed(QObject* parent) const

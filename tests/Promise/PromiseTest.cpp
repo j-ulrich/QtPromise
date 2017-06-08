@@ -42,6 +42,7 @@ private slots:
 	void alwaysTest_data();
 	void alwaysTest();
 	void threeLevelChainTest();
+	void testAsyncChain();
 	void allTest();
 	void allRejectTest();
 	void anyTest();
@@ -100,7 +101,7 @@ void PromiseTest::callActionOnDeferred(Deferred::Ptr& deferred, const QString& a
 void PromiseTest::cleanup()
 {
 	// Let deleteLater be executed to clean up
-	QTestEventLoop().enterLoopMSecs(100);
+	QTest::qWait(100);
 }
 
 //####### Tests #######
@@ -549,11 +550,47 @@ void PromiseTest::threeLevelChainTest()
 	});
 
 	// Ensure deleteLater can be called on intermediate Promise
-	QTestEventLoop().enterLoopMSecs(100);
+	QTest::qWait(100);
 
 	QVariant data("my data");
 	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);
 	QCOMPARE(callbackCalls, QVariantList() << data << data);
+}
+
+/*! \test Tests chaining multiple asynchronous operations.
+ */
+void PromiseTest::testAsyncChain()
+{
+	Deferred::Ptr deferred = Deferred::create();
+	Deferred::Ptr transmitDeferred = Deferred::create();
+	Promise::Ptr originalPromise = Promise::create(deferred);
+
+	Promise::Ptr finalPromise = originalPromise
+			->then([&](const QVariant&) -> Promise::Ptr {
+		Deferred::Ptr secondDeferred = Deferred::create();
+		QObject::connect(transmitDeferred.data(), &Deferred::resolved,
+		                 secondDeferred.data(), &Deferred::resolve);
+		return Promise::create(secondDeferred);
+	});
+
+	// Ensure deleteLater can be called on intermediate objects
+	QTest::qWait(100);
+
+	QVariant data("my data");
+	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);
+
+	QTest::qWait(100);
+
+	QCOMPARE(finalPromise->state(), Deferred::Pending);
+
+	QVariant secondData("second data");
+	qDebug("Resolve transmitDeferred");
+	callActionOnDeferred(transmitDeferred, ACTION_RESOLVE, secondData, 1);
+
+	QTest::qWait(100);
+
+	QCOMPARE(finalPromise->state(), Deferred::Resolved);
+	QCOMPARE(finalPromise->data(), secondData);
 }
 
 /*! \test Tests resolving a combined Promise created with Promise::all().

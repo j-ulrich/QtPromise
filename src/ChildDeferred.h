@@ -57,6 +57,9 @@ public:
 	 */
 	static Ptr create(QList<Deferred::Ptr> parents, bool trackResults = false);
 
+	void setParent(Deferred::Ptr parent, bool trackResults = false);
+	void setParents(QList<Deferred::Ptr> parents, bool trackResults = false);
+
 
 signals:
 	/*! Emitted when one of the parent Deferreds is resolved.
