@@ -16,11 +16,11 @@ class DeferredTest : public QObject
 	Q_OBJECT
 
 private slots:
-	void constructorTest();
-	void resolveTest();
-	void rejectTest();
-	void notifyTest();
-	void destructorTest();
+	void testConstructor();
+	void testResolve();
+	void testReject();
+	void testNotify();
+	void testDestructor();
 	void cleanup();
 
 private:
@@ -45,12 +45,12 @@ DeferredTest::DeferredSpies::DeferredSpies(Deferred::Ptr deferred)
 void DeferredTest::cleanup()
 {
 	// Let deleteLater be executed to clean up
-	QTestEventLoop().enterLoopMSecs(100);
+	QTest::qWait(100);
 }
 
 /*! \test Tests the Deferred::create() method.
  */
-void DeferredTest::constructorTest()
+void DeferredTest::testConstructor()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	qDebug() << "Deferred:" << deferred.data();
@@ -62,7 +62,7 @@ void DeferredTest::constructorTest()
 
 /*! \test Tests the Deferred::resolve() method.
  */
-void DeferredTest::resolveTest()
+void DeferredTest::testResolve()
 {
 	Deferred::Ptr deferred = Deferred::create();
 
@@ -89,7 +89,7 @@ void DeferredTest::resolveTest()
 
 /*! \test Tests the Deferred::reject() method.
  */
-void DeferredTest::rejectTest()
+void DeferredTest::testReject()
 {
 	Deferred::Ptr deferred = Deferred::create();
 
@@ -116,7 +116,7 @@ void DeferredTest::rejectTest()
 
 /*! \test Tests the Deferred::notify() method.
  */
-void DeferredTest::notifyTest()
+void DeferredTest::testNotify()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	qDebug() << "Deferred:" << deferred.data();
@@ -146,7 +146,7 @@ void DeferredTest::notifyTest()
 
 /*! \test Tests the destructor Deferred::~Deferred().
  */
-void DeferredTest::destructorTest()
+void DeferredTest::testDestructor()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	qDebug() << "Deferred:" << deferred.data();
