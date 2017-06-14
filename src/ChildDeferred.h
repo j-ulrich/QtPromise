@@ -57,9 +57,26 @@ public:
 	 */
 	static Ptr create(QList<Deferred::Ptr> parents, bool trackResults = false);
 
+	/*! Sets the parent of this ChildDeferred.
+	 *
+	 * \param parent The new parent for this ChildDeferred.
+	 * \param trackResults If \c true, the ChildDeferred listens to the signals
+	 * of the \p parent and emits parentResolved(), parentRejected(), parentsResolved()
+	 * and parentsResolved() signals.
+	 */
 	void setParent(Deferred::Ptr parent, bool trackResults = false);
+	/*! Sets the parents of this ChildDeferred.
+	 *
+	 * \param parents The new parents of this ChildDeferred.
+	 * \param trackResults If \c true, the ChildDeferred listens to the signals
+	 * of the \p parents and emits parentResolved(), parentRejected(), parentsResolved()
+	 * and parentsResolved() signals.
+	 */
 	void setParents(QList<Deferred::Ptr> parents, bool trackResults = false);
 
+	/*! \return The parents of this ChildDeferred.
+	 */
+	QList<Deferred::Ptr> parents() const { return m_parents; }
 
 signals:
 	/*! Emitted when one of the parent Deferreds is resolved.
