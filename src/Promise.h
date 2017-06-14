@@ -164,17 +164,18 @@ public:
 	 * For the \p notifiedCallback, the following rules apply:
 	 * - If the callback returns `void`, the returned Promise is notified identical to
 	 * this Promise.
-	 * - If the callback return `QVariant`, the returned Promise is notified with the
-	 * returned value.
+	 * - If the callback returns `QVariant`, the returned Promise is notified with the
+	 * returned value whenever this Promise is notified.
 	 * - If the callback returns `Promise::Ptr`, the returned Promise is notified identical
 	 * to the Promise returned by the callback.
-	 * Resolving or rejected the Promise returned by the callback only has the effect that
-	 * the returned Promise does not receive any notifications anymore but it has no effect
-	 * on the state of the returned Promise.
+	 * Additionally, resolving the Promise returned by the callback or returning an already resolved
+	 * Promise will also notify the returned Promise with the resolve data.
+	 * Rejecting the Promise or returning a rejected Promise will do nothing which means it blocks
+	 * the notification.
 	 *
 	 * Note the special behavior of notifications:\n
 	 * Before this Promise is resolved or rejected, the Promise returned by then() will be notified
-	 * with the notifications from this Promise, possibly changed by the \p notifiedCallback.
+	 * with the notifications from this Promise, possibly modified by the \p notifiedCallback.
 	 * Once this Promise is resolved or rejected, if the corresponding callback (\p resolvedCallback
 	 * or \p rejectedCallback) returns a Promise::Ptr, the Promise returned by then() will be
 	 * notified with the notifications from that Promise.
@@ -417,9 +418,9 @@ Promise::createThenFuncWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFu
 		case Deferred::Pending:
 		default:
 			newDeferred->setParent(intermedDeferred);
-			connect(intermedDeferred.data(), &Deferred::resolved, newDeferred.data(), &Deferred::resolve);
-			connect(intermedDeferred.data(), &Deferred::rejected, newDeferred.data(), &Deferred::reject);
-			connect(intermedDeferred.data(), &Deferred::notified, newDeferred.data(), &Deferred::notify);
+			QObject::connect(intermedDeferred.data(), &Deferred::resolved, newDeferred.data(), &Deferred::resolve);
+			QObject::connect(intermedDeferred.data(), &Deferred::rejected, newDeferred.data(), &Deferred::reject);
+			QObject::connect(intermedDeferred.data(), &Deferred::notified, newDeferred.data(), &Deferred::notify);
 			break;
 		}
 	};
@@ -448,12 +449,23 @@ template<typename PromiseCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, Promise::WrappedCallbackFunc>::type
 Promise::createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFunc func)
 {
-	return [newDeferred, func](const QVariant& data) {
+	// There can be only one parent at this time.
+	Deferred::Ptr originalDeferred = newDeferred->parents().first();
+	return [originalDeferred, newDeferred, func](const QVariant& data) {
 		Deferred::Ptr intermedDeferred = func(data)->m_deferred;
-		if (intermedDeferred->state() == Deferred::Pending)
+		switch (intermedDeferred->state())
 		{
-			newDeferred->setParent(intermedDeferred);
-			connect(intermedDeferred.data(), &Deferred::notified, newDeferred.data(), &Deferred::notify);
+		case Deferred::Pending:
+			newDeferred->setParents(QList<Deferred::Ptr>{originalDeferred, intermedDeferred});
+			QObject::connect(intermedDeferred.data(), &Deferred::resolved, newDeferred.data(), &Deferred::notify);
+			QObject::connect(intermedDeferred.data(), &Deferred::notified, newDeferred.data(), &Deferred::notify);
+			break;
+		case Deferred::Resolved:
+			newDeferred->notify(intermedDeferred->data());
+			break;
+		case Deferred::Rejected:
+		default:
+			break;
 		}
 	};
 }

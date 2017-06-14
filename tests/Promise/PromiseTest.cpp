@@ -39,6 +39,9 @@ private slots:
 	void testThenVariantCallback();
 	void testThenPromiseCallback_data();
 	void testThenPromiseCallback();
+	void testThenNotify();
+	void testThenNotifyPromiseCallback_data();
+	void testThenNotifyPromiseCallback();
 	void testAlways_data();
 	void testAlways();
 	void testThreeLevelChain();
@@ -466,7 +469,7 @@ void PromiseTest::testThenPromiseCallback()
 			return Promise::createRejected(callbackData);
 		else
 		{
-			QTest::qFail("Invalid action", __FILE__, __LINE__);
+			QTest::qFail("Invalid callbackAction", __FILE__, __LINE__);
 			return Promise::createRejected(QVariant());
 		}
 	};
@@ -495,6 +498,127 @@ void PromiseTest::testThenPromiseCallback()
 	QTEST(newPromise->data(), "expectedChainedData");
 	QTEST(resolvedCalls, "expectedResolvedCalls");
 	QTEST(rejectedCalls, "expectedRejectedCalls");
+}
+
+/*! \test Tests notifying the promise returned by Promise::then().
+ */
+void PromiseTest::testThenNotify()
+{
+	// Setup test scenario
+	Deferred::Ptr originalDeferred = Deferred::create();
+	Deferred::Ptr resolveDeferred = Deferred::create();
+	Deferred::Ptr notifyDeferred = Deferred::create();
+
+	Promise::Ptr originalPromise = Promise::create(originalDeferred);
+
+	Promise::Ptr chainedPromise = originalPromise
+			->then([&](const QVariant& data) -> Promise::Ptr {
+		return Promise::create(resolveDeferred);
+	}, noop, [&](const QVariant& progress) -> Promise::Ptr {
+		return Promise::create(notifyDeferred);
+	});
+
+	PromiseSpies spies(chainedPromise);
+
+	// Run test sequence
+
+	/* Notifying one of the callback Deferreds before the original
+	 * Deferred should do nothing.
+	 */
+	resolveDeferred->notify();
+	notifyDeferred->notify();
+
+	QTest::qWait(100);
+	QVERIFY(spies.notified.empty());
+
+	// Notifying the original Deferred should "enable" the notifyDeferred.
+	originalDeferred->notify(QVariant("first notify"));
+
+	QTest::qWait(100);
+	QVERIFY(spies.notified.empty());
+
+	QVariant secondNotify{"second notify"};
+	notifyDeferred->notify(secondNotify);
+
+	QCOMPARE(spies.notified.last().first(), secondNotify);
+
+	QVariant thirdNotify{"third notify"};
+	notifyDeferred->notify(thirdNotify);
+
+	QCOMPARE(spies.notified.last().first(), thirdNotify);
+	spies.notified.clear();
+
+	// The notifyDeferred is now in control of notifying.
+	originalDeferred->notify(QVariant("fourth notify"));
+	resolveDeferred->notify(QVariant{"fifth notify"});
+
+	QTest::qWait(100);
+	QVERIFY(spies.notified.empty());
+	spies.notified.clear();
+
+	// Resolve the original Deferred should "enable" the resolveDeferred.
+	originalDeferred->resolve();
+
+	QTest::qWait(100);
+	QVERIFY(spies.notified.empty());
+
+	QVariant sixthNotify{"sixth notify"};
+	resolveDeferred->notify(sixthNotify);
+
+	QCOMPARE(spies.notified.last().first(), sixthNotify);
+	spies.notified.clear();
+
+	// The resolveDeferred is now in control of notifying.
+	originalDeferred->notify(QVariant("seventh notify"));
+	notifyDeferred->notify(QVariant("eighth notify"));
+
+	QVERIFY(spies.notified.empty());
+
+	notifyDeferred->resolve();
+	resolveDeferred->resolve();
+}
+
+/*! Provides the data for the testThenNotifyPromiseCallback() test.
+ */
+void PromiseTest::testThenNotifyPromiseCallback_data()
+{
+	QTest::addColumn<bool>("resolve");
+	QTest::addColumn<QVariant>("notifyData");
+	QTest::addColumn<QVariantList>("expectedNotifyCalls");
+
+	QVariant notifyData{"notify"};
+
+	QTest::newRow("resolved") << true << notifyData << (QVariantList() << notifyData << notifyData);
+	QTest::newRow("rejected") << false << notifyData << QVariantList();
+}
+
+/*! \test Tests returning a resolved or rejected Promise from a notifyCallback of
+ * Promise::then().
+ */
+void PromiseTest::testThenNotifyPromiseCallback()
+{
+	QFETCH(bool, resolve);
+	QFETCH(QVariant, notifyData);
+
+	Deferred::Ptr deferred = Deferred::create();
+	Promise::Ptr promise = Promise::create(deferred);
+
+	QVariantList notifiedCalls;
+
+	Promise::Ptr resultPromise = promise->then(noop, noop,
+	                                           [=](const QVariant& progress) -> Promise::Ptr {
+		if (resolve)
+			return Promise::createResolved(notifyData);
+		else
+			return Promise::createRejected(notifyData);
+	})
+	->then(noop, noop, [&](const QVariant& progress) {
+		notifiedCalls.push_back(progress);
+	});
+
+	callActionOnDeferred(deferred, ACTION_NOTIFY, QVariant{"dummy data"}, 2);
+
+	QTEST(notifiedCalls, "expectedNotifyCalls");
 }
 
 /*! Provides the data for the testAlways() test.
