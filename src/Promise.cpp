@@ -10,7 +10,7 @@ void noop(const QVariant&)
 
 }
 
-Promise::Promise(QSharedPointer<Deferred> deferred)
+Promise::Promise(Deferred::Ptr deferred)
 	: QObject(), m_deferred(deferred)
 {
 	switch (m_deferred->state())
@@ -35,18 +35,8 @@ Promise::Promise(QSharedPointer<Deferred> deferred)
 }
 
 Promise::Promise(Deferred::State state, const QVariant& data)
-	: Promise(Deferred::create())
+	: Promise(Deferred::create(state, data))
 {
-	switch (state)
-	{
-	case Deferred::Rejected:
-		m_deferred->reject(data);
-		break;
-	case Deferred::Resolved:
-	default:
-		m_deferred->resolve(data);
-		break;
-	}
 }
 
 Promise::Ptr Promise::create(Deferred::Ptr deferred)
@@ -80,7 +70,7 @@ QVariant Promise::data() const
 }  // namespace QtPromise
 
 
-uint qHash(QtPromise::Promise::Ptr promisePtr, uint seed)
+uint qHash(const QtPromise::Promise::Ptr& promisePtr, uint seed)
 {
 	return qHash(promisePtr.data(), seed);
 }

@@ -32,6 +32,7 @@ NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 	 */
 	connect(m_reply, &QNetworkReply::downloadProgress, this, &NetworkDeferred::replyDownloadProgress);
 	connect(m_reply, &QNetworkReply::uploadProgress, this, &NetworkDeferred::replyUploadProgress);
+	connect(m_reply, &QObject::destroyed, this, &NetworkDeferred::replyDestroyed);
 }
 
 NetworkDeferred::Ptr NetworkDeferred::create(QNetworkReply* reply)
@@ -61,21 +62,20 @@ void NetworkDeferred::replyFinished()
 	QMutexLocker locker(&m_lock);
 	// Save reply data since it will be removed from QNetworkReply when calling readAll()
 	m_buffer = m_reply->readAll();
+
+	ReplyData replyData = this->replyData();
 	if (m_reply->error() != QNetworkReply::NoError)
 	{
-		Error reason;
-		reason.code = m_reply->error();
-		reason.message = m_reply->errorString();
-		if (this->reject(QVariant::fromValue(reason)))
-			emit rejected(reason);
+		m_error.code = m_reply->error();
+		m_error.message = m_reply->errorString();
+		m_error.replyData = replyData;
+		if (this->reject(QVariant::fromValue(m_error)))
+			emit rejected(m_error);
 	}
 	else
 	{
-		ReplyData data;
-		data.data = m_buffer;
-		data.headers = m_reply->rawHeaderPairs();
-		if (this->resolve(QVariant::fromValue(data)))
-			emit resolved(data);
+		if (this->resolve(QVariant::fromValue(replyData)))
+			emit resolved(replyData);
 	}
 }
 
@@ -95,6 +95,31 @@ void NetworkDeferred::replyUploadProgress(qint64 bytesSent, qint64 bytesTotal)
 	m_progress.upload.total = bytesTotal;
 	if (this->notify(QVariant::fromValue(m_progress)))
 		emit notified(m_progress);
+}
+
+void NetworkDeferred::replyDestroyed(QObject* reply)
+{
+	/* Do NOT access m_reply in this method since
+	 * its QNetworkReply members have already been destructed
+	 * (this method is called from ~QObject()).
+	 */
+	QMutexLocker locker(&m_lock);
+	if (this->state() == Deferred::Pending)
+	{
+		QString errorMessage = QString("QNetworkReply 0x%1 destroyed while owning NetworkDeferred 0x%2 still pending")
+		.arg((quintptr)reply, QT_POINTER_SIZE * 2, 16, QChar('0'))
+		.arg((quintptr)this, QT_POINTER_SIZE * 2, 16, QChar('0'));
+		qDebug(errorMessage.toLatin1().data());
+
+		m_error.code = static_cast<QNetworkReply::NetworkError>(-1);
+		m_error.message = errorMessage;
+		m_error.replyData = ReplyData(m_buffer, nullptr);
+
+		if (this->reject(QVariant::fromValue(m_error)))
+			emit rejected(m_error);
+	}
+	m_reply = nullptr;
+	m_error.replyData.qReply = nullptr;
 }
 
 

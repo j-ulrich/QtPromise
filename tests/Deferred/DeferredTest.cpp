@@ -7,16 +7,20 @@ namespace QtPromise
 namespace Tests
 {
 
+/*! \brief Unit tests for the Deferred class.
+ *
+ * \author jochen.ulrich
+ */
 class DeferredTest : public QObject
 {
 	Q_OBJECT
 
 private slots:
-	void constructorTest();
-	void resolveTest();
-	void rejectTest();
-	void notifyTest();
-	void destructorTest();
+	void testConstructor();
+	void testResolve();
+	void testReject();
+	void testNotify();
+	void testDestructor();
 	void cleanup();
 
 private:
@@ -41,10 +45,12 @@ DeferredTest::DeferredSpies::DeferredSpies(Deferred::Ptr deferred)
 void DeferredTest::cleanup()
 {
 	// Let deleteLater be executed to clean up
-	QTestEventLoop().enterLoopMSecs(100);
+	QTest::qWait(100);
 }
 
-void DeferredTest::constructorTest()
+/*! \test Tests the Deferred::create() method.
+ */
+void DeferredTest::testConstructor()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	qDebug() << "Deferred:" << deferred.data();
@@ -54,7 +60,9 @@ void DeferredTest::constructorTest()
 	QVERIFY(deferred->data().isNull());
 }
 
-void DeferredTest::resolveTest()
+/*! \test Tests the Deferred::resolve() method.
+ */
+void DeferredTest::testResolve()
 {
 	Deferred::Ptr deferred = Deferred::create();
 
@@ -79,7 +87,9 @@ void DeferredTest::resolveTest()
 	QCOMPARE(spies.notified.count(), 0);
 }
 
-void DeferredTest::rejectTest()
+/*! \test Tests the Deferred::reject() method.
+ */
+void DeferredTest::testReject()
 {
 	Deferred::Ptr deferred = Deferred::create();
 
@@ -104,7 +114,9 @@ void DeferredTest::rejectTest()
 	QCOMPARE(spies.notified.count(), 0);
 }
 
-void DeferredTest::notifyTest()
+/*! \test Tests the Deferred::notify() method.
+ */
+void DeferredTest::testNotify()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	qDebug() << "Deferred:" << deferred.data();
@@ -132,7 +144,9 @@ void DeferredTest::notifyTest()
 	QCOMPARE(spies.notified.at(1).first().toInt(), secondValue);
 }
 
-void DeferredTest::destructorTest()
+/*! \test Tests the destructor Deferred::~Deferred().
+ */
+void DeferredTest::testDestructor()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	qDebug() << "Deferred:" << deferred.data();

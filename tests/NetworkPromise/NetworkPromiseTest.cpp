@@ -12,17 +12,22 @@ namespace QtPromise
 namespace Tests
 {
 
+/*! \brief Unit tests for the NetworkPromise class.
+ *
+ * \author jochen.ulrich
+ */
 class NetworkPromiseTest : public QObject
 {
 	Q_OBJECT
 
 private slots:
-	void successTest();
-	void failTest();
-	void httpTest();
-	void finishedReplyTest_data();
-	void finishedReplyTest();
-	void cachedDataTest();
+	void testSuccess();
+	void testFail();
+	void testHttp();
+	void testFinishedReply_data();
+	void testFinishedReply();
+	void testDestroyReply();
+	void testCachedData();
 
 private:
 	struct PromiseSpies
@@ -51,7 +56,9 @@ NetworkPromiseTest::PromiseSpies::PromiseSpies(NetworkPromise::Ptr promise)
 }
 
 //####### Tests #######
-void NetworkPromiseTest::successTest()
+/*! \test Tests a successful request with a NetworkPromise.
+ */
+void NetworkPromiseTest::testSuccess()
 {
 	QString dataPath = QFINDTESTDATA("data/DummyData.txt");
 	QFile dataFile(dataPath);
@@ -83,7 +90,9 @@ void NetworkPromiseTest::successTest()
 	QCOMPARE(spies.baseNotified.first().first(), QVariant::fromValue(progress));
 }
 
-void NetworkPromiseTest::failTest()
+/*! \test Tests a failed request with a NetworkPromise.
+ */
+void NetworkPromiseTest::testFail()
 {
 	QString dataPath("A_File_that_doesnt_exist_9831874375377535764532134848337483.txt");
 
@@ -110,7 +119,9 @@ void NetworkPromiseTest::failTest()
 	QCOMPARE(spies.baseNotified.count(), 0);
 }
 
-void NetworkPromiseTest::httpTest()
+/*! \test Tests a HTTP request with a NetworkPromise.
+ */
+void NetworkPromiseTest::testHttp()
 {
 	QNetworkAccessManager qnam;
 	if(qnam.networkAccessible() == QNetworkAccessManager::NotAccessible)
@@ -129,7 +140,9 @@ void NetworkPromiseTest::httpTest()
 		QCOMPARE(spies.rejected.count(), 1);
 }
 
-void NetworkPromiseTest::finishedReplyTest_data()
+/*! Provides the data for the testFinishedReply() test.
+ */
+void NetworkPromiseTest::testFinishedReply_data()
 {
 	QTest::addColumn<QString>("dataPath");
 	QTest::addColumn<bool>("expectResolve");
@@ -141,7 +154,7 @@ void NetworkPromiseTest::finishedReplyTest_data()
 /*! \test Tests the NetworkPromise with a QNetworkReply which has finished
  * and emitted it's events before the NetworkPromise is created.
  */
-void NetworkPromiseTest::finishedReplyTest()
+void NetworkPromiseTest::testFinishedReply()
 {
 	QFETCH(QString, dataPath);
 	QFETCH(bool, expectResolve);
@@ -186,9 +199,29 @@ void NetworkPromiseTest::finishedReplyTest()
 	QCOMPARE(resolvedData.value<NetworkDeferred::ReplyData>().data, expectedData);
 }
 
-/*! \test Tests that the NetworkPromise works with cached data.
+/*! \test Tests destroying a QNetworkReply while it is attached to a NetworkPromise.
  */
-void NetworkPromiseTest::cachedDataTest()
+void NetworkPromiseTest::testDestroyReply()
+{
+	QNetworkAccessManager qnam;
+	if(qnam.networkAccessible() == QNetworkAccessManager::NotAccessible)
+		QSKIP("Network not accessible");
+
+	QNetworkRequest request(QUrl("http://www.google.com"));
+	QNetworkReply* reply = qnam.get(request);
+
+	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
+
+	QCOMPARE(promise->state(), Deferred::Pending);
+
+	delete reply;
+
+	QCOMPARE(promise->state(), Deferred::Rejected);
+}
+
+/*! \test Tests the NetworkPromise with cached data.
+ */
+void NetworkPromiseTest::testCachedData()
 {
 	QNetworkAccessManager qnam;
 	QNetworkDiskCache diskCache(&qnam);
