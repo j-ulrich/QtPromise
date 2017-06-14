@@ -582,14 +582,25 @@ void PromiseTest::testThenNotify()
  */
 void PromiseTest::testThenNotifyPromiseCallback_data()
 {
-	QTest::addColumn<bool>("resolve");
-	QTest::addColumn<QVariant>("notifyData");
+	QTest::addColumn<QList<bool>>("resolveRejectSequence");
+	QTest::addColumn<QVariantList>("notifyData");
 	QTest::addColumn<QVariantList>("expectedNotifyCalls");
 
 	QVariant notifyData{"notify"};
+	QVariant notifyData2{"notify2"};
 
-	QTest::newRow("resolved") << true << notifyData << (QVariantList() << notifyData << notifyData);
-	QTest::newRow("rejected") << false << notifyData << QVariantList();
+	QTest::newRow("resolve") << (QList<bool>{} << true)
+	                         << (QVariantList{} << notifyData)
+	                         << (QVariantList{} << notifyData);
+	QTest::newRow("reject") << (QList<bool>{} << false)
+	                        << (QVariantList{} << notifyData)
+	                        << QVariantList();
+	QTest::newRow("resolve, reject") << (QList<bool>{} << true << false)
+	                                 << (QVariantList{} << notifyData << notifyData2)
+	                                 << (QVariantList{} << notifyData);
+	QTest::newRow("reject, resolve") << (QList<bool>{} << false << true)
+	                                 << (QVariantList{} << notifyData << notifyData2)
+	                                 << (QVariantList{} << notifyData2);
 }
 
 /*! \test Tests returning a resolved or rejected Promise from a notifyCallback of
@@ -597,26 +608,28 @@ void PromiseTest::testThenNotifyPromiseCallback_data()
  */
 void PromiseTest::testThenNotifyPromiseCallback()
 {
-	QFETCH(bool, resolve);
-	QFETCH(QVariant, notifyData);
+	QFETCH(QList<bool>, resolveRejectSequence);
+	QFETCH(QVariantList, notifyData);
 
 	Deferred::Ptr deferred = Deferred::create();
 	Promise::Ptr promise = Promise::create(deferred);
 
 	QVariantList notifiedCalls;
 
+	auto iResolveRejectSeq = QListIterator<bool>{resolveRejectSequence};
+	auto iNotifyData = QListIterator<QVariant>{notifyData};
 	Promise::Ptr resultPromise = promise->then(noop, noop,
-	                                           [=](const QVariant& progress) -> Promise::Ptr {
-		if (resolve)
-			return Promise::createResolved(notifyData);
+	                                           [&](const QVariant& progress) -> Promise::Ptr {
+		if (iResolveRejectSeq.next())
+			return Promise::createResolved(iNotifyData.next());
 		else
-			return Promise::createRejected(notifyData);
+			return Promise::createRejected(iNotifyData.next());
 	})
 	->then(noop, noop, [&](const QVariant& progress) {
 		notifiedCalls.push_back(progress);
 	});
 
-	callActionOnDeferred(deferred, ACTION_NOTIFY, QVariant{"dummy data"}, 2);
+	callActionOnDeferred(deferred, ACTION_NOTIFY, QVariant{"dummy data"}, resolveRejectSequence.count());
 
 	QTEST(notifiedCalls, "expectedNotifyCalls");
 }
