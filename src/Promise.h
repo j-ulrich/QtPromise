@@ -147,7 +147,8 @@ public:
 	 * This method ensures that the provided callback functions are called when this
 	 * Promise is resolved, rejected or notified. This method then returns a new Promise
 	 * which is resolved, rejected and notified depending on the types of the callbacks
-	 * and their returned values.\n
+	 * and their returned values.
+	 *
 	 * For the \p resolvedCallback and \p rejectedCallback, the following rules apply:
 	 * - If the callback returns `void`, the returned Promise is resolved or rejected
 	 * identical to this Promise.
@@ -156,14 +157,35 @@ public:
 	 * To make this absolute clear: returning a `QVariant` from a \p rejectedCallback
 	 * will **resolve** the returned Promise.
 	 * - If the callback returns `Promise::Ptr`, the returned Promise is resolved or
-	 * rejected
+	 * rejected identical to the Promise returned by the callback.
+	 * Once this Promise has been resolved or rejected, notifying the Promise returned
+	 * by the callback will notify the returned Promise.
+	 *
+	 * For the \p notifiedCallback, the following rules apply:
+	 * - If the callback returns `void`, the returned Promise is notified identical to
+	 * this Promise.
+	 * - If the callback returns `QVariant`, the returned Promise is notified with the
+	 * returned value whenever this Promise is notified.
+	 * - If the callback returns `Promise::Ptr`, the returned Promise is notified identical
+	 * to the Promise returned by the callback.
+	 * Additionally, resolving the Promise returned by the callback or returning an already resolved
+	 * Promise will also notify the returned Promise with the resolve data.
+	 * Rejecting the Promise or returning a rejected Promise will do nothing which means it blocks
+	 * the notification.
+	 *
+	 * Note the special behavior of notifications:\n
+	 * Before this Promise is resolved or rejected, the Promise returned by then() will be notified
+	 * with the notifications from this Promise, possibly modified by the \p notifiedCallback.
+	 * Once this Promise is resolved or rejected, if the corresponding callback (\p resolvedCallback
+	 * or \p rejectedCallback) returns a Promise::Ptr, the Promise returned by then() will be
+	 * notified with the notifications from that Promise.
 	 *
 	 * \tparam ResolvedFunc A callback function type expecting a `const QVariant&` as parameter
 	 * and returning either `void`, `QVariant` or `Promise::Ptr`.
 	 * \tparam RejectedFunc A callback function type expecting a `const QVariant&` as parameter
 	 * and returning either `void`, `QVariant` or `Promise::Ptr`.
 	 * \tparam NotifiedFunc A callback function type expecting a `const QVariant&` as parameter
-	 * and returning either `void` or `QVariant`.
+	 * and returning either `void` or `QVariant` or `Promise::Ptr`.
 	 * \param resolvedCallback A callback which is executed when the Promise's Deferred is resolved.
 	 * The callback will receive the data passed to Deferred::resolve() as parameter.
 	 * \param rejectedCallback A callback which is executed when the Promise's Deferred is rejected.
@@ -267,24 +289,29 @@ private:
 	template <typename VoidCallbackFunc>
 	static
 	typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, WrappedCallbackFunc>::type
-	createThenFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state);
+	createThenFuncWrapper(ChildDeferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state);
 	template<typename VariantCallbackFunc>
 	static
 	typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, WrappedCallbackFunc>::type
-	createThenFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State state);
+	createThenFuncWrapper(ChildDeferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State state);
 	template<typename PromiseCallbackFunc>
 	static
 	typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, WrappedCallbackFunc>::type
-	createThenFuncWrapper(Deferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State state);
+	createThenFuncWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State state);
 
 	template <typename VoidCallbackFunc>
 	static
 	typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, WrappedCallbackFunc>::type
-	createNotifyFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func);
+	createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, VoidCallbackFunc func);
 	template<typename VariantCallbackFunc>
 	static
 	typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, WrappedCallbackFunc>::type
-	createNotifyFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func);
+	createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, VariantCallbackFunc func);
+	template<typename PromiseCallbackFunc>
+	static
+	typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, WrappedCallbackFunc>::type
+	createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFunc func);
+
 
 	template<typename PromiseContainer>
 	static Ptr all_impl(PromiseContainer promises);
@@ -307,11 +334,11 @@ Promise::Ptr Promise::then(ResolvedFunc&& resolvedCallback, RejectedFunc&& rejec
 		return callThenFunc(rejectedCallback);
 	case Deferred::Pending:
 	default:
-		Deferred::Ptr newDeferred = ChildDeferred::create(m_deferred).staticCast<Deferred>();
+		ChildDeferred::Ptr newDeferred = ChildDeferred::create(m_deferred);
 		connect(m_deferred.data(), &Deferred::resolved, createThenFuncWrapper(newDeferred, resolvedCallback, Deferred::Resolved));
 		connect(m_deferred.data(), &Deferred::rejected, createThenFuncWrapper(newDeferred, rejectedCallback, Deferred::Rejected));
 		connect(m_deferred.data(), &Deferred::notified, createNotifyFuncWrapper(newDeferred, notifiedCallback));
-		return create(newDeferred);
+		return create(static_cast<Deferred::Ptr>(newDeferred));
 	}
 }
 
@@ -346,7 +373,7 @@ Promise::callThenFunc(PromiseCallbackFunc func) const
 
 template <typename VoidCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, Promise::WrappedCallbackFunc>::type
-Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state)
+Promise::createThenFuncWrapper(ChildDeferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state)
 {
 	Q_ASSERT_X(state != Deferred::Pending, "Promise::createThenFuncWrapper()", "state must not be Pending (this is a bug in QtPromise)");
 	if (state == Deferred::Resolved)
@@ -363,7 +390,7 @@ Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func,
 
 template<typename VariantCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, Promise::WrappedCallbackFunc>::type
-Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State)
+Promise::createThenFuncWrapper(ChildDeferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State)
 {
 	return [newDeferred, func](const QVariant& data) {
 		QVariant newValue = QVariant::fromValue(func(data));
@@ -376,30 +403,70 @@ Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc fu
 
 template<typename PromiseCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, Promise::WrappedCallbackFunc>::type
-Promise::createThenFuncWrapper(Deferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State)
+Promise::createThenFuncWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State)
 {
 	return [newDeferred, func](const QVariant& data) {
-		Promise::Ptr intermediatePromise = func(data);
-		intermediatePromise->then([newDeferred](const QVariant& data) {newDeferred->resolve(data);},
-		                          [newDeferred](const QVariant& data) {newDeferred->reject(data);});
+		Deferred::Ptr intermedDeferred = func(data)->m_deferred;
+		switch (intermedDeferred->state())
+		{
+		case Deferred::Resolved:
+			newDeferred->resolve(intermedDeferred->data());
+			break;
+		case Deferred::Rejected:
+			newDeferred->reject(intermedDeferred->data());
+			break;
+		case Deferred::Pending:
+		default:
+			newDeferred->setParent(intermedDeferred);
+			QObject::connect(intermedDeferred.data(), &Deferred::resolved, newDeferred.data(), &Deferred::resolve);
+			QObject::connect(intermedDeferred.data(), &Deferred::rejected, newDeferred.data(), &Deferred::reject);
+			QObject::connect(intermedDeferred.data(), &Deferred::notified, newDeferred.data(), &Deferred::notify);
+			break;
+		}
 	};
 }
 
 template <typename VoidCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value, Promise::WrappedCallbackFunc>::type
-Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VoidCallbackFunc func)
+Promise::createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, VoidCallbackFunc func)
 {
 	return [newDeferred, func](const QVariant& data) {
 		func(data);
+		newDeferred->notify(data);
 	};
 }
 
 template<typename VariantCallbackFunc>
 typename std::enable_if<std::is_same<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value, Promise::WrappedCallbackFunc>::type
-Promise::createNotifyFuncWrapper(Deferred::Ptr newDeferred, VariantCallbackFunc func)
+Promise::createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, VariantCallbackFunc func)
 {
 	return [newDeferred, func](const QVariant& data) {
 		newDeferred->notify(func(data));
+	};
+}
+
+template<typename PromiseCallbackFunc>
+typename std::enable_if<std::is_same<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value, Promise::WrappedCallbackFunc>::type
+Promise::createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFunc func)
+{
+	// There can be only one parent at this time.
+	Deferred::Ptr originalDeferred = newDeferred->parents().first();
+	return [originalDeferred, newDeferred, func](const QVariant& data) {
+		Deferred::Ptr intermedDeferred = func(data)->m_deferred;
+		switch (intermedDeferred->state())
+		{
+		case Deferred::Pending:
+			newDeferred->setParents(QList<Deferred::Ptr>{originalDeferred, intermedDeferred});
+			QObject::connect(intermedDeferred.data(), &Deferred::resolved, newDeferred.data(), &Deferred::notify);
+			QObject::connect(intermedDeferred.data(), &Deferred::notified, newDeferred.data(), &Deferred::notify);
+			break;
+		case Deferred::Resolved:
+			newDeferred->notify(intermedDeferred->data());
+			break;
+		case Deferred::Rejected:
+		default:
+			break;
+		}
 	};
 }
 

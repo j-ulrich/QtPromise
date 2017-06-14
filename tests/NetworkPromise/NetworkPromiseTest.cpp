@@ -20,12 +20,12 @@ class NetworkPromiseTest : public QObject
 	Q_OBJECT
 
 private slots:
-	void successTest();
-	void failTest();
-	void httpTest();
-	void finishedReplyTest_data();
-	void finishedReplyTest();
-	void destroyReplyTest();
+	void testSuccess();
+	void testFail();
+	void testHttp();
+	void testFinishedReply_data();
+	void testFinishedReply();
+	void testDestroyReply();
 
 private:
 	struct PromiseSpies
@@ -56,7 +56,7 @@ NetworkPromiseTest::PromiseSpies::PromiseSpies(NetworkPromise::Ptr promise)
 //####### Tests #######
 /*! \test Tests a successful request with a NetworkPromise.
  */
-void NetworkPromiseTest::successTest()
+void NetworkPromiseTest::testSuccess()
 {
 	QString dataPath = QFINDTESTDATA("data/DummyData.txt");
 	QFile dataFile(dataPath);
@@ -90,7 +90,7 @@ void NetworkPromiseTest::successTest()
 
 /*! \test Tests a failed request with a NetworkPromise.
  */
-void NetworkPromiseTest::failTest()
+void NetworkPromiseTest::testFail()
 {
 	QString dataPath("A_File_that_doesnt_exist_9831874375377535764532134848337483.txt");
 
@@ -119,7 +119,7 @@ void NetworkPromiseTest::failTest()
 
 /*! \test Tests a HTTP request with a NetworkPromise.
  */
-void NetworkPromiseTest::httpTest()
+void NetworkPromiseTest::testHttp()
 {
 	QNetworkAccessManager qnam;
 	if(qnam.networkAccessible() == QNetworkAccessManager::NotAccessible)
@@ -138,9 +138,9 @@ void NetworkPromiseTest::httpTest()
 		QCOMPARE(spies.rejected.count(), 1);
 }
 
-/*! Provides the data for the finishedReplyTest()
+/*! Provides the data for the testFinishedReply() test.
  */
-void NetworkPromiseTest::finishedReplyTest_data()
+void NetworkPromiseTest::testFinishedReply_data()
 {
 	QTest::addColumn<QString>("dataPath");
 	QTest::addColumn<bool>("expectResolve");
@@ -152,7 +152,7 @@ void NetworkPromiseTest::finishedReplyTest_data()
 /*! \test Tests the NetworkPromise with a QNetworkReply which has finished
  * and emitted it's events before the NetworkPromise is created.
  */
-void NetworkPromiseTest::finishedReplyTest()
+void NetworkPromiseTest::testFinishedReply()
 {
 	QFETCH(QString, dataPath);
 	QFETCH(bool, expectResolve);
@@ -199,7 +199,7 @@ void NetworkPromiseTest::finishedReplyTest()
 
 /*! \test Tests destroying a QNetworkReply while it is attached to a NetworkPromise.
  */
-void NetworkPromiseTest::destroyReplyTest()
+void NetworkPromiseTest::testDestroyReply()
 {
 	QNetworkAccessManager qnam;
 	if(qnam.networkAccessible() == QNetworkAccessManager::NotAccessible)

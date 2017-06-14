@@ -25,30 +25,34 @@ class PromiseTest : public QObject
 	Q_OBJECT
 
 private slots:
-	void constructorTest();
-	void constructorWithResolvedDeferredTest();
-	void constructorWithRejectedDeferredTest();
-	void createResolvedPromiseTest();
-	void createRejectedPromiseTest();
-	void resolveTest();
-	void rejectTest();
-	void notifyTest();
-	void thenVoidCallbackTest_data();
-	void thenVoidCallbackTest();
-	void thenVariantCallbackTest_data();
-	void thenVariantCallbackTest();
-	void thenPromiseCallbackTest_data();
-	void thenPromiseCallbackTest();
-	void alwaysTest_data();
-	void alwaysTest();
-	void threeLevelChainTest();
-	void allTest();
-	void allRejectTest();
-	void anyTest();
-	void anyRejectTest();
-	void allAnySyncTest_data();
-	void allAnySyncTest();
-	void allAnyInitializerListTest();
+	void testConstructor();
+	void testConstructorWithResolvedDeferred();
+	void testConstructorWithRejectedDeferred();
+	void testCreateResolvedPromise();
+	void testCreateRejectedPromise();
+	void testResolve();
+	void testReject();
+	void testNotify();
+	void testThenVoidCallback_data();
+	void testThenVoidCallback();
+	void testThenVariantCallback_data();
+	void testThenVariantCallback();
+	void testThenPromiseCallback_data();
+	void testThenPromiseCallback();
+	void testThenNotify();
+	void testThenNotifyPromiseCallback_data();
+	void testThenNotifyPromiseCallback();
+	void testAlways_data();
+	void testAlways();
+	void testThreeLevelChain();
+	void testAsyncChain();
+	void testAll();
+	void testAllReject();
+	void testAny();
+	void testAnyReject();
+	void testAllAnySync_data();
+	void testAllAnySync();
+	void testAllAnyInitializerList();
 	void cleanup();
 
 private:
@@ -100,14 +104,14 @@ void PromiseTest::callActionOnDeferred(Deferred::Ptr& deferred, const QString& a
 void PromiseTest::cleanup()
 {
 	// Let deleteLater be executed to clean up
-	QTestEventLoop().enterLoopMSecs(100);
+	QTest::qWait(100);
 }
 
 //####### Tests #######
 
 /*! \test Tests the Promise::create() method.
  */
-void PromiseTest::constructorTest()
+void PromiseTest::testConstructor()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	Promise::Ptr promise = Promise::create(deferred);
@@ -119,7 +123,7 @@ void PromiseTest::constructorTest()
 /*! \test Tests the Promise::create() method with
  * an already resolved Deferred.
  */
-void PromiseTest::constructorWithResolvedDeferredTest()
+void PromiseTest::testConstructorWithResolvedDeferred()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	QString value("string");
@@ -140,7 +144,7 @@ void PromiseTest::constructorWithResolvedDeferredTest()
 /*! \test Tests the Promise::create() method with
  * an already rejected Deferred.
  */
-void PromiseTest::constructorWithRejectedDeferredTest()
+void PromiseTest::testConstructorWithRejectedDeferred()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	QString value("string");
@@ -160,7 +164,7 @@ void PromiseTest::constructorWithRejectedDeferredTest()
 
 /*! \test Tests the Promise::createResolved() method.
  */
-void PromiseTest::createResolvedPromiseTest()
+void PromiseTest::testCreateResolvedPromise()
 {
 	QString myString = "String";
 	Promise::Ptr promise = Promise::createResolved(myString);
@@ -171,7 +175,7 @@ void PromiseTest::createResolvedPromiseTest()
 
 /*! \test Tests the Promise::createRejected() method.
  */
-void PromiseTest::createRejectedPromiseTest()
+void PromiseTest::testCreateRejectedPromise()
 {
 	QString myString = "String";
 	Promise::Ptr promise = Promise::createRejected(myString);
@@ -182,7 +186,7 @@ void PromiseTest::createRejectedPromiseTest()
 
 /*! \test Tests resolving a Promise.
  */
-void PromiseTest::resolveTest()
+void PromiseTest::testResolve()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	Promise::Ptr promise = Promise::create(deferred);
@@ -202,7 +206,7 @@ void PromiseTest::resolveTest()
 
 /*! \test Tests rejecting a Promise.
  */
-void PromiseTest::rejectTest()
+void PromiseTest::testReject()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	Promise::Ptr promise = Promise::create(deferred);
@@ -222,7 +226,7 @@ void PromiseTest::rejectTest()
 
 /*! \test Tests notifying a Promise.
  */
-void PromiseTest::notifyTest()
+void PromiseTest::testNotify()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	Promise::Ptr promise = Promise::create(deferred);
@@ -250,9 +254,9 @@ void PromiseTest::notifyTest()
 	QCOMPARE(spies.notified.at(1).first().toInt(), secondValue);
 }
 
-/*! Provides the data for the thenVoidCallbackTest() method.
+/*! Provides the data for the testThenVoidCallback() test.
  */
-void PromiseTest::thenVoidCallbackTest_data()
+void PromiseTest::testThenVoidCallback_data()
 {
 	QTest::addColumn<bool>("async");
 	QTest::addColumn<QString>("action");
@@ -275,7 +279,7 @@ void PromiseTest::thenVoidCallbackTest_data()
 
 /*! \test Tests the Promise::then() method with a callback returning void.
  */
-void PromiseTest::thenVoidCallbackTest()
+void PromiseTest::testThenVoidCallback()
 {
 	QFETCH(bool, async);
 	QFETCH(QString, action);
@@ -325,12 +329,12 @@ void PromiseTest::thenVoidCallbackTest()
 	QTEST(resolvedCalls, "expectedResolvedCalls");
 	QTEST(rejectedCalls, "expectedRejectedCalls");
 	QTEST(notifiedCalls, "expectedNotifiedCalls");
-	QVERIFY(chainedNotifiedCalls.isEmpty());
+	QTEST(chainedNotifiedCalls, "expectedNotifiedCalls");
 }
 
-/*! Provides the data for the tehnVariantCallbackTest().
+/*! Provides the data for the testThenVariantCallback() test.
  */
-void PromiseTest::thenVariantCallbackTest_data()
+void PromiseTest::testThenVariantCallback_data()
 {
 	QTest::addColumn<bool>("async");
 	QTest::addColumn<QString>("action");
@@ -358,7 +362,7 @@ void PromiseTest::thenVariantCallbackTest_data()
 
 /*! \test Tests the Promise::then() method with a callback returning QVariant.
  */
-void PromiseTest::thenVariantCallbackTest()
+void PromiseTest::testThenVariantCallback()
 {
 	QFETCH(bool, async);
 	QFETCH(QString, action);
@@ -375,11 +379,9 @@ void PromiseTest::thenVariantCallbackTest()
 
 	QVariantList originalNotifiedCalls;
 
-	Promise::Ptr newPromise = promise->then([&](const QVariant& value) -> QVariant {
-		Q_UNUSED(value)
+	Promise::Ptr newPromise = promise->then([&](const QVariant&) -> QVariant {
 		return chainedData;
-	}, [&](const QVariant& reason) -> QVariant {
-		Q_UNUSED(reason)
+	}, [&](const QVariant&) -> QVariant {
 		return chainedData;
 	}, [&](const QVariant& progress) -> QVariant {
 		originalNotifiedCalls.push_back(progress);
@@ -415,9 +417,9 @@ void PromiseTest::thenVariantCallbackTest()
 	QTEST(notifiedCalls, "expectedNotifiedCalls");
 }
 
-/*! Provides the data for the thenPromiseCallbackTest()
+/*! Provides the data for the testThenPromiseCallback() test.
  */
-void PromiseTest::thenPromiseCallbackTest_data()
+void PromiseTest::testThenPromiseCallback_data()
 {
 	QTest::addColumn<bool>("async");
 	QTest::addColumn<QString>("action");
@@ -444,7 +446,7 @@ void PromiseTest::thenPromiseCallbackTest_data()
 
 /*! \test Tests the Promise::then() method with a callback returning Promise::Ptr.
  */
-void PromiseTest::thenPromiseCallbackTest()
+void PromiseTest::testThenPromiseCallback()
 {
 	QFETCH(bool, async);
 	QFETCH(QString, action);
@@ -460,15 +462,14 @@ void PromiseTest::thenPromiseCallbackTest()
 
 	Promise::Ptr promise = Promise::create(deferred);
 
-	auto callback = [&](const QVariant& value) -> Promise::Ptr {
-		Q_UNUSED(value)
+	auto callback = [&](const QVariant&) -> Promise::Ptr {
 		if (callbackAction == ACTION_RESOLVE)
 			return Promise::createResolved(callbackData);
 		else if (callbackAction == ACTION_REJECT)
 			return Promise::createRejected(callbackData);
 		else
 		{
-			QTest::qFail("Invalid action", __FILE__, __LINE__);
+			QTest::qFail("Invalid callbackAction", __FILE__, __LINE__);
 			return Promise::createRejected(QVariant());
 		}
 	};
@@ -499,9 +500,143 @@ void PromiseTest::thenPromiseCallbackTest()
 	QTEST(rejectedCalls, "expectedRejectedCalls");
 }
 
-/*! Provides the data for the alwaysTest().
+/*! \test Tests notifying the promise returned by Promise::then().
  */
-void PromiseTest::alwaysTest_data()
+void PromiseTest::testThenNotify()
+{
+	// Setup test scenario
+	Deferred::Ptr originalDeferred = Deferred::create();
+	Deferred::Ptr resolveDeferred = Deferred::create();
+	Deferred::Ptr notifyDeferred = Deferred::create();
+
+	Promise::Ptr originalPromise = Promise::create(originalDeferred);
+
+	Promise::Ptr chainedPromise = originalPromise
+			->then([&](const QVariant& data) -> Promise::Ptr {
+		return Promise::create(resolveDeferred);
+	}, noop, [&](const QVariant& progress) -> Promise::Ptr {
+		return Promise::create(notifyDeferred);
+	});
+
+	PromiseSpies spies(chainedPromise);
+
+	// Run test sequence
+
+	/* Notifying one of the callback Deferreds before the original
+	 * Deferred should do nothing.
+	 */
+	resolveDeferred->notify();
+	notifyDeferred->notify();
+
+	QTest::qWait(100);
+	QVERIFY(spies.notified.empty());
+
+	// Notifying the original Deferred should "enable" the notifyDeferred.
+	originalDeferred->notify(QVariant("first notify"));
+
+	QTest::qWait(100);
+	QVERIFY(spies.notified.empty());
+
+	QVariant secondNotify{"second notify"};
+	notifyDeferred->notify(secondNotify);
+
+	QCOMPARE(spies.notified.last().first(), secondNotify);
+
+	QVariant thirdNotify{"third notify"};
+	notifyDeferred->notify(thirdNotify);
+
+	QCOMPARE(spies.notified.last().first(), thirdNotify);
+	spies.notified.clear();
+
+	// The notifyDeferred is now in control of notifying.
+	originalDeferred->notify(QVariant("fourth notify"));
+	resolveDeferred->notify(QVariant{"fifth notify"});
+
+	QTest::qWait(100);
+	QVERIFY(spies.notified.empty());
+	spies.notified.clear();
+
+	// Resolve the original Deferred should "enable" the resolveDeferred.
+	originalDeferred->resolve();
+
+	QTest::qWait(100);
+	QVERIFY(spies.notified.empty());
+
+	QVariant sixthNotify{"sixth notify"};
+	resolveDeferred->notify(sixthNotify);
+
+	QCOMPARE(spies.notified.last().first(), sixthNotify);
+	spies.notified.clear();
+
+	// The resolveDeferred is now in control of notifying.
+	originalDeferred->notify(QVariant("seventh notify"));
+	notifyDeferred->notify(QVariant("eighth notify"));
+
+	QVERIFY(spies.notified.empty());
+
+	notifyDeferred->resolve();
+	resolveDeferred->resolve();
+}
+
+/*! Provides the data for the testThenNotifyPromiseCallback() test.
+ */
+void PromiseTest::testThenNotifyPromiseCallback_data()
+{
+	QTest::addColumn<QList<bool>>("resolveRejectSequence");
+	QTest::addColumn<QVariantList>("notifyData");
+	QTest::addColumn<QVariantList>("expectedNotifyCalls");
+
+	QVariant notifyData{"notify"};
+	QVariant notifyData2{"notify2"};
+
+	QTest::newRow("resolve") << (QList<bool>{} << true)
+	                         << (QVariantList{} << notifyData)
+	                         << (QVariantList{} << notifyData);
+	QTest::newRow("reject") << (QList<bool>{} << false)
+	                        << (QVariantList{} << notifyData)
+	                        << QVariantList();
+	QTest::newRow("resolve, reject") << (QList<bool>{} << true << false)
+	                                 << (QVariantList{} << notifyData << notifyData2)
+	                                 << (QVariantList{} << notifyData);
+	QTest::newRow("reject, resolve") << (QList<bool>{} << false << true)
+	                                 << (QVariantList{} << notifyData << notifyData2)
+	                                 << (QVariantList{} << notifyData2);
+}
+
+/*! \test Tests returning a resolved or rejected Promise from a notifyCallback of
+ * Promise::then().
+ */
+void PromiseTest::testThenNotifyPromiseCallback()
+{
+	QFETCH(QList<bool>, resolveRejectSequence);
+	QFETCH(QVariantList, notifyData);
+
+	Deferred::Ptr deferred = Deferred::create();
+	Promise::Ptr promise = Promise::create(deferred);
+
+	QVariantList notifiedCalls;
+
+	auto iResolveRejectSeq = QListIterator<bool>{resolveRejectSequence};
+	auto iNotifyData = QListIterator<QVariant>{notifyData};
+	Promise::Ptr resultPromise = promise->then(noop, noop,
+	                                           [&](const QVariant& progress) -> Promise::Ptr {
+		if (iResolveRejectSeq.next())
+			return Promise::createResolved(iNotifyData.next());
+		else
+			return Promise::createRejected(iNotifyData.next());
+	})
+	->then(noop, noop, [&](const QVariant& progress) {
+		notifiedCalls.push_back(progress);
+	});
+
+	callActionOnDeferred(deferred, ACTION_NOTIFY, QVariant{"dummy data"}, resolveRejectSequence.count());
+
+	QTEST(notifiedCalls, "expectedNotifyCalls");
+}
+
+/*! Provides the data for the testAlways() test.
+ */
+void PromiseTest::testAlways_data()
 {
 	QTest::addColumn<QString>("action");
 
@@ -512,7 +647,7 @@ void PromiseTest::alwaysTest_data()
 
 /*! \test Tests the Promise::always() method.
  */
-void PromiseTest::alwaysTest()
+void PromiseTest::testAlways()
 {
 	QFETCH(QString, action);
 
@@ -532,10 +667,9 @@ void PromiseTest::alwaysTest()
 	QCOMPARE(callbackCalls, QVariantList() << originalData);
 }
 
-/*! \test Tests if a Promise chain survives deletion of intermediate
- * Promises.
+/*! \test Tests if a Promise chain survives deletion of intermediate Promises.
  */
-void PromiseTest::threeLevelChainTest()
+void PromiseTest::testThreeLevelChain()
 {
 	Deferred::Ptr deferred = Deferred::create();
 	Promise::Ptr originalPromise = Promise::create(deferred);
@@ -549,16 +683,52 @@ void PromiseTest::threeLevelChainTest()
 	});
 
 	// Ensure deleteLater can be called on intermediate Promise
-	QTestEventLoop().enterLoopMSecs(100);
+	QTest::qWait(100);
 
 	QVariant data("my data");
 	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);
 	QCOMPARE(callbackCalls, QVariantList() << data << data);
 }
 
+/*! \test Tests chaining multiple asynchronous operations.
+ */
+void PromiseTest::testAsyncChain()
+{
+	Deferred::Ptr deferred = Deferred::create();
+	Deferred::Ptr transmitDeferred = Deferred::create();
+	Promise::Ptr originalPromise = Promise::create(deferred);
+
+	Promise::Ptr finalPromise = originalPromise
+			->then([&](const QVariant&) -> Promise::Ptr {
+		Deferred::Ptr secondDeferred = Deferred::create();
+		QObject::connect(transmitDeferred.data(), &Deferred::resolved,
+		                 secondDeferred.data(), &Deferred::resolve);
+		return Promise::create(secondDeferred);
+	});
+
+	// Ensure deleteLater can be called on intermediate objects
+	QTest::qWait(100);
+
+	QVariant data("my data");
+	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);
+
+	QTest::qWait(100);
+
+	QCOMPARE(finalPromise->state(), Deferred::Pending);
+
+	QVariant secondData("second data");
+	qDebug("Resolve transmitDeferred");
+	callActionOnDeferred(transmitDeferred, ACTION_RESOLVE, secondData, 1);
+
+	QTest::qWait(100);
+
+	QCOMPARE(finalPromise->state(), Deferred::Resolved);
+	QCOMPARE(finalPromise->data(), secondData);
+}
+
 /*! \test Tests resolving a combined Promise created with Promise::all().
  */
-void PromiseTest::allTest()
+void PromiseTest::testAll()
 {
 	QList<Deferred::Ptr> deferreds;
 	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
@@ -604,7 +774,7 @@ void PromiseTest::allTest()
 
 /*! \test Tests rejecting a combined Promise created with Promise::all().
  */
-void PromiseTest::allRejectTest()
+void PromiseTest::testAllReject()
 {
 	QList<Deferred::Ptr> deferreds;
 	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
@@ -642,7 +812,7 @@ void PromiseTest::allRejectTest()
 
 /*! \test Tests resolving a combined Promise created with Promise::any().
  */
-void PromiseTest::anyTest()
+void PromiseTest::testAny()
 {
 	QList<Deferred::Ptr> deferreds;
 	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
@@ -681,7 +851,7 @@ void PromiseTest::anyTest()
 
 /*! \test Tests rejecting a combined Promise created with Promise::any().
  */
-void PromiseTest::anyRejectTest()
+void PromiseTest::testAnyReject()
 {
 	QList<Deferred::Ptr> deferreds;
 	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
@@ -725,9 +895,9 @@ void PromiseTest::anyRejectTest()
 	QCOMPARE(spies.rejected.first().first(), QVariant::fromValue(rejectReasons));
 }
 
-/*! Provides the data for the PromiseTest::allAnySyncTest().
+/*! Provides the data for the testAllAnySync() test.
  */
-void PromiseTest::allAnySyncTest_data()
+void PromiseTest::testAllAnySync_data()
 {
 	QTest::addColumn<QList<Deferred::Ptr>>("deferreds");
 	QTest::addColumn<QList<int>>("expectedAllSignalCounts");
@@ -765,7 +935,7 @@ void PromiseTest::allAnySyncTest_data()
 /*! \test Tests Promise::all() and Promise::any()
  * when created with already resolved promises.
  */
-void PromiseTest::allAnySyncTest()
+void PromiseTest::testAllAnySync()
 {
 	QFETCH(QList<Deferred::Ptr>, deferreds);
 	QFETCH(QList<int>, expectedAllSignalCounts);
@@ -793,7 +963,7 @@ void PromiseTest::allAnySyncTest()
 /*! \test Tests Promise::all() and Promise::any()
  * with initializer lists.
  */
-void PromiseTest::allAnyInitializerListTest()
+void PromiseTest::testAllAnyInitializerList()
 {
 	Promise::Ptr firstPromise = Promise::createResolved(17);
 	Promise::Ptr secondPromise = Promise::createResolved(4);
