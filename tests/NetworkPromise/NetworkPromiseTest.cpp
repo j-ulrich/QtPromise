@@ -225,7 +225,10 @@ void NetworkPromiseTest::testCachedData()
 {
 	QNetworkAccessManager qnam;
 	QNetworkDiskCache diskCache(&qnam);
-	diskCache.setCacheDirectory(QDir(qApp->applicationDirPath()).filePath("cache"));
+	QTemporaryDir tempDir;
+	if (!tempDir.isValid())
+		QFAIL("Could not create temporary directory");
+	diskCache.setCacheDirectory(tempDir.path());
 	qnam.setCache(&diskCache);
 	
 	// Load the data for the first time to cache it
