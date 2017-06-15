@@ -21,6 +21,7 @@ class NetworkPromiseTest : public QObject
 	Q_OBJECT
 
 private slots:
+	void cleanup();
 	void testSuccess();
 	void testFail();
 	void testHttp();
@@ -53,6 +54,12 @@ NetworkPromiseTest::PromiseSpies::PromiseSpies(NetworkPromise::Ptr promise)
 	  baseRejected(promise.data(), &Promise::rejected),
 	  baseNotified(promise.data(), &Promise::notified)
 {
+}
+
+void NetworkPromiseTest::cleanup()
+{
+	// Let deleteLater be executed to clean up
+	QTest::qWait(100);
 }
 
 //####### Tests #######
@@ -223,18 +230,19 @@ void NetworkPromiseTest::testDestroyReply()
  */
 void NetworkPromiseTest::testCachedData()
 {
-	QNetworkAccessManager qnam;
-	QNetworkDiskCache diskCache(&qnam);
 	QTemporaryDir tempDir;
 	if (!tempDir.isValid())
 		QFAIL("Could not create temporary directory");
+
+	QNetworkAccessManager qnam;
+	QNetworkDiskCache diskCache(&qnam);
 	diskCache.setCacheDirectory(tempDir.path());
 	qnam.setCache(&diskCache);
 	
 	// Load the data for the first time to cache it
 	QString dataPath = QFINDTESTDATA("data/DummyData.txt");
 	QNetworkRequest request(QUrl::fromLocalFile(dataPath));
-	QNetworkReply* firstReply = qnam.get(request);
+	QScopedPointer<QNetworkReply> firstReply{qnam.get(request)};
 	QTRY_VERIFY(firstReply->isFinished());
 	
 	// Load the data for the second time.
