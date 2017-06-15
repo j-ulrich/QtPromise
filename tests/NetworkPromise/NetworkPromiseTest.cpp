@@ -140,7 +140,7 @@ void NetworkPromiseTest::testHttp()
 	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
 
 	PromiseSpies spies(promise);
-	spies.resolved.wait();
+	QTRY_VERIFY_WITH_TIMEOUT(reply->isFinished(), 10 * 1000);
 	if (reply->error() == QNetworkReply::NoError)
 		QCOMPARE(spies.resolved.count(), 1);
 	else
