@@ -192,8 +192,7 @@ void PromiseSitterTest::testGlobalInstance()
 	QVERIFY(PromiseSitter::instance()->contains(promise));
 
 	deferred->resolve("data");
-	QTest::qWait(100);
-	QVERIFY(!PromiseSitter::instance()->contains(promise));
+	QTRY_VERIFY(!PromiseSitter::instance()->contains(promise));
 }
 
 

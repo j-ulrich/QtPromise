@@ -528,51 +528,47 @@ void PromiseTest::testThenNotify()
 	resolveDeferred->notify();
 	notifyDeferred->notify();
 
-	QTest::qWait(100);
-	QVERIFY(spies.notified.empty());
+	QTRY_VERIFY(spies.notified.empty());
 
 	// Notifying the original Deferred should "enable" the notifyDeferred.
 	originalDeferred->notify(QVariant("first notify"));
 
-	QTest::qWait(100);
-	QVERIFY(spies.notified.empty());
+	QTRY_VERIFY(spies.notified.empty());
 
 	QVariant secondNotify{"second notify"};
 	notifyDeferred->notify(secondNotify);
 
-	QCOMPARE(spies.notified.last().first(), secondNotify);
+	QTRY_COMPARE(spies.notified.last().first(), secondNotify);
 
 	QVariant thirdNotify{"third notify"};
 	notifyDeferred->notify(thirdNotify);
 
-	QCOMPARE(spies.notified.last().first(), thirdNotify);
+	QTRY_COMPARE(spies.notified.last().first(), thirdNotify);
 	spies.notified.clear();
 
 	// The notifyDeferred is now in control of notifying.
 	originalDeferred->notify(QVariant("fourth notify"));
 	resolveDeferred->notify(QVariant{"fifth notify"});
 
-	QTest::qWait(100);
-	QVERIFY(spies.notified.empty());
+	QTRY_VERIFY(spies.notified.empty());
 	spies.notified.clear();
 
 	// Resolve the original Deferred should "enable" the resolveDeferred.
 	originalDeferred->resolve();
 
-	QTest::qWait(100);
-	QVERIFY(spies.notified.empty());
+	QTRY_VERIFY(spies.notified.empty());
 
 	QVariant sixthNotify{"sixth notify"};
 	resolveDeferred->notify(sixthNotify);
 
-	QCOMPARE(spies.notified.last().first(), sixthNotify);
+	QTRY_COMPARE(spies.notified.last().first(), sixthNotify);
 	spies.notified.clear();
 
 	// The resolveDeferred is now in control of notifying.
 	originalDeferred->notify(QVariant("seventh notify"));
 	notifyDeferred->notify(QVariant("eighth notify"));
 
-	QVERIFY(spies.notified.empty());
+	QTRY_VERIFY(spies.notified.empty());
 
 	notifyDeferred->resolve();
 	resolveDeferred->resolve();
@@ -712,18 +708,14 @@ void PromiseTest::testAsyncChain()
 	QVariant data("my data");
 	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);
 
-	QTest::qWait(100);
-
-	QCOMPARE(finalPromise->state(), Deferred::Pending);
+	QTRY_COMPARE(finalPromise->state(), Deferred::Pending);
 
 	QVariant secondData("second data");
 	qDebug("Resolve transmitDeferred");
 	callActionOnDeferred(transmitDeferred, ACTION_RESOLVE, secondData, 1);
 
-	QTest::qWait(100);
-
-	QCOMPARE(finalPromise->state(), Deferred::Resolved);
-	QCOMPARE(finalPromise->data(), secondData);
+	QTRY_COMPARE(finalPromise->state(), Deferred::Resolved);
+	QTRY_COMPARE(finalPromise->data(), secondData);
 }
 
 /*! \test Tests resolving a combined Promise created with Promise::all().
@@ -741,35 +733,31 @@ void PromiseTest::testAll()
 
 	PromiseSpies spies(combinedPromise);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
 
 	QList<QVariant> results;
 	results << "My string" << 15 << QVariant::fromValue(QList<int>() << 7 << 13);
 
 	deferreds[0]->resolve(results[0]);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
 
 	deferreds[2]->resolve(results[2]);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
 
 	deferreds[1]->resolve(results[1]);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 1);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
-	QCOMPARE(spies.resolved.first().first(), QVariant::fromValue(results));
+	QTRY_COMPARE(spies.resolved.count(), 1);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.first().first(), QVariant::fromValue(results));
 }
 
 /*! \test Tests rejecting a combined Promise created with Promise::all().
@@ -787,27 +775,24 @@ void PromiseTest::testAllReject()
 
 	PromiseSpies spies(combinedPromise);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
 
 	QVariant rejectReason = "Error string";
 
 	deferreds[0]->resolve(13);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
 
 	deferreds[1]->reject(rejectReason);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 1);
-	QCOMPARE(spies.notified.count(), 0);
-	QCOMPARE(spies.rejected.first().first(), rejectReason);
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 1);
+	QTRY_COMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.rejected.first().first(), rejectReason);
 }
 
 /*! \test Tests resolving a combined Promise created with Promise::any().
@@ -825,28 +810,25 @@ void PromiseTest::testAny()
 
 	PromiseSpies spies(combinedPromise);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
 
 	QVariant rejectReason = "Error string";
 	QVariant result = 13;
 
 	deferreds[0]->reject(rejectReason);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
 
 	deferreds[1]->resolve(result);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 1);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
-	QCOMPARE(spies.resolved.first().first(), QVariant::fromValue(result));
+	QTRY_COMPARE(spies.resolved.count(), 1);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.first().first(), QVariant::fromValue(result));
 }
 
 /*! \test Tests rejecting a combined Promise created with Promise::any().
@@ -864,35 +846,31 @@ void PromiseTest::testAnyReject()
 
 	PromiseSpies spies(combinedPromise);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
 
 	QList<QVariant> rejectReasons;
 	rejectReasons << "My string" << 15 << QVariant::fromValue(QList<int>() << 7 << 13);
 
 	deferreds[0]->reject(rejectReasons[0]);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
 
 	deferreds[2]->reject(rejectReasons[2]);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 0);
-	QCOMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
 
 	deferreds[1]->reject(rejectReasons[1]);
 
-	QTest::qWait(100);
-	QCOMPARE(spies.resolved.count(), 0);
-	QCOMPARE(spies.rejected.count(), 1);
-	QCOMPARE(spies.notified.count(), 0);
-	QCOMPARE(spies.rejected.first().first(), QVariant::fromValue(rejectReasons));
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 1);
+	QTRY_COMPARE(spies.notified.count(), 0);
+	QTRY_COMPARE(spies.rejected.first().first(), QVariant::fromValue(rejectReasons));
 }
 
 /*! Provides the data for the testAllAnySync() test.
@@ -951,13 +929,12 @@ void PromiseTest::testAllAnySync()
 	PromiseSpies allSpies(allPromise);
 	PromiseSpies anySpies(anyPromise);
 	
-	QTest::qWait(100);
-	QCOMPARE(allSpies.resolved.count(), expectedAllSignalCounts[0]);
-	QCOMPARE(allSpies.rejected.count(), expectedAllSignalCounts[1]);
-	QCOMPARE(allSpies.notified.count(), expectedAllSignalCounts[2]);
-	QCOMPARE(anySpies.resolved.count(), expectedAnySignalCounts[0]);
-	QCOMPARE(anySpies.rejected.count(), expectedAnySignalCounts[1]);
-	QCOMPARE(anySpies.notified.count(), expectedAnySignalCounts[2]);
+	QTRY_COMPARE(allSpies.resolved.count(), expectedAllSignalCounts[0]);
+	QTRY_COMPARE(allSpies.rejected.count(), expectedAllSignalCounts[1]);
+	QTRY_COMPARE(allSpies.notified.count(), expectedAllSignalCounts[2]);
+	QTRY_COMPARE(anySpies.resolved.count(), expectedAnySignalCounts[0]);
+	QTRY_COMPARE(anySpies.rejected.count(), expectedAnySignalCounts[1]);
+	QTRY_COMPARE(anySpies.notified.count(), expectedAnySignalCounts[2]);
 }
 
 /*! \test Tests Promise::all() and Promise::any()
@@ -971,9 +948,8 @@ void PromiseTest::testAllAnyInitializerList()
 	Promise::Ptr allPromise = Promise::all({firstPromise, secondPromise});
 	Promise::Ptr anyPromise = Promise::any({firstPromise, secondPromise});
 
-	QTest::qWait(100);
-	QCOMPARE(allPromise->state(), Deferred::Resolved);
-	QCOMPARE(anyPromise->state(), Deferred::Resolved);
+	QTRY_COMPARE(allPromise->state(), Deferred::Resolved);
+	QTRY_COMPARE(anyPromise->state(), Deferred::Resolved);
 }
 
 
