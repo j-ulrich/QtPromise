@@ -36,7 +36,7 @@ namespace QtPromise {
  * \author jochen.ulrich
  *
  * \sa NetworkPromise
- * \sa \ref page_signalEmission
+ * \sa \ref page_asyncSignalEmission
  */
 class NetworkDeferred : public Deferred
 {

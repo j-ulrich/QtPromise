@@ -25,7 +25,7 @@ The PromiseSitter class can be used to store those pointers.
 ### Object Deletion ###
 Another thing to note is that the objects are deleted using QObject::deleteLater().
 Therefore, the objects continue to exist until control returns to the event loop even
-if their QSharedPointer goes out of scope. 
+if all their QSharedPointers go out of scope. 
 
 This also means that callbacks can be called even after QSharedPointer::clear() has been
 called when the QObject::deleteLater() is handled after the resolved/rejected/notified signal
@@ -33,7 +33,7 @@ in the event loop.
 
 ### Memory Leaks with QSharedPointer and Lambdas ###
 Be careful when passing QSharedPointers of QObject derived classes to lambdas connected to
-the object's slots as this creates a memory leak.
+the object's own signals as this creates a memory leak.
 This applies for the objects from the %Qt %Promise library as well:
 \code
 Promise::Ptr myPromise = startAsyncOperation();
