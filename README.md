@@ -41,6 +41,11 @@ However, they do not allow chaining, enforce using threads and do not support cu
 Ben Lau's [AsyncFuture](https://github.com/benlau/asyncfuture) is based on QFuture and adds some of the missing functionality.
 However, it is using a different API, more oriented to the Observable pattern, and does not support progress reporting (yet?).
 
+Benoit Walter's [QtPromise](https://github.com/bwalter/qt-promise) is based on Ben Lau's AsyncFuture
+and provides an API similar to this implementation of QtPromise. However, it has some difference:
+It uses context objects to manage lifetime of promises and to store additional data. It also doesn't provide
+progress reporting (yet?). 
+
 <a name="further-reading"></a>
 ### Further reading ###
 
@@ -67,8 +72,44 @@ However, it is using a different API, more oriented to the Observable pattern, a
 
 
 <a name="example"></a>
-## Example ##
+## Examples ##
 
+### Custom asynchronous Operation ###
+Provides the result of an asynchronous operation as a Promise.
+```cpp
+QtPromise::Promise::Ptr MyClass::startAsyncOperation()
+{
+	using namespace QtPromise;
+	
+	Deferred::Ptr deferred = Deferred::create();
+	MyAsyncOperation* asyncOp = new MyAsyncOperation(this);
+	
+	QObject::connect(asyncOp, &MyAsyncOperation::success, [=](const QByteArray& data) {
+		deferred->resolve(QVariant::fromValue(data));
+	});
+	QObject::connect(asyncOp, &MyAsyncOperation::failed, [=](const QString& error) {
+		deferred->reject(QVariant::fromValue(error));
+	});
+	QObject::connect(asyncOp, &MyAsyncOperation::progress, [=](int current, int total) {
+		QMap<int> progressMap;
+		progressMap["current"] = current;
+		progressMap["total"] = total;
+		deferred->notify(QVariant::fromValue(progressMap));
+	});
+	
+	Promise::Ptr promise = Promise::create(deferred)
+	->always([=](const QVariant&) {
+		// Delete asyncOp once the operation finished
+		asyncOp->deleteLater();
+	});
+	
+	asyncOp->start();
+	return promise;
+}
+```
+
+### Fetch JSON Data ###
+Implements and uses a helper method to process JSON data fetched using a QNetworkReply.
 ```cpp
 QtPromise::Promise::Ptr fetchJson(QNetworkReply* reply)
 {
@@ -85,7 +126,7 @@ QtPromise::Promise::Ptr fetchJson(QNetworkReply* reply)
 
 void MyDataFetcher::printJsonData()
 {
-	QNetworkRequest request("http://api.example.com/getData");
+	QNetworkRequest request("http://api.example.com/getJsonData");
 	QNetworkReply* reply = this->qnam->get(request);
 
 	this->promise = fetchJson(reply)
@@ -102,8 +143,9 @@ void MyDataFetcher::printJsonData()
 <a name="requirements"></a>
 ## Requirements ##
  - Qt 5
- - Compiler supporting C++11 (tested with Microsoft Visual Studio 2015, GCC 4.9.2 and GCC 6.2.0)
- - An event loop (e.g. `QCoreApplication::exec()` or `QEventLoop::exec()`)
+ - Compiler supporting C++11 (tested with Microsoft Visual Studio 2015, GCC 4.9.2 and GCC 6.3.0)
+ - An event loop which also handles [DeferredDelete](http://doc.qt.io/qt-5/qevent.html#Type-enum) events
+ (e.g. `QCoreApplication::exec()` or `QEventLoop::exec()`)
 
 
 <a name="documentation"></a>
