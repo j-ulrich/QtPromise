@@ -11,7 +11,7 @@
 >   - [Other Implementations](#other-implementations)
 >   - [Further Reading](#further-reading)
 > - [Features](#features)
-> - [Example](#example)
+> - [Examples](#examples)
 > - [Requirements](#requirements)
 > - [Documentation](#documentation)
 > - [License](#license)

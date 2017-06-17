@@ -42,4 +42,4 @@ CMakeLists.txt.user*
 .settings
 
 # CMake
-build*
+build*/
