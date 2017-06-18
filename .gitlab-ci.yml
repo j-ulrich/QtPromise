@@ -44,7 +44,9 @@ archive_tags:
     - build
   script:
     - echo "Archiving artifacts of tag ${CI_COMMIT_TAG}"
-    - cd "${ARTIFACTS_DIR}"
+    - mv "${ARTIFACTS_DIR}/bin" "bin"
+    - mv "${ARTIFACTS_DIR}/docs" "docs"
+    - mv "${ARTIFACTS_DIR}/include" "include"
   artifacts:
     name: "${CI_COMMIT_TAG}_${TARGET_ID}"
     paths:
@@ -59,9 +61,8 @@ pages:
   dependencies:
     - build
   script:
-    - mkdir -p "public/docs"
+    - mkdir -p "public"
     - cp -r "${ARTIFACTS_DIR}/docs/" "public/docs/"
-    - echo "<html><body>Hello World!</body></html>" >"public/index.html"
   artifacts:
     paths:
       - "public"
