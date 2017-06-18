@@ -16,12 +16,12 @@ build:
     - make qt5promise
     - make docs
     - cd "${CI_PROJECT_DIR}"
-    - mkdir -p "${ARTIFACTS_DIR}"
-    - cp -r "${BUILD_DIR}/doc/html/" "${ARTIFACTS_DIR}/docs/"
+    - mkdir -p "${ARTIFACTS_DIR}/docs"
+    - cp -r "${BUILD_DIR}/doc/html"/* "${ARTIFACTS_DIR}/docs/"
     - mkdir -p "${ARTIFACTS_DIR}/bin"
     - cp "${BUILD_DIR}/src/libqt5promise.a" "${ARTIFACTS_DIR}/bin/"
     - mkdir -p "${ARTIFACTS_DIR}/include"
-    - cp src/*.h "${ARTIFACTS_DIR}/include/"
+    - cp "src"/*.h "${ARTIFACTS_DIR}/include/"
   artifacts:
     paths:
       - "${ARTIFACTS_DIR}"
@@ -53,19 +53,19 @@ archive_tags:
       - "bin"
       - "docs"
       - "include"
-#  only:
-#    - tags
+  only:
+    - tags
   
 pages:
   stage: deploy
   dependencies:
     - build
   script:
-    - mkdir -p "public"
-    - cp -r "${ARTIFACTS_DIR}/docs/" "public/docs/"
+    - mkdir -p "public/docs"
+    - cp -r "${ARTIFACTS_DIR}/docs"/* "public/docs/"
   artifacts:
     paths:
       - "public"
-#  only:
-#    - master
+  only:
+    - master
     
