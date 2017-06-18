@@ -26,16 +26,34 @@ public:
 	/*! Smart pointer to a NetworkPromise */
 	typedef QSharedPointer<NetworkPromise> Ptr;
 
-	/*! Creates a NetworkPromise for a QNetworkReply
+	/*! Creates a NetworkPromise for a QNetworkReply.
 	 *
 	 * \param reply The QNetworkReply performing the transmission.
 	 * \return A NetworkPromise to a new, pending NetworkDeferred for the given
 	 * \p reply.
 	 */
 	static Ptr create(QNetworkReply* reply);
+	/*! Creates a NetworkPromise for a NetworkDeferred.
+	 *
+	 * \param deferred The NetworkDeferred which should be represented by a NetworkPromise.
+	 * \return QSharedPointer to a new NetworkPromise for the given \p deferred.
+	 *
+	 * \sa Promise::create(Deferred::Ptr)
+	 */
 	static Ptr create(NetworkDeferred::Ptr deferred);
 
+	/*! \return The data in case this NetworkPromise was already resolved or an empty ReplyData
+	 * object otherwise.
+	 *
+	 * \sa NetworkDeferred::ReplyData()
+	 */
 	NetworkDeferred::ReplyData replyData() const;
+
+	/*! \return The error in case this NetworkPromsie was already rejected or an empty Error
+	 * object otherwise.
+	 *
+	 * \sa NetworkDeferred::Error()
+	 */
 	NetworkDeferred::Error error() const;
 
 signals:
@@ -54,11 +72,17 @@ signals:
 
 protected:
 	/*! Creates a NetworkDeferred for a QNetworkReply and
-	 * then create a NetworkPromise for that new NetworkDeferred.
+	 * then creates a NetworkPromise for that new NetworkDeferred.
 	 *
-	 * \sa NetworkDeferred()
+	 * \param reply The QNetworkReply to be represented by a NetworkPromise.
+	 *
+	 * \sa NetworkDeferred(QNetworkReply*)
 	 */
 	NetworkPromise(QNetworkReply* reply);
+	/*! Creates a NetworkPromise for a NetworkDeferred.
+	 *
+	 * \param deferred The NetworkDeferred which should be represented by a NetworkPromise.
+	 */
 	NetworkPromise(NetworkDeferred::Ptr deferred);
 };
 

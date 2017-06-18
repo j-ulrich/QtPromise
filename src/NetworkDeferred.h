@@ -61,7 +61,7 @@ public:
 		 */
 		const QNetworkReply* qReply;
 
-		/*! Default constructor.
+		/*! Creates an empty ReplyData object.
 		 *
 		 * \p data will be empty and \p qReply will be a \c nullptr.
 		 */

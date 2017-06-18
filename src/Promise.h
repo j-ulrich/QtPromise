@@ -204,7 +204,7 @@ public:
 	 *
 	 * \tparam AlwaysFunc A callback function type expecting a `const QVariant&` as parameter
 	 * and returning either `void`, `QVariant` or `Promise::Ptr`.
-	 * \param alwaysFunc A callback which is executed when the Promise's Deferred is resolved
+	 * \param alwaysCallback A callback which is executed when the Promise's Deferred is resolved
 	 * or rejected. The callback will receive the data passed to Deferred::resolve() or
 	 * Deferred::reject() as parameter.
 	 * \return A new Promise which is resolved/rejected depending on the type and return
@@ -502,7 +502,7 @@ Promise::Ptr Promise::any_impl(PromiseContainer promises)
 }  // namespace QtPromise
 
 /*! Returns the hash value for a Promise smart pointer.
- * @param deferredPtr The QSharedPointer who's hash value should be returned.
+ * @param promisePtr The QSharedPointer who's hash value should be returned.
  * @param seed The seed used for the calculation.
  * @return The hash value based on the address of the pointer.
  */

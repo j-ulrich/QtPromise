@@ -4,6 +4,10 @@
 namespace QtPromise
 {
 
+/*!
+ * \cond INTERNAL
+ */
+
 ChildDeferred::ChildDeferred(QList<Deferred::Ptr> parents, bool trackResults)
 	: Deferred(), m_lock(QMutex::Recursive), m_resolvedCount(0), m_rejectedCount(0)
 {
@@ -94,5 +98,8 @@ void ChildDeferred::onParentRejected(const QVariant& reason)
 	}
 }
 
+/*!
+ * \endcond
+ */
 
 } /* namespace QtPromise */
