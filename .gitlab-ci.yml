@@ -21,7 +21,7 @@ build:
     - mkdir -p "${ARTIFACTS_DIR}/bin"
     - cp "${BUILD_DIR}/src/libqt5promise.a" "${ARTIFACTS_DIR}/bin/"
     - mkdir -p "${ARTIFACTS_DIR}/include"
-    - cp "src/*.h" "${ARTIFACTS_DIR}/include/"
+    - cp src/*.h "${ARTIFACTS_DIR}/include/"
   artifacts:
     paths:
       - "${ARTIFACTS_DIR}"
