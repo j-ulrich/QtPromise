@@ -71,7 +71,7 @@ progress reporting (yet?).
 > **Important note:** The library currently does **not** provide binary compatibility between versions. Only source compatibility is guaranteed between minor and patch versions.
 
 
-<a name="example"></a>
+<a name="examples"></a>
 ## Examples ##
 
 ### Custom asynchronous Operation ###
@@ -150,6 +150,7 @@ void MyDataFetcher::printJsonData()
 
 <a name="documentation"></a>
 ## Documentation ##
+- [API Documentation](https://julrich.gitlab.io/QtPromise/docs/)
 - [Changelog](CHANGELOG.md)
 
 
