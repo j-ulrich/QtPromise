@@ -43,3 +43,7 @@ CMakeLists.txt.user*
 
 # CMake
 build*/
+
+# Project specific
+artifacts/
+public/
