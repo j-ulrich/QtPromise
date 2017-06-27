@@ -4,7 +4,8 @@
 
 > Promise Pattern for Qt
 
-![Build status](https://gitlab.com/julrich/QtPromise/badges/master/build.svg)
+[![Build status](https://gitlab.com/julrich/QtPromise/badges/master/build.svg)](https://gitlab.com/julrich/QtPromise/pipelines?scope=branches)
+[![Coverage report](https://gitlab.com/julrich/QtPromise/badges/master/coverage.svg)](https://julrich.gitlab.io/QtPromise/coverage/)
 
 ### Table of Contents ###
 > - [Motivation](#motivation)
