@@ -53,6 +53,7 @@ archive_tags:
   stage: deploy
   dependencies:
     - build
+    - test
   script:
     - echo "Archiving artifacts of tag ${CI_COMMIT_TAG}"
     - mv "${ARTIFACTS_DIR}/bin" "bin"
@@ -74,6 +75,7 @@ pages:
   stage: deploy
   dependencies:
     - build
+    - test
   script:
     - mkdir -p "public/docs"
     - cp -r "${ARTIFACTS_DIR}/docs"/* "public/docs/"
