@@ -10,6 +10,15 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) specifi
 ---
 
 
+## Unreleased ##
+
+### Added ###
+- [#7] Coverage report
+
+
+---
+
+
 ## [1.0.0] - 2017-06-21 ##
 Initial release.
 
