@@ -41,8 +41,7 @@ test:
     - ctest --output-on-failure # Run the tests
     - cd "${CI_PROJECT_DIR}"
     - mkdir -p "${ARTIFACTS_DIR}/coverage"
-    - gcovr -r "${BUILD_DIR}"
-    - gcovr -r "${BUILD_DIR}" --html --html-details -o "${ARTIFACTS_DIR}/coverage/coverage.html"
+    - gcovr -r . -e "\.moc$" -e "^moc_" --print-summary --html --html-details -o "${ARTIFACTS_DIR}/coverage/coverage.html"
   artifacts:
     paths:
       - "${ARTIFACTS_DIR}"
