@@ -25,6 +25,7 @@ private slots:
 	void testSuccess();
 	void testFail();
 	void testHttp();
+	void testUpload();
 	void testFinishedReply_data();
 	void testFinishedReply();
 	void testDestroyReply();
@@ -114,6 +115,7 @@ void NetworkPromiseTest::testSuccess()
 void NetworkPromiseTest::testFail()
 {
 	QString dataPath("A_File_that_doesnt_exist_9831874375377535764532134848337483.txt");
+	QVERIFY(!QFile::exists(dataPath));
 
 	QNetworkAccessManager qnam;
 	QNetworkRequest request(QUrl::fromLocalFile(dataPath));
@@ -164,6 +166,24 @@ void NetworkPromiseTest::testHttp()
 		QCOMPARE(spies.resolved.count(), 1);
 	else
 		QCOMPARE(spies.rejected.count(), 1);
+}
+
+void NetworkPromiseTest::testUpload()
+{
+	QNetworkAccessManager qnam;
+	QNetworkRequest request(QUrl("https://eu.httpbin.org/post"));
+	request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+	QString data("foo bar");
+	QNetworkReply* reply = qnam.post(request, data.toUtf8());
+
+	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
+
+	PromiseSpies spies(promise);
+	QVERIFY(spies.resolved.wait());
+	QVERIFY(spies.notified.count() > 0);
+	QVERIFY(spies.notified.last().first().value<NetworkDeferred::ReplyProgress>().upload.current > 0);
+	QJsonDocument json = QJsonDocument::fromJson(promise->replyData().data);
+	QCOMPARE(json.object()["data"].toString(), data);
 }
 
 /*! Provides the data for the testFinishedReply() test.

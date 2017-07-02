@@ -15,6 +15,9 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) specifi
 ### Added ###
 - [#7] Coverage report
 
+### Changed ###
+- NetworkPromise now filters an unexpected 0/0 upload progress signal from QNetworkReply
+
 
 ---
 
