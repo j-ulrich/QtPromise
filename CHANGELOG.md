@@ -13,6 +13,7 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) specifi
 ## Unreleased ##
 
 ### Added ###
+- [#6] Support for QFuture
 - [#7] Coverage report
 
 

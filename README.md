@@ -68,6 +68,7 @@ progress reporting (yet?).
 - Can be used with any asynchronous operation
 - Supports signals & slots
 - Supports `QNetworkReply`
+- Supports `QFuture`
 - [Semantic versioning](http://semver.org/)
 > **Important note:** The library currently does **not** provide binary compatibility between versions. Only source compatibility is guaranteed between minor and patch versions.
 
