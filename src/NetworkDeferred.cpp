@@ -82,6 +82,12 @@ void NetworkDeferred::replyFinished()
 void NetworkDeferred::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
 	QMutexLocker locker(&m_lock);
+	/* This check is added since there is some unexpected behavior with upload progress
+	 * signals and it's not clear if the same could happen for download progress signals
+	 * as well.
+	 */
+	if (bytesTotal == 0 && m_progress.download.total > 0)
+		return;
 	m_progress.download.current = bytesReceived;
 	m_progress.download.total = bytesTotal;
 	if (this->notify(QVariant::fromValue(m_progress)))
@@ -91,6 +97,11 @@ void NetworkDeferred::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTo
 void NetworkDeferred::replyUploadProgress(qint64 bytesSent, qint64 bytesTotal)
 {
 	QMutexLocker locker(&m_lock);
+	/* For some reason, Qt emits an upload progress signal with both values set to 0
+	 * after the download of the reply finished although we had an successful upload.
+	 */
+	if (bytesTotal == 0 && m_progress.upload.total > 0)
+		return;
 	m_progress.upload.current = bytesSent;
 	m_progress.upload.total = bytesTotal;
 	if (this->notify(QVariant::fromValue(m_progress)))
