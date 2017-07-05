@@ -1,0 +1,201 @@
+/*! \file
+ *
+ * \date Created on: 02.07.2017
+ * \author jochen.ulrich
+ */
+
+#ifndef QTPROMISE_FUTUREDEFERRED_H_
+#define QTPROMISE_FUTUREDEFERRED_H_
+
+#ifndef QT_NO_QFUTURE
+
+#include <QFutureWatcher>
+#include <QTimer>
+#include "Deferred.h"
+
+namespace QtPromise
+{
+
+/*! \brief Creates a Deferred for a QFuture.
+ *
+ * A FutureDeferred is resolved when the QFuture finishes and rejected
+ * when the QFuture is canceled. In both cases, the data provided will be a
+ * QVariantList of the results which have become available.
+ * Additionally, the deferred is notified with a Progress object whenever
+ * the QFuture's progress changes.
+ *
+ * \note It is required that the result type of the QFuture (i.e. the type passed
+ * as template parameter) is registered in Qt's meta type system using Q_DECLARE_METATYPE
+ * since it will be stored in a QVariantList.
+ *
+ * Similar to NetwordDeferred, FutureDeferred emits its signals when the control
+ * returns to the event loop. This ensures that the signals can be handled even if
+ * the QFuture is already finished when the FutureDeferred is created.
+ *
+ * In most cases, it is not necessary to create a FutureDeferred directly but instead
+ * use the convenience method FuturePromise::create(const QFuture<T>&) which returns a
+ * promise on a FutureDeferred.
+ * Creating a FutureDeferred directly is only needed if the deferred should be
+ * resolved/rejected/notified independently of the QFuture, which should be
+ * a very rare use case.
+ *
+ * \threadsafeClass
+ * \author jochen.ulrich
+ * \since 1.1.0
+ *
+ * \sa FuturePromise
+ * \sa \ref page_asyncSignalEmission
+ */
+class FutureDeferred : public Deferred
+{
+	Q_OBJECT
+
+public:
+	/*! Smart pointer to FutureDeferred. */
+	typedef QSharedPointer<FutureDeferred> Ptr;
+
+	/*! Creates a FutureDeferred for a QFuture.
+	 *
+	 * \tparam T The result type of the \p future.
+	 * \param future The QFuture representing the asynchronous operation.
+	 * \return QSharedPointer to a new, pending FutureDeferred.
+	 */
+	template<typename T>
+	static Ptr create(const QFuture<T>& future);
+
+	/*! Represents the progress of a download or upload.
+	 */
+	struct Progress
+	{
+		/*! Minimum value of the progress. */
+		int min = -1;
+		/*! Maximum value of the progress. */
+		int max = -1;
+		/*! Current value of the progress. */
+		int value = -1;
+		/*! Status text of the progress. */
+		QString text;
+
+		/*! Compares two Progress objects for equality.
+		 *
+		 * \param other The Progress object to compare to.
+		 * \return \c true if \p min, \p max, \p value and \p text are equal
+		 * for \c this and \p other. \c false otherwise.
+		 */
+		bool operator==(const Progress& other) const
+		{
+			return min == other.min && max == other.max && value == other.value && text == other.text;
+		}
+	};
+
+	QVariantList results() const { QMutexLocker locker(&m_lock); return m_results; }
+
+Q_SIGNALS:
+	/*! Emitted when the QFuture finishes successfully.
+	 *
+	 * \param results The results provided by the QFuture.
+	 */
+	void resolved(const QVariantList& results) const;
+	/*! Emitted when the QFuture was canceled.
+	 *
+	 * \param results The results that have been created by the QFuture until it was canceled.
+	 */
+	void rejected(const QVariantList& results) const;
+	/*! Emitted when the progress of the QFuture changes.
+	 *
+	 * \param progress A FutureDeferred::Progress object.
+	 */
+	void notified(const QtPromise::FutureDeferred::Progress& progress) const;
+
+protected:
+	/*! Creates a FutureDeferred for a given QFuture.
+	 *
+	 * \tparam T The result type of the \p future.
+	 * \param future The QFuture which is represented by the created FutureDeferred.
+	 */
+	template<typename T>
+	FutureDeferred(const QFuture<T>& future);
+
+private Q_SLOTS:
+	void futureFinished(const QVariantList& results);
+	void futureCanceled(const QVariantList& results);
+	void futureProgressRangeChanged(int min, int max);
+	void futureProgressTextChanged(const QString& text);
+	void futureProgressValueChanged(int value);
+
+private:
+	template<typename T>
+	static QVariantList listToVariantList(const QList<T>& list);
+
+	mutable QMutex m_lock;
+	QVariantList m_results;
+	Progress m_progress;
+
+	void registerMetaTypes() const;
+};
+
+
+
+//####### Template Method Implementation #######
+template<typename T>
+FutureDeferred::FutureDeferred(const QFuture<T>& future)
+{
+	registerMetaTypes();
+
+	if (future.isFinished())
+	{
+		QTimer::singleShot(0, this, [this, future] {
+			this->futureFinished(listToVariantList(future.results()));
+		});
+	}
+	else if (future.isCanceled())
+	{
+		QTimer::singleShot(0, this, [this, future] {
+			this->futureCanceled(listToVariantList(future.results()));
+		});
+	}
+	else
+	{
+		auto futureWatcher = new QFutureWatcher<T>{this};
+
+		connect(futureWatcher, &QFutureWatcher<T>::finished, [this, future] {
+			this->futureFinished(listToVariantList(future.results()));
+		});
+		connect(futureWatcher, &QFutureWatcher<T>::canceled, [this, future] {
+			this->futureCanceled(listToVariantList(future.results()));
+		});
+		connect(futureWatcher, &QFutureWatcher<T>::progressRangeChanged,
+		        this, &FutureDeferred::futureProgressRangeChanged);
+		connect(futureWatcher, &QFutureWatcher<T>::progressTextChanged,
+		        this, &FutureDeferred::futureProgressTextChanged);
+		connect(futureWatcher, &QFutureWatcher<T>::progressValueChanged,
+		        this, &FutureDeferred::futureProgressValueChanged);
+
+	}
+
+}
+
+template<typename T>
+FutureDeferred::Ptr FutureDeferred::create(const QFuture<T>& future)
+{
+	return Ptr(new FutureDeferred(future), &QObject::deleteLater);
+}
+
+template<typename T>
+QVariantList FutureDeferred::listToVariantList(const QList<T>& list)
+{
+	QVariantList result;
+	for (T entry : list)
+		result << QVariant::fromValue(entry);
+	return result;
+}
+
+
+} /* namespace QtPromise */
+
+Q_DECLARE_METATYPE(QtPromise::FutureDeferred::Progress)
+
+
+#endif /* QT_NO_QTFUTURE */
+
+#endif /* QTPROMISE_FUTUREDEFERRED_H_ */

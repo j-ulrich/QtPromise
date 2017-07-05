@@ -9,7 +9,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt5 COMPONENTS Core Network REQUIRED)
+find_package(Qt5 COMPONENTS Core Network OPTIONAL_COMPONENTS Concurrent)
 
 get_target_property(QT5CORE_LOCATION Qt5::Core LOCATION)
 get_filename_component(QT5_BIN_DIR ${QT5CORE_LOCATION} DIRECTORY)
