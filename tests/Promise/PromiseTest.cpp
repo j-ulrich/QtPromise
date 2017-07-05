@@ -24,7 +24,7 @@ class PromiseTest : public QObject
 {
 	Q_OBJECT
 
-private slots:
+private Q_SLOTS:
 	void testConstructor();
 	void testConstructorWithResolvedDeferred();
 	void testConstructorWithRejectedDeferred();

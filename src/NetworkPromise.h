@@ -56,7 +56,7 @@ public:
 	 */
 	NetworkDeferred::Error error() const;
 
-signals:
+Q_SIGNALS:
 	/*! \copydoc NetworkDeferred::resolved()
 	 * \sa NetworkDeferred::resolved()
 	 */

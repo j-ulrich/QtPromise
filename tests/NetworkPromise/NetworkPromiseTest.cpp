@@ -20,7 +20,7 @@ class NetworkPromiseTest : public QObject
 {
 	Q_OBJECT
 
-private slots:
+private Q_SLOTS:
 	void cleanup();
 	void testSuccess();
 	void testFail();

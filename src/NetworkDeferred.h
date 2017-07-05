@@ -206,7 +206,7 @@ public:
 	 */
 	Error error() const { QMutexLocker locker(&m_lock); return m_error; }
 
-signals:
+Q_SIGNALS:
 	/*! Emitted when the QNetworkReply finishes successfully.
 	 *
 	 * \param data The NetworkDeferred::ReplyData.
@@ -233,7 +233,7 @@ protected:
 	 */
 	NetworkDeferred(QNetworkReply* reply);
 
-private slots:
+private Q_SLOTS:
 	void replyFinished();
 	void replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 	void replyUploadProgress(qint64 bytesSent, qint64 bytesTotal);

@@ -2,7 +2,7 @@ namespace QtPromise {
 
 /*!
 
-\mainpage %Qt Promise
+\mainpage %Qt %Promise
 
 ## Introduction ##
 The %Qt %Promise library provides two main interfaces: Promise and Deferred.\n

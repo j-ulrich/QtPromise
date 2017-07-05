@@ -216,7 +216,7 @@ public:
 	Ptr always(AlwaysFunc&& alwaysCallback) const { return this->then(alwaysCallback, alwaysCallback); }
 
 
-signals:
+Q_SIGNALS:
 	/*! Emitted when the Promise's Deferred is resolved.
 	 *
 	 * \param value The result of the asynchronous operation.

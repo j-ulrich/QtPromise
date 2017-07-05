@@ -74,13 +74,13 @@ void ChildDeferred::onParentResolved(const QVariant& value)
 {
 	QMutexLocker locker(&m_lock);
 	m_resolvedCount += 1;
-	emit parentResolved(value);
+	Q_EMIT parentResolved(value);
 	if (m_resolvedCount == m_parents.size())
 	{
 		QList<QVariant> results;
 		for (Deferred::Ptr parent : m_parents)
 			results.append(parent->data());
-		emit parentsResolved(results);
+		Q_EMIT parentsResolved(results);
 	}
 }
 
@@ -88,13 +88,13 @@ void ChildDeferred::onParentRejected(const QVariant& reason)
 {
 	QMutexLocker locker(&m_lock);
 	m_rejectedCount += 1;
-	emit parentRejected(reason);
+	Q_EMIT parentRejected(reason);
 	if (m_rejectedCount == m_parents.size())
 	{
 		QList<QVariant> reasons;
 		for (Deferred::Ptr parent : m_parents)
 			reasons.append(parent->data());
-		emit parentsRejected(reasons);
+		Q_EMIT parentsRejected(reasons);
 	}
 }
 

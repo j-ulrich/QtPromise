@@ -146,7 +146,7 @@ public:
 	 */
 	QVariant data() const { QMutexLocker locker(&m_lock); return m_data; }
 
-signals:
+Q_SIGNALS:
 	/*! Emitted when the asynchronous operation was successful.
 	 *
 	 * \param value The result of the asynchronous operation.
@@ -169,7 +169,7 @@ signals:
 	 */
 	void notified(const QVariant& progress) const;
 
-public slots:
+public Q_SLOTS:
 	/*! Communicates success of the asynchronous operation.
 	 *
 	 * Call this slot when the asynchronous operation succeeded to submit

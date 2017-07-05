@@ -68,7 +68,7 @@ bool Deferred::resolve(const QVariant& value)
 	{
 		m_data = value;
 		m_state = Resolved;
-		emit resolved(m_data);
+		Q_EMIT resolved(m_data);
 		return true;
 	}
 	else
@@ -86,7 +86,7 @@ bool Deferred::reject(const QVariant& reason)
 	{
 		m_data = reason;
 		m_state = Rejected;
-		emit rejected(m_data);
+		Q_EMIT rejected(m_data);
 		return true;
 	}
 	else
@@ -102,7 +102,7 @@ bool Deferred::notify(const QVariant& progress)
 
 	if (m_state == Pending)
 	{
-		emit notified(progress);
+		Q_EMIT notified(progress);
 		return true;
 	}
 	else

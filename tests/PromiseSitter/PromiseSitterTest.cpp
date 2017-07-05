@@ -23,7 +23,7 @@ class PromiseSitterTest : public QObject
 {
 	Q_OBJECT
 
-private slots:
+private Q_SLOTS:
 	void testAddContainsRemove();
 	void testPromiseLifetime_data();
 	void testPromiseLifetime();

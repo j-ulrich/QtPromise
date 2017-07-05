@@ -16,6 +16,10 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) specifi
 - [#6] Support for QFuture
 - [#7] Coverage report
 
+### Changed ###
+- Replaced Qt custom keywords (signals, slots, emit) with the corresponding preprocessor macros
+  to be compatible with the "no_keywords" configuration.
+
 
 ---
 
