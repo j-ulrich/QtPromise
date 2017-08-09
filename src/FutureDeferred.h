@@ -33,8 +33,8 @@ namespace QtPromise
  * the QFuture is already finished when the FutureDeferred is created.
  *
  * In most cases, it is not necessary to create a FutureDeferred directly but instead
- * use the convenience method FuturePromise::create(const QFuture<T>&) which returns a
- * promise on a FutureDeferred.
+ * use the convenience method FuturePromise::create(const QFuture<T>&) which creates a
+ * FutureDeferred and directly returns a promise on it.
  * Creating a FutureDeferred directly is only needed if the deferred should be
  * resolved/rejected/notified independently of the QFuture, which should be
  * a very rare use case.

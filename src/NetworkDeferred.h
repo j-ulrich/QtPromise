@@ -26,8 +26,8 @@ namespace QtPromise {
  * the QNetworkReply is already finished when the NetworkDeferred is created.
  *
  * In most cases, it is not necessary to create a NetworkDeferred directly but instead
- * use the convenience method NetworkPromise::create(QNetworkReply*) which returns a
- * promise on a NetworkDeferred.
+ * use the convenience method NetworkPromise::create(QNetworkReply*) which creats a
+ * NetworkDeferred and directly returns a promise on it.
  * Creating a NetworkDeferred directly is only needed if the deferred should be
  * resolved/rejected/notified independently of the QNetworkReply, which should be
  * a very rare use case.
