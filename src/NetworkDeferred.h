@@ -186,6 +186,10 @@ public:
 	/*! Creates a NetworkDeferred for a QNetworkReply.
 	 *
 	 * \param reply The QNetworkReply performing the transmission.
+	 * \note The NetworkDeferred takes ownership of the \p reply by
+	 * becoming its parent. If you don't want this, change the \p reply's
+	 * parent after calling create() and ensure the \p reply exists as long
+	 * as this NetworkDeferred is pending.
 	 * \return QSharedPointer to a new, pending NetworkDeferred.
 	 */
 	static Ptr create(QNetworkReply* reply);
@@ -230,6 +234,7 @@ protected:
 	/*! Creates a NetworkDeferred for a given QNetworkReply.
 	 *
 	 * \param reply The QNetworkReply which is represented by the created NetworkDeferred.
+	 * \note The NetworkDeferred takes ownership of the \p reply.
 	 */
 	NetworkDeferred(QNetworkReply* reply);
 
