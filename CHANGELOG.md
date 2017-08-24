@@ -11,9 +11,10 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) specifi
 
 
 ## Unreleased ##
+Feature addition: QFuture support
 
 ### Added ###
-- [#6] Support for QFuture
+- [#6] Support for QFuture: FuturePromise and FutureDeferred
 - [#7] Coverage report
 
 ### Changed ###

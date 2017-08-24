@@ -99,6 +99,10 @@ Q_SIGNALS:
 	/*! Emitted when the QFuture was canceled.
 	 *
 	 * \param results The results that have been created by the QFuture until it was canceled.
+	 * \note This includes only continuous results. Meaning results with index in the range
+	 * from 0 to `future.resultCount() - 1`.
+	 *
+	 * \sa QFuture::resultCount()
 	 */
 	void rejected(const QVariantList& results) const;
 	/*! Emitted when the progress of the QFuture changes.
@@ -159,10 +163,18 @@ FutureDeferred::FutureDeferred(const QFuture<T>& future)
 		auto futureWatcher = new QFutureWatcher<T>{this};
 
 		connect(futureWatcher, &QFutureWatcher<T>::finished, [this, future] {
-			this->futureFinished(listToVariantList(future.results()));
+			if (!future.isCanceled())
+				this->futureFinished(listToVariantList(future.results()));
 		});
 		connect(futureWatcher, &QFutureWatcher<T>::canceled, [this, future] {
-			this->futureCanceled(listToVariantList(future.results()));
+			/* future.results() does *NOT* return the achieved results
+			 * after the future has been cancelled.
+			 * So we have to get the results "manually".
+			 */
+			QVariantList results;
+			for (int i=0; i < future.resultCount(); ++i)
+				results << future.resultAt(0);
+			this->futureCanceled(listToVariantList(results));
 		});
 		connect(futureWatcher, &QFutureWatcher<T>::progressRangeChanged,
 		        this, &FutureDeferred::futureProgressRangeChanged);
@@ -171,6 +183,7 @@ FutureDeferred::FutureDeferred(const QFuture<T>& future)
 		connect(futureWatcher, &QFutureWatcher<T>::progressValueChanged,
 		        this, &FutureDeferred::futureProgressValueChanged);
 
+		futureWatcher->setFuture(future);
 	}
 
 }

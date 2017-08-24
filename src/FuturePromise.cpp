@@ -35,7 +35,7 @@ FuturePromise::Ptr FuturePromise::create(FutureDeferred::Ptr deferred)
 
 QVariantList FuturePromise::results() const
 {
-	return m_deferred.staticCast<FuturePromise>()->results();
+	return m_deferred.staticCast<FutureDeferred>()->results();
 }
 
 
