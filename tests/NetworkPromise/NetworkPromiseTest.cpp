@@ -94,7 +94,7 @@ void NetworkPromiseTest::testSuccess()
 	QVERIFY(progress.download.current > 0);
 	QVERIFY(progress.download.total > 0);
 	QVERIFY(spies.baseNotified.count() > 0);
-	QCOMPARE(spies.baseNotified.first().first(), QVariant::fromValue(progress));
+	QCOMPARE(spies.baseNotified.first().first().value<NetworkDeferred::ReplyProgress>(), progress);
 }
 
 /*! \test Tests a failed request with a NetworkPromise.

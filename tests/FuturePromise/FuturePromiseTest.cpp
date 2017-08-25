@@ -56,7 +56,7 @@ FuturePromiseTest::PromiseSpies::PromiseSpies(FuturePromise::Ptr promise)
 
 void FuturePromiseTest::initTestCase()
 {
-	/* Ensure we have exactly one worker thread.
+	/* Ensure we have at most one worker thread.
 	 * Else it is impossible to have the QFutures report progress in a
 	 * predictable manner.
 	 */
@@ -100,7 +100,7 @@ void FuturePromiseTest::testBasicFuture()
 	QCOMPARE(spies.baseResolved.count(), 1);
 	QCOMPARE(spies.resolved.count(), 1);
 	QCOMPARE(promise->results(), spies.resolved.first().first().toList());
-	QCOMPARE(promise->results().first(), QVariant::fromValue(returnValue));
+	QCOMPARE(promise->results().first().value<int>(), returnValue);
 }
 
 void FuturePromiseTest::testMultipleResults()
@@ -173,7 +173,7 @@ void FuturePromiseTest::testCancel()
 	QCOMPARE(spies.rejected.first().first().toList(), promise->results());
 	QCOMPARE(spies.baseRejected.first().first(), QVariant::fromValue(promise->results()));
 	QCOMPARE(promise->results().count(), 1);
-	QCOMPARE(promise->results().first(), QVariant::fromValue(2));
+	QCOMPARE(promise->results().first().value<int>(), 2);
 }
 
 void FuturePromiseTest::testProgressReporting()
@@ -206,12 +206,12 @@ void FuturePromiseTest::testProgressReporting()
 	expectedProgress.min = 0;
 	expectedProgress.max = input.length();
 	expectedProgress.value = -1;
-	QCOMPARE(spies.notified.at(0).first(), QVariant::fromValue(expectedProgress));
+	QCOMPARE(spies.notified.at(0).first().value<FutureDeferred::Progress>(), expectedProgress);
 
 	expectedProgress.min = 0;
 	expectedProgress.max = input.length();
 	expectedProgress.value = 0;
-	QCOMPARE(spies.notified.at(1).first(), QVariant::fromValue(expectedProgress));
+	QCOMPARE(spies.notified.at(1).first().value<FutureDeferred::Progress>(), expectedProgress);
 
 	waitCond.wakeOne();
 
@@ -220,7 +220,7 @@ void FuturePromiseTest::testProgressReporting()
 	expectedProgress.min = 0;
 	expectedProgress.max = input.length();
 	expectedProgress.value = 1;
-	QCOMPARE(spies.notified.at(2).first(), QVariant::fromValue(expectedProgress));
+	QCOMPARE(spies.notified.at(2).first().value<FutureDeferred::Progress>(), expectedProgress);
 
 	waitCond.wakeOne();
 
@@ -229,7 +229,7 @@ void FuturePromiseTest::testProgressReporting()
 	expectedProgress.min = 0;
 	expectedProgress.max = input.length();
 	expectedProgress.value = 2;
-	QCOMPARE(spies.notified.at(3).first(), QVariant::fromValue(expectedProgress));
+	QCOMPARE(spies.notified.at(3).first().value<FutureDeferred::Progress>(), expectedProgress);
 
 	waitCond.wakeOne();
 
