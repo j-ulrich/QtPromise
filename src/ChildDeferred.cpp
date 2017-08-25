@@ -67,7 +67,7 @@ void ChildDeferred::setParents(QList<Deferred::Ptr> parents, bool trackResults)
 
 void ChildDeferred::onParentDestroyed(QObject* parent) const
 {
-	qCritical("Parent deferred %08p is destroyed while child %08p is still holding a reference.", parent, this);
+	qCritical("Parent deferred %s is destroyed while child %s is still holding a reference.", qUtf8Printable(pointerToQString(parent)), qUtf8Printable(pointerToQString(this)));
 }
 
 void ChildDeferred::onParentResolved(const QVariant& value)

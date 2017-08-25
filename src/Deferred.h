@@ -231,6 +231,8 @@ private:
 	bool m_logInvalidActionMessage = true;
 };
 
+QString pointerToQString(const void* pointer);
+
 }  // namespace QtPromise
 
 Q_DECLARE_METATYPE(QtPromise::DeferredDestroyed)

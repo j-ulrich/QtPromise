@@ -40,7 +40,7 @@ Deferred::~Deferred()
 {
 	if (m_state == Pending)
 	{
-		qDebug("Deferred %08p destroyed while still pending", this);
+		qDebug("Deferred %s destroyed while still pending", qUtf8Printable(pointerToQString(this)));
 #ifndef QT_NO_EXCEPTIONS
 	this->reject(QVariant::fromValue(DeferredDestroyed(this)));
 #else
@@ -57,7 +57,7 @@ void Deferred::setLogInvalidActionMessage(bool logInvalidActionMessage)
 void Deferred::logInvalidActionMessage(const char* action) const
 {
 	if (m_logInvalidActionMessage)
-		qDebug("Cannot %s Deferred %08p which is already %s", action, this, m_state==Resolved?"resolved":"rejected");
+		qDebug("Cannot %s Deferred %s which is already %s", action, qUtf8Printable(pointerToQString(this)), m_state==Resolved?"resolved":"rejected");
 }
 
 bool Deferred::resolve(const QVariant& value)
@@ -112,6 +112,11 @@ bool Deferred::notify(const QVariant& progress)
 	}
 }
 
+QString pointerToQString(const void* pointer)
+{
+	return QString("0x%1").arg(reinterpret_cast<quintptr>(pointer),
+	                           QT_POINTER_SIZE * 2, 16, QChar('0'));
+}
 
 }  // namespace QtPromise
 
