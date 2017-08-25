@@ -25,10 +25,13 @@ private Q_SLOTS:
 	void testSuccess();
 	void testFail();
 	void testHttp();
+	void testUpload();
 	void testFinishedReply_data();
 	void testFinishedReply();
 	void testDestroyReply();
 	void testCachedData();
+	void testFinishedDeferred_data();
+	void testFinishedDeferred();
 
 private:
 	struct PromiseSpies
@@ -81,10 +84,20 @@ void NetworkPromiseTest::testSuccess()
 
 	PromiseSpies spies(promise);
 
+	QCOMPARE(promise->replyData(), NetworkDeferred::ReplyData(QByteArray(), reply));
+	QCOMPARE(promise->error(), NetworkDeferred::Error());
+
+	// "Execute the request"
 	QVERIFY(spies.resolved.wait());
+
+	// Check resolved data
 	QCOMPARE(spies.resolved.count(), 1);
 	NetworkDeferred::ReplyData replyData = spies.resolved.first().first().value<NetworkDeferred::ReplyData>();
 	QCOMPARE(replyData.data, expectedData);
+	QCOMPARE(replyData.qReply, reply);
+	QCOMPARE(promise->replyData(), replyData);
+	QCOMPARE(promise->error(), NetworkDeferred::Error());
+
 	QCOMPARE(spies.baseResolved.count(), 1);
 	QCOMPARE(spies.baseResolved.first().first().value<NetworkDeferred::ReplyData>(), replyData);
 	QCOMPARE(spies.rejected.count(), 0);
@@ -102,6 +115,7 @@ void NetworkPromiseTest::testSuccess()
 void NetworkPromiseTest::testFail()
 {
 	QString dataPath("A_File_that_doesnt_exist_9831874375377535764532134848337483.txt");
+	QVERIFY(!QFile::exists(dataPath));
 
 	QNetworkAccessManager qnam;
 	QNetworkRequest request(QUrl::fromLocalFile(dataPath));
@@ -111,15 +125,22 @@ void NetworkPromiseTest::testFail()
 
 	PromiseSpies spies(promise);
 
+	// "Execute the request"
 	QVERIFY(spies.rejected.wait());
+
 	QCOMPARE(spies.resolved.count(), 0);
 	QCOMPARE(spies.baseResolved.count(), 0);
+
+	// Check rejected data
 	QCOMPARE(spies.rejected.count(), 1);
 	NetworkDeferred::Error error = spies.rejected.first().first().value<NetworkDeferred::Error>();
 	QCOMPARE(error.code, QNetworkReply::ContentNotFoundError);
 	qDebug() << "Error code:" << error.code;
 	qDebug() << "Error message:" << error.message;
 	QVERIFY(!error.message.isEmpty());
+	QCOMPARE(promise->replyData(), NetworkDeferred::ReplyData(QByteArray(), reply));
+	QCOMPARE(promise->error(), error);
+
 	QCOMPARE(spies.baseRejected.count(), 1);
 	QCOMPARE(spies.baseRejected.first().first().value<NetworkDeferred::Error>(), error);
 	QCOMPARE(spies.notified.count(), 0);
@@ -140,17 +161,39 @@ void NetworkPromiseTest::testHttp()
 	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
 
 	PromiseSpies spies(promise);
-	QTRY_VERIFY_WITH_TIMEOUT(reply->isFinished(), 10 * 1000);
+	QTRY_VERIFY_WITH_TIMEOUT(reply->isFinished(), 20 * 1000);
 	if (reply->error() == QNetworkReply::NoError)
 		QCOMPARE(spies.resolved.count(), 1);
 	else
 		QCOMPARE(spies.rejected.count(), 1);
 }
 
+void NetworkPromiseTest::testUpload()
+{
+	QNetworkAccessManager qnam;
+	QNetworkRequest request(QUrl("https://eu.httpbin.org/post"));
+	request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+	QString data("foo bar");
+	QNetworkReply* reply = qnam.post(request, data.toUtf8());
+
+	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
+
+	PromiseSpies spies(promise);
+	QVERIFY(spies.resolved.wait());
+	QVERIFY(spies.notified.count() > 0);
+	QVERIFY(spies.notified.last().first().value<NetworkDeferred::ReplyProgress>().upload.current > 0);
+	QJsonDocument json = QJsonDocument::fromJson(promise->replyData().data);
+	QCOMPARE(json.object()["data"].toString(), data);
+}
+
 /*! Provides the data for the testFinishedReply() test.
  */
 void NetworkPromiseTest::testFinishedReply_data()
 {
+	/* Note that this data method is also used for
+	 * the testFinishedDeferredTest()!
+	 */
+
 	QTest::addColumn<QString>("dataPath");
 	QTest::addColumn<bool>("expectResolve");
 
@@ -178,8 +221,8 @@ void NetworkPromiseTest::testFinishedReply()
 	QNetworkRequest request(QUrl::fromLocalFile(dataPath));
 	QNetworkReply* reply = qnam.get(request);
 
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 500);
-	QVERIFY(reply->isFinished());
+	QTRY_VERIFY(reply->isFinished());
+	QTest::qWait(50); // Make sure the events (signals) of the reply are processed
 
 	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
 
@@ -250,6 +293,61 @@ void NetworkPromiseTest::testCachedData()
 	NetworkPromise::Ptr promise = NetworkPromise::create(secondReply);
 	QTRY_VERIFY(secondReply->isFinished());
 	QTRY_COMPARE(promise->state(), Deferred::Resolved);
+}
+
+/*! Provides the data for the testFinishedDeferred() test.
+ */
+void NetworkPromiseTest::testFinishedDeferred_data()
+{
+	// Reuse the data from the testFinishedReply() test.
+	testFinishedReply_data();
+}
+
+void NetworkPromiseTest::testFinishedDeferred()
+{
+	QFETCH(QString, dataPath);
+	QFETCH(bool, expectResolve);
+
+	QByteArray expectedData;
+	QFile dataFile(dataPath);
+	if (dataFile.open(QIODevice::ReadOnly))
+	{
+		expectedData = dataFile.readAll();
+		dataFile.close();
+	}
+
+	QNetworkAccessManager qnam;
+	QNetworkRequest request(QUrl::fromLocalFile(dataPath));
+	QNetworkReply* reply = qnam.get(request);
+
+	NetworkDeferred::Ptr deferred = NetworkDeferred::create(reply);
+
+	QTRY_VERIFY(reply->isFinished());
+	QTRY_COMPARE(deferred->state(), expectResolve? Deferred::Resolved : Deferred::Rejected);
+
+	NetworkPromise::Ptr promise = NetworkPromise::create(deferred);
+
+	PromiseSpies spies(promise);
+
+	bool resolvedCalled = false;
+	QVariant resolvedData;
+	Promise::Ptr newPromise = promise->then([&](const QVariant& data) {
+		resolvedCalled = true;
+		resolvedData = data;
+	});
+
+	if (expectResolve)
+		QVERIFY(spies.resolved.wait(500));
+	else
+		QVERIFY(spies.rejected.wait(500));
+	QCOMPARE(spies.resolved.count(), expectResolve? 1 : 0);
+	QCOMPARE(spies.baseResolved.count(), expectResolve? 1 : 0);
+	QCOMPARE(spies.rejected.count(), expectResolve? 0 : 1);
+	QCOMPARE(spies.baseRejected.count(), expectResolve? 0 : 1);
+	QCOMPARE(spies.notified.count(), 0);
+	QCOMPARE(spies.baseNotified.count(), 0);
+	QCOMPARE(resolvedCalled, expectResolve);
+	QCOMPARE(resolvedData.value<NetworkDeferred::ReplyData>().data, expectedData);
 }
 
 

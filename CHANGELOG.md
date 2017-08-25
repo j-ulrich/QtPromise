@@ -20,6 +20,7 @@ Feature addition: QFuture support
 ### Changed ###
 - Replaced Qt custom keywords (signals, slots, emit) with the corresponding preprocessor macros
   to be compatible with the "no_keywords" configuration.
+- NetworkPromise now filters an unexpected 0/0 upload progress signal from QNetworkReply
 
 
 ---

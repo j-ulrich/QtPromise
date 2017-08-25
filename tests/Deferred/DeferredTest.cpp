@@ -21,6 +21,7 @@ private Q_SLOTS:
 	void testReject();
 	void testNotify();
 	void testDestructor();
+	void testDeferredDestroyedException();
 	void cleanup();
 
 private:
@@ -158,6 +159,14 @@ void DeferredTest::testDestructor()
 	QVERIFY(spies.rejected.wait()); // Need an event loop to execute deleteLater
 	QCOMPARE(spies.rejected.count(), 1);
 	QVERIFY(spies.rejected.first().first().canConvert<DeferredDestroyed>());
+}
+
+/*! \test Tests the default constructor of DeferredDestroyed.
+ */
+void DeferredTest::testDeferredDestroyedException()
+{
+	DeferredDestroyed ex;
+	QVERIFY(ex.deferred() == nullptr);
 }
 
 
