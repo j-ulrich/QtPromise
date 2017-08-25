@@ -107,6 +107,13 @@ Q_SIGNALS:
 	void rejected(const QVariantList& results) const;
 	/*! Emitted when the progress of the QFuture changes.
 	 *
+	 * \note When using a QFuture from one of the QtConcurrent algorithms,
+	 * the notified() signal is emitted twice right when the asynchronous
+	 * operation starts. This arises from the behavior of the QFutureWatcher
+	 * which first signals a change in the progress range when set to the initial
+	 * values and then signals a change in the progress value when set to the
+	 * initial value.
+	 *
 	 * \param progress A FutureDeferred::Progress object.
 	 */
 	void notified(const QtPromise::FutureDeferred::Progress& progress) const;
