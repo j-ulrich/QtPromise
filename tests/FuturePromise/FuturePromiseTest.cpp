@@ -27,6 +27,10 @@ private Q_SLOTS:
 	void testMultipleResults();
 	void testProgressReporting();
 	void testCancel();
+	void testFinishedFuture_data();
+	void testFinishedFuture();
+	void testFinishedDeferred_data();
+	void testFinishedDeferred();
 
 private:
 	struct PromiseSpies
@@ -115,7 +119,7 @@ void FuturePromiseTest::testMultipleResults()
 		return value * 2;
 	};
 
-	// Prevent the thread(s) from running before we set up the promise
+	// Prevent the thread from running before we set up the promise
 	mutex.lock();
 
 	QFuture<int> future = QtConcurrent::mapped(input, mapFunction);
@@ -124,7 +128,7 @@ void FuturePromiseTest::testMultipleResults()
 
 	PromiseSpies spies(promise);
 
-	// Allow the thread(s) to run
+	// Allow the thread to run
 	mutex.unlock();
 
 	QTRY_COMPARE(promise->state(), Deferred::Resolved);
@@ -135,7 +139,6 @@ void FuturePromiseTest::testMultipleResults()
 	QCOMPARE(spies.resolved.count(), 1);
 	QCOMPARE(spies.resolved.first().first().toList(), promise->results());
 	QCOMPARE(spies.baseResolved.first().first(), QVariant::fromValue(promise->results()));
-
 }
 
 void FuturePromiseTest::testCancel()
@@ -237,6 +240,137 @@ void FuturePromiseTest::testProgressReporting()
 	QTRY_COMPARE(promise->state(), Deferred::Resolved);
 }
 
+/*! Provides the data for the testFinishedFuture() test.
+ */
+void FuturePromiseTest::testFinishedFuture_data()
+{
+	/* Note that this data method is also used for
+	 * the testFinishedDeferred()!
+	 */
+
+	QTest::addColumn<bool>("cancel");
+	QTest::addColumn<QVariantList>("expectedResults");
+
+	QTest::newRow("success") << false << (QVariantList() << 1 << 2 << 3);
+	QTest::newRow("cancel") << true << QVariantList();
+}
+
+/*! \test Tests the FuturePromise with a QFuture which has finished
+ * and emitted it's events before the FuturePromise is created.
+ */
+void FuturePromiseTest::testFinishedFuture()
+{
+	QFETCH(bool, cancel);
+
+	QList<int> input;
+	input << 1 << 2 << 3;
+
+	QMutex mutex;
+
+	std::function<int(const int&)> filterFunction = [&](const int& value) -> bool {
+		QMutexLocker locker(&mutex);
+		return true;
+	};
+
+	// Prevent the thread from running before we could cancel it
+	mutex.lock();
+
+	QFuture<int> future = QtConcurrent::filtered(input, filterFunction);
+
+	if (cancel)
+		future.cancel();
+
+	// Allow the thread to run
+	mutex.unlock();
+
+	QTRY_VERIFY(future.isFinished());
+
+	FuturePromise::Ptr promise = FuturePromise::create(future);
+
+	PromiseSpies spies(promise);
+
+	if (cancel)
+	{
+		QTRY_COMPARE(promise->state(), Deferred::Rejected);
+		QTRY_COMPARE(spies.baseRejected.count(), 1);
+		QTRY_COMPARE(spies.rejected.count(), 1);
+		QCOMPARE(spies.rejected.first().first().toList(), promise->results());
+		QCOMPARE(spies.baseRejected.first().first(), QVariant::fromValue(promise->results()));
+	}
+	else
+	{
+		QTRY_COMPARE(promise->state(), Deferred::Resolved);
+		QTRY_COMPARE(spies.baseResolved.count(), 1);
+		QTRY_COMPARE(spies.resolved.count(), 1);
+		QCOMPARE(spies.resolved.first().first().toList(), promise->results());
+		QCOMPARE(spies.baseResolved.first().first(), QVariant::fromValue(promise->results()));
+	}
+	QTEST(promise->results(), "expectedResults");
+}
+
+
+/*! Provides the data for the testFinishedDeferred() test.
+ */
+void FuturePromiseTest::testFinishedDeferred_data()
+{
+	// Reuse the data from the testFinishedFuture() test.
+	testFinishedFuture_data();
+}
+
+/*! \test Tests the FuturePromise with a FutureDeferred which has finished
+ * and emitted it's events before the FuturePromise is created.
+ */
+void FuturePromiseTest::testFinishedDeferred()
+{
+	QFETCH(bool, cancel);
+
+	QList<int> input;
+	input << 1 << 2 << 3;
+
+	QMutex mutex;
+
+	std::function<int(const int&)> filterFunction = [&](const int& value) -> bool {
+		QMutexLocker locker(&mutex);
+		return true;
+	};
+
+	// Prevent the thread from running before we could cancel it
+	mutex.lock();
+
+	QFuture<int> future = QtConcurrent::filtered(input, filterFunction);
+
+	if (cancel)
+		future.cancel();
+
+	// Allow the thread to run
+	mutex.unlock();
+
+	FutureDeferred::Ptr deferred = FutureDeferred::create(future);
+
+	QTRY_VERIFY(future.isFinished());
+
+	FuturePromise::Ptr promise = FuturePromise::create(deferred);
+
+	PromiseSpies spies(promise);
+
+	if (cancel)
+	{
+		QTRY_COMPARE(promise->state(), Deferred::Rejected);
+		QTRY_COMPARE(spies.baseRejected.count(), 1);
+		QTRY_COMPARE(spies.rejected.count(), 1);
+		QCOMPARE(spies.rejected.first().first().toList(), promise->results());
+		QCOMPARE(spies.baseRejected.first().first(), QVariant::fromValue(promise->results()));
+	}
+	else
+	{
+		QTRY_COMPARE(promise->state(), Deferred::Resolved);
+		QTRY_COMPARE(spies.baseResolved.count(), 1);
+		QTRY_COMPARE(spies.resolved.count(), 1);
+		QCOMPARE(spies.resolved.first().first().toList(), promise->results());
+		QCOMPARE(spies.baseResolved.first().first(), QVariant::fromValue(promise->results()));
+	}
+	QTEST(promise->results(), "expectedResults");
+}
 
 }  // namespace Tests
 }  // namespace QtPromise

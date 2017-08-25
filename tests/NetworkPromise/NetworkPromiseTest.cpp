@@ -191,7 +191,7 @@ void NetworkPromiseTest::testUpload()
 void NetworkPromiseTest::testFinishedReply_data()
 {
 	/* Note that this data method is also used for
-	 * the testFinishedDeferredTest()!
+	 * the testFinishedDeferred()!
 	 */
 
 	QTest::addColumn<QString>("dataPath");
@@ -303,6 +303,9 @@ void NetworkPromiseTest::testFinishedDeferred_data()
 	testFinishedReply_data();
 }
 
+/*! \test Tests the NetworkPromise with a NetworkDeferred which has finished
+ * and emitted it's events before the NetworkPromise is created.
+ */
 void NetworkPromiseTest::testFinishedDeferred()
 {
 	QFETCH(QString, dataPath);

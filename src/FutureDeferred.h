@@ -146,16 +146,16 @@ FutureDeferred::FutureDeferred(const QFuture<T>& future)
 {
 	registerMetaTypes();
 
-	if (future.isFinished())
-	{
-		QTimer::singleShot(0, this, [this, future] {
-			this->futureFinished(listToVariantList(future.results()));
-		});
-	}
-	else if (future.isCanceled())
+	if (future.isCanceled())
 	{
 		QTimer::singleShot(0, this, [this, future] {
 			this->futureCanceled(listToVariantList(future.results()));
+		});
+	}
+	else if (future.isFinished())
+	{
+		QTimer::singleShot(0, this, [this, future] {
+			this->futureFinished(listToVariantList(future.results()));
 		});
 	}
 	else
