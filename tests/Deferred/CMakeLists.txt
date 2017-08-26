@@ -8,3 +8,4 @@ add_executable(test_Deferred
 target_link_libraries(test_Deferred Qt5::Core Qt5::Test)
 
 add_test(NAME Deferred COMMAND test_Deferred)
+set_tests_properties(Deferred PROPERTIES TIMEOUT 30)

@@ -11,3 +11,4 @@ add_executable(test_FuturePromise
 target_link_libraries(test_FuturePromise Qt5::Core Qt5::Concurrent Qt5::Test)
 
 add_test(NAME FuturePromise COMMAND test_FuturePromise)
+set_tests_properties(FuturePromise PROPERTIES TIMEOUT 30)
