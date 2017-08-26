@@ -184,14 +184,15 @@ void FuturePromiseTest::testProgressReporting()
 	QList<int> input;
 	input << 1 << 2 << 3;
 
-	QWaitCondition waitCond;
+	QMutex mutex;
 
 	std::function<int(const int&)> mapFunction = [&](const int& value) -> int {
-		QMutex mutex;
 		QMutexLocker locker(&mutex);
-		waitCond.wait(&mutex);
 		return value * 2;
 	};
+
+	// Prevent the thread from running before we set up the promise
+	mutex.lock();
 
 	QFuture<int> future = QtConcurrent::mapped(input, mapFunction);
 
@@ -205,39 +206,25 @@ void FuturePromiseTest::testProgressReporting()
 
 	// The first two notifications inform about progress min/max and initial value (0)
 	QTRY_COMPARE(spies.notified.count(), 2);
-	FutureDeferred::Progress expectedProgress;
-	expectedProgress.min = 0;
-	expectedProgress.max = input.length();
-	expectedProgress.value = -1;
-	QCOMPARE(spies.notified.at(0).first().value<FutureDeferred::Progress>(), expectedProgress);
+	FutureDeferred::Progress progress = spies.notified.at(0).first().value<FutureDeferred::Progress>();
+	QCOMPARE(progress.min, 0);
+	QCOMPARE(progress.max, input.length());
+	QCOMPARE(progress.value, -1);
 
-	expectedProgress.min = 0;
-	expectedProgress.max = input.length();
-	expectedProgress.value = 0;
-	QCOMPARE(spies.notified.at(1).first().value<FutureDeferred::Progress>(), expectedProgress);
+	progress = spies.notified.at(1).first().value<FutureDeferred::Progress>();
+	QCOMPARE(progress.min, 0);
+	QCOMPARE(progress.max, input.length());
+	QCOMPARE(progress.value, 0);
 
-	waitCond.wakeOne();
+	// Allow the thread to run
+	mutex.unlock();
 
-	// First real progress
-	QTRY_COMPARE(spies.notified.count(), 3);
-	expectedProgress.min = 0;
-	expectedProgress.max = input.length();
-	expectedProgress.value = 1;
-	QCOMPARE(spies.notified.at(2).first().value<FutureDeferred::Progress>(), expectedProgress);
-
-	waitCond.wakeOne();
-
-	// Second real progress
-	QTRY_COMPARE(spies.notified.count(), 4);
-	expectedProgress.min = 0;
-	expectedProgress.max = input.length();
-	expectedProgress.value = 2;
-	QCOMPARE(spies.notified.at(3).first().value<FutureDeferred::Progress>(), expectedProgress);
-
-	waitCond.wakeOne();
-
-	// Finished
 	QTRY_COMPARE(promise->state(), Deferred::Resolved);
+	QVERIFY(spies.notified.count() > 2);
+	progress = spies.notified.last().first().value<FutureDeferred::Progress>();
+	QCOMPARE(progress.min, 0);
+	QCOMPARE(progress.max, input.length());
+	QCOMPARE(progress.value, input.length());
 }
 
 /*! Provides the data for the testFinishedFuture() test.
