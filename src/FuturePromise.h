@@ -43,10 +43,12 @@ public:
 	 */
 	static Ptr create(FutureDeferred::Ptr deferred);
 
-	/*! \return The data in case this NetworkPromise was already resolved or an empty ReplyData
-	 * object otherwise.
+	/*! \return The list of results in case this NetworkPromise is resolved.
+	 * If this NetworkPromise is rejected, returns the results that have been produced
+	 * up to the time when the QFuture was cancelled.
+	 * Otherwise, returns an empty list.
 	 *
-	 * \sa NetworkDeferred::ReplyData()
+	 * \sa FutureDeferred::rejected()
 	 */
 	QVariantList results() const;
 

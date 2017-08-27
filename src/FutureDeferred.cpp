@@ -8,6 +8,7 @@ namespace QtPromise
 void FutureDeferred::registerMetaTypes()
 {
 	qRegisterMetaType<Progress>();
+	QMetaType::registerEqualsComparator<Progress>();
 	qRegisterMetaType<Progress>("FutureDeferred::Progress");
 	qRegisterMetaType<Progress>("QtPromise::FutureDeferred::Progress");
 }

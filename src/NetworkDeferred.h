@@ -47,6 +47,10 @@ public:
 	typedef QSharedPointer<NetworkDeferred> Ptr;
 
 	/*! The struct used to resolve a NetworkDeferred.
+	 *
+	 * \note This type is registered in Qt's meta type system using
+	 * Q_DECLARE_METATYPE() and using qRegisterMetaType() and
+	 * QMetaType::registerEqualsComparator() in NetworkDeferred().
 	 */
 	struct ReplyData
 	{
@@ -86,6 +90,10 @@ public:
 	};
 
 	/*! Represents the progress of a download or upload.
+	 *
+	 * \note This type is registered in Qt's meta type system using
+	 * Q_DECLARE_METATYPE() and using qRegisterMetaType() and
+	 * QMetaType::registerEqualsComparator() in NetworkDeferred().
 	 */
 	struct Progress
 	{
@@ -111,6 +119,10 @@ public:
 	 * It includes both the download and the upload progress.
 	 * If the QNetworkReply did not download or upload anything yet,
 	 * the values of the corresponding Progress object will be \c -1.
+	 *
+	 * \note This type is registered in Qt's meta type system using
+	 * Q_DECLARE_METATYPE() and using qRegisterMetaType() and
+	 * QMetaType::registerEqualsComparator() in NetworkDeferred().
 	 */
 	struct ReplyProgress
 	{
@@ -134,6 +146,10 @@ public:
 	};
 
 	/*! The struct used to reject a NetworkDeferred.
+	 *
+	 * \note This type is registered in Qt's meta type system using
+	 * Q_DECLARE_METATYPE() and using qRegisterMetaType() and
+	 * QMetaType::registerEqualsComparator() in NetworkDeferred().
 	 */
 	struct Error
 	{
@@ -251,7 +267,7 @@ private:
 	ReplyProgress m_progress;
 	Error m_error;
 
-	void registerMetaTypes() const;
+	static void registerMetaTypes();
 };
 
 }  // namespace QtPromise

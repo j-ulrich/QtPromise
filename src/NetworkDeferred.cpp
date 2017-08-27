@@ -40,18 +40,22 @@ NetworkDeferred::Ptr NetworkDeferred::create(QNetworkReply* reply)
 	return Ptr(new NetworkDeferred(reply), &QObject::deleteLater);
 }
 
-void NetworkDeferred::registerMetaTypes() const
+void NetworkDeferred::registerMetaTypes()
 {
 	qRegisterMetaType<ReplyData>();
+	QMetaType::registerEqualsComparator<ReplyData>();
 	qRegisterMetaType<ReplyData>("NetworkDeferred::ReplyData");
 	qRegisterMetaType<ReplyData>("QtPromise::NetworkDeferred::ReplyData");
 	qRegisterMetaType<Error>();
+	QMetaType::registerEqualsComparator<Error>();
 	qRegisterMetaType<Error>("NetworkDeferred::Error");
 	qRegisterMetaType<Error>("QtPromise::NetworkDeferred::Error");
 	qRegisterMetaType<Progress>();
+	QMetaType::registerEqualsComparator<Progress>();
 	qRegisterMetaType<Progress>("NetworkDeferred::Progress");
 	qRegisterMetaType<Progress>("QtPromise::NetworkDeferred::Progress");
 	qRegisterMetaType<ReplyProgress>();
+	QMetaType::registerEqualsComparator<ReplyProgress>();
 	qRegisterMetaType<ReplyProgress>("NetworkDeferred::ReplyProgress");
 	qRegisterMetaType<ReplyProgress>("QtPromise::NetworkDeferred::ReplyProgress");
 }

@@ -10,6 +10,7 @@ Deferred::Deferred()
 	qRegisterMetaType<DeferredDestroyed>();
 	qRegisterMetaType<DeferredDestroyed>("QtPromise::DeferredDestroyed");
 	qRegisterMetaType<State>();
+	QMetaType::registerEqualsComparator<State>();
 	qRegisterMetaType<State>("Deferred::State");
 	qRegisterMetaType<State>("QtPromise::Deferred::State");
 }

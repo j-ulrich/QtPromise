@@ -64,6 +64,10 @@ public:
 	static Ptr create(const QFuture<T>& future);
 
 	/*! Represents the progress of a download or upload.
+	 *
+	 * \note This type is registered in Qt's meta type system using
+	 * Q_DECLARE_METATYPE() and using qRegisterMetaType() and
+	 * QMetaType::registerEqualsComparator() in FutureDeferred().
 	 */
 	struct Progress
 	{
@@ -88,6 +92,13 @@ public:
 		}
 	};
 
+	/*! \return The list of results in case this NetworkDeferred is resolved.
+	 * If this NetworkDeferred is rejected, returns the results that have been produced
+	 * up to the time when the QFuture was cancelled.
+	 * Otherwise, returns an empty list.
+	 *
+	 * \sa rejected()
+	 */
 	QVariantList results() const { QMutexLocker locker(&m_lock); return m_results; }
 
 Q_SIGNALS:
@@ -98,7 +109,7 @@ Q_SIGNALS:
 	void resolved(const QVariantList& results) const;
 	/*! Emitted when the QFuture was canceled.
 	 *
-	 * \param results The results that have been created by the QFuture until it was canceled.
+	 * \param results The results that have been produced by the QFuture until it was cancelled.
 	 * \note This includes only continuous results. Meaning results with index in the range
 	 * from 0 to `future.resultCount() - 1`.
 	 *
@@ -110,9 +121,9 @@ Q_SIGNALS:
 	 * \note When using a QFuture from one of the QtConcurrent algorithms,
 	 * the notified() signal is emitted twice right when the asynchronous
 	 * operation starts. This arises from the behavior of the QFutureWatcher
-	 * which first signals a change in the progress range when set to the initial
-	 * values and then signals a change in the progress value when set to the
-	 * initial value.
+	 * which first signals a change in the progress range (min and max) when they
+	 * are set to the initial values and then signals a change in the progress value
+	 * when it is set to the initial value.
 	 *
 	 * \param progress A FutureDeferred::Progress object.
 	 */
