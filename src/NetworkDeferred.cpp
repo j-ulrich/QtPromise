@@ -3,6 +3,8 @@
 
 namespace QtPromise {
 
+QAtomicInteger<qint8> NetworkDeferred::m_metaTypesRegistered{0};
+
 NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 	: Deferred(), m_reply(reply), m_lock(QMutex::Recursive)
 {
@@ -42,22 +44,25 @@ NetworkDeferred::Ptr NetworkDeferred::create(QNetworkReply* reply)
 
 void NetworkDeferred::registerMetaTypes()
 {
-	qRegisterMetaType<ReplyData>();
-	QMetaType::registerEqualsComparator<ReplyData>();
-	qRegisterMetaType<ReplyData>("NetworkDeferred::ReplyData");
-	qRegisterMetaType<ReplyData>("QtPromise::NetworkDeferred::ReplyData");
-	qRegisterMetaType<Error>();
-	QMetaType::registerEqualsComparator<Error>();
-	qRegisterMetaType<Error>("NetworkDeferred::Error");
-	qRegisterMetaType<Error>("QtPromise::NetworkDeferred::Error");
-	qRegisterMetaType<Progress>();
-	QMetaType::registerEqualsComparator<Progress>();
-	qRegisterMetaType<Progress>("NetworkDeferred::Progress");
-	qRegisterMetaType<Progress>("QtPromise::NetworkDeferred::Progress");
-	qRegisterMetaType<ReplyProgress>();
-	QMetaType::registerEqualsComparator<ReplyProgress>();
-	qRegisterMetaType<ReplyProgress>("NetworkDeferred::ReplyProgress");
-	qRegisterMetaType<ReplyProgress>("QtPromise::NetworkDeferred::ReplyProgress");
+	if (m_metaTypesRegistered.testAndSetOrdered(0, 1))
+	{
+		qRegisterMetaType<ReplyData>();
+		QMetaType::registerEqualsComparator<ReplyData>();
+		qRegisterMetaType<ReplyData>("NetworkDeferred::ReplyData");
+		qRegisterMetaType<ReplyData>("QtPromise::NetworkDeferred::ReplyData");
+		qRegisterMetaType<Error>();
+		QMetaType::registerEqualsComparator<Error>();
+		qRegisterMetaType<Error>("NetworkDeferred::Error");
+		qRegisterMetaType<Error>("QtPromise::NetworkDeferred::Error");
+		qRegisterMetaType<Progress>();
+		QMetaType::registerEqualsComparator<Progress>();
+		qRegisterMetaType<Progress>("NetworkDeferred::Progress");
+		qRegisterMetaType<Progress>("QtPromise::NetworkDeferred::Progress");
+		qRegisterMetaType<ReplyProgress>();
+		QMetaType::registerEqualsComparator<ReplyProgress>();
+		qRegisterMetaType<ReplyProgress>("NetworkDeferred::ReplyProgress");
+		qRegisterMetaType<ReplyProgress>("QtPromise::NetworkDeferred::ReplyProgress");
+	}
 }
 
 void NetworkDeferred::replyFinished()

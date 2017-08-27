@@ -5,12 +5,17 @@
 namespace QtPromise
 {
 
+QAtomicInteger<qint8> FutureDeferred::m_metaTypesRegistered{0};
+
 void FutureDeferred::registerMetaTypes()
 {
-	qRegisterMetaType<Progress>();
-	QMetaType::registerEqualsComparator<Progress>();
-	qRegisterMetaType<Progress>("FutureDeferred::Progress");
-	qRegisterMetaType<Progress>("QtPromise::FutureDeferred::Progress");
+	if (m_metaTypesRegistered.testAndSetOrdered(0, 1))
+	{
+		qRegisterMetaType<Progress>();
+		QMetaType::registerEqualsComparator<Progress>();
+		qRegisterMetaType<Progress>("FutureDeferred::Progress");
+		qRegisterMetaType<Progress>("QtPromise::FutureDeferred::Progress");
+	}
 }
 
 void FutureDeferred::futureFinished(const QVariantList& results)

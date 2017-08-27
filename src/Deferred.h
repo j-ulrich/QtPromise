@@ -12,6 +12,7 @@
 #include <QMutex>
 #include <QException>
 #include <QSharedPointer>
+#include <QAtomicInteger>
 
 
 namespace QtPromise {
@@ -229,6 +230,9 @@ private:
 	State m_state;
 	QVariant m_data;
 	bool m_logInvalidActionMessage = true;
+
+	static QAtomicInteger<qint8> m_metaTypesRegistered;
+	static void registerMetaTypes();
 };
 
 QString pointerToQString(const void* pointer);

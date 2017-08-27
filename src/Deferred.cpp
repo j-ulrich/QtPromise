@@ -4,15 +4,25 @@
 
 namespace QtPromise {
 
+QAtomicInteger<qint8> Deferred::m_metaTypesRegistered{0};
+
 Deferred::Deferred()
 	: QObject(nullptr), m_state(Pending), m_lock(QMutex::Recursive)
 {
-	qRegisterMetaType<DeferredDestroyed>();
-	qRegisterMetaType<DeferredDestroyed>("QtPromise::DeferredDestroyed");
-	qRegisterMetaType<State>();
-	QMetaType::registerEqualsComparator<State>();
-	qRegisterMetaType<State>("Deferred::State");
-	qRegisterMetaType<State>("QtPromise::Deferred::State");
+	registerMetaTypes();
+}
+
+void Deferred::registerMetaTypes()
+{
+	if (m_metaTypesRegistered.testAndSetOrdered(0, 1))
+	{
+		qRegisterMetaType<DeferredDestroyed>();
+		qRegisterMetaType<DeferredDestroyed>("QtPromise::DeferredDestroyed");
+		qRegisterMetaType<State>();
+		QMetaType::registerEqualsComparator<State>();
+		qRegisterMetaType<State>("Deferred::State");
+		qRegisterMetaType<State>("QtPromise::Deferred::State");
+	}
 }
 
 Deferred::Ptr Deferred::create()
