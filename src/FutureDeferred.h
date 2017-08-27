@@ -136,13 +136,13 @@ private Q_SLOTS:
 
 private:
 	template<typename T>
-	static QVariantList listToVariantList(const QList<T>& list);
+	static QVariantList resultsFromFuture(const QFuture<T>& future);
 
 	mutable QMutex m_lock;
 	QVariantList m_results;
 	Progress m_progress;
 
-	void registerMetaTypes() const;
+	static void registerMetaTypes();
 };
 
 
@@ -156,13 +156,13 @@ FutureDeferred::FutureDeferred(const QFuture<T>& future)
 	if (future.isCanceled())
 	{
 		QTimer::singleShot(0, this, [this, future] {
-			this->futureCanceled(listToVariantList(future.results()));
+			this->futureCanceled(resultsFromFuture(future));
 		});
 	}
 	else if (future.isFinished())
 	{
 		QTimer::singleShot(0, this, [this, future] {
-			this->futureFinished(listToVariantList(future.results()));
+			this->futureFinished(resultsFromFuture(future));
 		});
 	}
 	else
@@ -171,17 +171,10 @@ FutureDeferred::FutureDeferred(const QFuture<T>& future)
 
 		connect(futureWatcher, &QFutureWatcher<T>::finished, [this, future] {
 			if (!future.isCanceled())
-				this->futureFinished(listToVariantList(future.results()));
+				this->futureFinished(resultsFromFuture(future));
 		});
 		connect(futureWatcher, &QFutureWatcher<T>::canceled, [this, future] {
-			/* future.results() does *NOT* return the achieved results
-			 * after the future has been cancelled.
-			 * So we have to get the results "manually".
-			 */
-			QVariantList results;
-			for (int i=0; i < future.resultCount(); ++i)
-				results << future.resultAt(0);
-			this->futureCanceled(listToVariantList(results));
+			this->futureCanceled(resultsFromFuture(future));
 		});
 		connect(futureWatcher, &QFutureWatcher<T>::progressRangeChanged,
 		        this, &FutureDeferred::futureProgressRangeChanged);
@@ -202,14 +195,18 @@ FutureDeferred::Ptr FutureDeferred::create(const QFuture<T>& future)
 }
 
 template<typename T>
-QVariantList FutureDeferred::listToVariantList(const QList<T>& list)
+QVariantList FutureDeferred::resultsFromFuture(const QFuture<T>& future)
 {
-	QVariantList result;
-	for (T entry : list)
-		result << QVariant::fromValue(entry);
-	return result;
+	/* future.results() does *NOT* return the achieved results
+	 * after the future has been cancelled.
+	 * So we get the results "manually" .
+	 */
+	QVariantList results;
+	const int resultCount = future.resultCount();
+	for (int i=0; i < resultCount; ++i)
+		results << future.resultAt(i);
+	return results;
 }
-
 
 } /* namespace QtPromise */
 

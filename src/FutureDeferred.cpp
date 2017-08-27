@@ -5,7 +5,7 @@
 namespace QtPromise
 {
 
-void FutureDeferred::registerMetaTypes() const
+void FutureDeferred::registerMetaTypes()
 {
 	qRegisterMetaType<Progress>();
 	qRegisterMetaType<Progress>("FutureDeferred::Progress");
