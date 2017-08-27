@@ -179,7 +179,7 @@ void NetworkPromiseTest::testUpload()
 	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
 
 	PromiseSpies spies(promise);
-	QVERIFY(spies.resolved.wait());
+	QTRY_VERIFY_WITH_TIMEOUT(reply->isFinished(), 20 * 1000);
 	QVERIFY(spies.notified.count() > 0);
 	QVERIFY(spies.notified.last().first().value<NetworkDeferred::ReplyProgress>().upload.current > 0);
 	QJsonDocument json = QJsonDocument::fromJson(promise->replyData().data);
