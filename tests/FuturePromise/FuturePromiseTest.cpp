@@ -329,12 +329,12 @@ void FuturePromiseTest::testFinishedDeferred()
 	if (cancel)
 		future.cancel();
 
+	FutureDeferred::Ptr deferred = FutureDeferred::create(future);
+
 	// Allow the thread to run
 	mutex.unlock();
 
-	FutureDeferred::Ptr deferred = FutureDeferred::create(future);
-
-	QTRY_VERIFY(future.isFinished());
+	QTRY_VERIFY(deferred->state() != Deferred::Pending);
 
 	FuturePromise::Ptr promise = FuturePromise::create(deferred);
 
