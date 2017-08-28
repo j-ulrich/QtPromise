@@ -40,4 +40,5 @@ Initial release.
 ---
 
 
+[1.1.0]: https://gitlab.com/julrich/QtPromise/tags/1.1.0
 [1.0.0]: https://gitlab.com/julrich/QtPromise/tags/1.0.0
