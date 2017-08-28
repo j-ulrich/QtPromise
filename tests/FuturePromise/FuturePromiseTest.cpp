@@ -26,6 +26,7 @@ private Q_SLOTS:
 	void testBasicFuture();
 	void testMultipleResults();
 	void testProgressReporting();
+	void testProgressText();
 	void testCancel();
 	void testFinishedFuture_data();
 	void testFinishedFuture();
@@ -107,6 +108,8 @@ void FuturePromiseTest::testBasicFuture()
 	QCOMPARE(promise->results().first().value<int>(), returnValue);
 }
 
+/*! \test Tests FuturePromise with a QFuture which produces multiple results.
+ */
 void FuturePromiseTest::testMultipleResults()
 {
 	QList<int> input;
@@ -141,6 +144,8 @@ void FuturePromiseTest::testMultipleResults()
 	QCOMPARE(spies.baseResolved.first().first(), QVariant::fromValue(promise->results()));
 }
 
+/*! \test Tests rejection of a FuturePromise when the QFuture is cancelled.
+ */
 void FuturePromiseTest::testCancel()
 {
 	QList<int> input;
@@ -179,6 +184,8 @@ void FuturePromiseTest::testCancel()
 	QCOMPARE(promise->results().first().value<int>(), 2);
 }
 
+/*! \test Tests the notifications of a FuturePromise when the QFuture reports progress.
+ */
 void FuturePromiseTest::testProgressReporting()
 {
 	QList<int> input;
@@ -225,6 +232,57 @@ void FuturePromiseTest::testProgressReporting()
 	QCOMPARE(progress.min, 0);
 	QCOMPARE(progress.max, input.length());
 	QCOMPARE(progress.value, input.length());
+}
+
+/*! \test Tests notifications of a FuturePromise when the QFuture updates
+ * the progress text.
+ *
+ * Since the QtConcurrent algorithms don't update the progress text at the moment,
+ * we fake it to get the coverage.
+ */
+void FuturePromiseTest::testProgressText()
+{
+	QList<int> input;
+	input << 1 << 2 << 3;
+
+	QMutex mutex;
+
+	std::function<int(const int&)> mapFunction = [&](const int& value) -> int {
+		QMutexLocker locker(&mutex);
+		return value * 2;
+	};
+
+	// Prevent the thread from running before we set up the promise
+	mutex.lock();
+
+	QFuture<int> future = QtConcurrent::mapped(input, mapFunction);
+
+	FutureDeferred::Ptr deferred = FutureDeferred::create(future);
+	FuturePromise::Ptr promise = FuturePromise::create(deferred);
+
+	PromiseSpies spies(promise);
+
+	QTRY_VERIFY(spies.notified.count() > 0);
+	int formerNotifiedCount = spies.notified.count();
+
+	//####### FAKE
+	QString fakeTextProgress{"dummy text progress"};
+	QMetaObject::invokeMethod(deferred.data(), "futureProgressTextChanged",
+	                          Q_ARG(QString, fakeTextProgress));
+	//####### END OF FAKE
+
+	QTRY_COMPARE(spies.notified.count(), formerNotifiedCount + 1);
+	FutureDeferred::Progress expectedProgress;
+	expectedProgress.min = 0;
+	expectedProgress.max = input.length();
+	expectedProgress.value = 0;
+	expectedProgress.text = fakeTextProgress;
+	QCOMPARE(spies.notified.last().first().value<FutureDeferred::Progress>(), expectedProgress);
+
+	// Allow the thread to finish
+	mutex.unlock();
+
+	QTRY_COMPARE(promise->state(), Deferred::Resolved);
 }
 
 /*! Provides the data for the testFinishedFuture() test.
