@@ -78,7 +78,7 @@ public:
 	 */
 	QList<Deferred::Ptr> parents() const { return m_parents; }
 
-signals:
+Q_SIGNALS:
 	/*! Emitted when one of the parent Deferreds is resolved.
 	 *
 	 * @param value The result of the resolved Deferred.
@@ -113,7 +113,7 @@ protected:
 	 */
 	ChildDeferred(QList<Deferred::Ptr> parents, bool trackResults);
 
-private slots:
+private Q_SLOTS:
 	void onParentDestroyed(QObject* parent) const;
 	void onParentResolved(const QVariant& value);
 	void onParentRejected(const QVariant& reason);

@@ -15,12 +15,12 @@ NetworkPromise::NetworkPromise(NetworkDeferred::Ptr deferred)
 	{
 	case Deferred::Resolved:
 		connect(this, &Promise::resolved, [this, deferred]() {
-			emit this->resolved(deferred->replyData());
+			Q_EMIT this->resolved(deferred->replyData());
 		});
 		break;
 	case Deferred::Rejected:
 		connect(this, &Promise::rejected, [this, deferred]() {
-			emit this->rejected(deferred->error());
+			Q_EMIT this->rejected(deferred->error());
 		});
 		break;
 	case Deferred::Pending:

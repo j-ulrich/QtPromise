@@ -8,6 +8,7 @@
 #define QTPROMISE_NETWORKDEFERRED_H_
 
 #include <QNetworkReply>
+#include <QAtomicInteger>
 #include "Deferred.h"
 
 
@@ -26,8 +27,8 @@ namespace QtPromise {
  * the QNetworkReply is already finished when the NetworkDeferred is created.
  *
  * In most cases, it is not necessary to create a NetworkDeferred directly but instead
- * use the convenience method NetworkPromise::create(QNetworkReply*) which returns a
- * promise on a NetworkDeferred.
+ * use the convenience method NetworkPromise::create(QNetworkReply*) which creats a
+ * NetworkDeferred and directly returns a promise on it.
  * Creating a NetworkDeferred directly is only needed if the deferred should be
  * resolved/rejected/notified independently of the QNetworkReply, which should be
  * a very rare use case.
@@ -47,6 +48,10 @@ public:
 	typedef QSharedPointer<NetworkDeferred> Ptr;
 
 	/*! The struct used to resolve a NetworkDeferred.
+	 *
+	 * \note This type is registered in Qt's meta type system using
+	 * Q_DECLARE_METATYPE() and using qRegisterMetaType() and
+	 * QMetaType::registerEqualsComparator() in NetworkDeferred().
 	 */
 	struct ReplyData
 	{
@@ -86,6 +91,10 @@ public:
 	};
 
 	/*! Represents the progress of a download or upload.
+	 *
+	 * \note This type is registered in Qt's meta type system using
+	 * Q_DECLARE_METATYPE() and using qRegisterMetaType() and
+	 * QMetaType::registerEqualsComparator() in NetworkDeferred().
 	 */
 	struct Progress
 	{
@@ -111,6 +120,10 @@ public:
 	 * It includes both the download and the upload progress.
 	 * If the QNetworkReply did not download or upload anything yet,
 	 * the values of the corresponding Progress object will be \c -1.
+	 *
+	 * \note This type is registered in Qt's meta type system using
+	 * Q_DECLARE_METATYPE() and using qRegisterMetaType() and
+	 * QMetaType::registerEqualsComparator() in NetworkDeferred().
 	 */
 	struct ReplyProgress
 	{
@@ -134,6 +147,10 @@ public:
 	};
 
 	/*! The struct used to reject a NetworkDeferred.
+	 *
+	 * \note This type is registered in Qt's meta type system using
+	 * Q_DECLARE_METATYPE() and using qRegisterMetaType() and
+	 * QMetaType::registerEqualsComparator() in NetworkDeferred().
 	 */
 	struct Error
 	{
@@ -186,6 +203,10 @@ public:
 	/*! Creates a NetworkDeferred for a QNetworkReply.
 	 *
 	 * \param reply The QNetworkReply performing the transmission.
+	 * \note The NetworkDeferred takes ownership of the \p reply by
+	 * becoming its parent. If you don't want this, change the \p reply's
+	 * parent after calling create() and ensure the \p reply exists as long
+	 * as this NetworkDeferred is pending.
 	 * \return QSharedPointer to a new, pending NetworkDeferred.
 	 */
 	static Ptr create(QNetworkReply* reply);
@@ -206,7 +227,7 @@ public:
 	 */
 	Error error() const { QMutexLocker locker(&m_lock); return m_error; }
 
-signals:
+Q_SIGNALS:
 	/*! Emitted when the QNetworkReply finishes successfully.
 	 *
 	 * \param data The NetworkDeferred::ReplyData.
@@ -230,10 +251,11 @@ protected:
 	/*! Creates a NetworkDeferred for a given QNetworkReply.
 	 *
 	 * \param reply The QNetworkReply which is represented by the created NetworkDeferred.
+	 * \note The NetworkDeferred takes ownership of the \p reply.
 	 */
 	NetworkDeferred(QNetworkReply* reply);
 
-private slots:
+private Q_SLOTS:
 	void replyFinished();
 	void replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 	void replyUploadProgress(qint64 bytesSent, qint64 bytesTotal);
@@ -246,7 +268,8 @@ private:
 	ReplyProgress m_progress;
 	Error m_error;
 
-	void registerMetaTypes() const;
+	static QAtomicInteger<qint8> m_metaTypesRegistered;
+	static void registerMetaTypes();
 };
 
 }  // namespace QtPromise

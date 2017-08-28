@@ -10,3 +10,4 @@ add_executable(test_Promise
 target_link_libraries(test_Promise Qt5::Core Qt5::Test)
 
 add_test(NAME Promise COMMAND test_Promise)
+set_tests_properties(Promise PROPERTIES TIMEOUT 30)

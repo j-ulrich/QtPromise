@@ -3,6 +3,8 @@
 
 namespace QtPromise {
 
+QAtomicInteger<qint8> NetworkDeferred::m_metaTypesRegistered{0};
+
 NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 	: Deferred(), m_reply(reply), m_lock(QMutex::Recursive)
 {
@@ -40,21 +42,27 @@ NetworkDeferred::Ptr NetworkDeferred::create(QNetworkReply* reply)
 	return Ptr(new NetworkDeferred(reply), &QObject::deleteLater);
 }
 
-void NetworkDeferred::registerMetaTypes() const
+void NetworkDeferred::registerMetaTypes()
 {
-	qRegisterMetaType<ReplyData>();
-	qRegisterMetaType<ReplyData>("NetworkDeferred::ReplyData");
-	qRegisterMetaType<ReplyData>("QtPromise::NetworkDeferred::ReplyData");
-	qRegisterMetaType<Error>();
-	qRegisterMetaType<Error>("NetworkDeferred::Error");
-	qRegisterMetaType<Error>("QtPromise::NetworkDeferred::Error");
-	qRegisterMetaType<Progress>();
-	qRegisterMetaType<Progress>("NetworkDeferred::Progress");
-	qRegisterMetaType<Progress>("QtPromise::NetworkDeferred::Progress");
-	qRegisterMetaType<ReplyProgress>();
-	qRegisterMetaType<ReplyProgress>("NetworkDeferred::ReplyProgress");
-	qRegisterMetaType<ReplyProgress>("QtPromise::NetworkDeferred::ReplyProgress");
-
+	if (m_metaTypesRegistered.testAndSetOrdered(0, 1))
+	{
+		qRegisterMetaType<ReplyData>();
+		QMetaType::registerEqualsComparator<ReplyData>();
+		qRegisterMetaType<ReplyData>("NetworkDeferred::ReplyData");
+		qRegisterMetaType<ReplyData>("QtPromise::NetworkDeferred::ReplyData");
+		qRegisterMetaType<Error>();
+		QMetaType::registerEqualsComparator<Error>();
+		qRegisterMetaType<Error>("NetworkDeferred::Error");
+		qRegisterMetaType<Error>("QtPromise::NetworkDeferred::Error");
+		qRegisterMetaType<Progress>();
+		QMetaType::registerEqualsComparator<Progress>();
+		qRegisterMetaType<Progress>("NetworkDeferred::Progress");
+		qRegisterMetaType<Progress>("QtPromise::NetworkDeferred::Progress");
+		qRegisterMetaType<ReplyProgress>();
+		QMetaType::registerEqualsComparator<ReplyProgress>();
+		qRegisterMetaType<ReplyProgress>("NetworkDeferred::ReplyProgress");
+		qRegisterMetaType<ReplyProgress>("QtPromise::NetworkDeferred::ReplyProgress");
+	}
 }
 
 void NetworkDeferred::replyFinished()
@@ -70,12 +78,12 @@ void NetworkDeferred::replyFinished()
 		m_error.message = m_reply->errorString();
 		m_error.replyData = replyData;
 		if (this->reject(QVariant::fromValue(m_error)))
-			emit rejected(m_error);
+			Q_EMIT rejected(m_error);
 	}
 	else
 	{
 		if (this->resolve(QVariant::fromValue(replyData)))
-			emit resolved(replyData);
+			Q_EMIT resolved(replyData);
 	}
 }
 
@@ -91,7 +99,7 @@ void NetworkDeferred::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTo
 	m_progress.download.current = bytesReceived;
 	m_progress.download.total = bytesTotal;
 	if (this->notify(QVariant::fromValue(m_progress)))
-		emit notified(m_progress);
+		Q_EMIT notified(m_progress);
 }
 
 void NetworkDeferred::replyUploadProgress(qint64 bytesSent, qint64 bytesTotal)
@@ -105,7 +113,7 @@ void NetworkDeferred::replyUploadProgress(qint64 bytesSent, qint64 bytesTotal)
 	m_progress.upload.current = bytesSent;
 	m_progress.upload.total = bytesTotal;
 	if (this->notify(QVariant::fromValue(m_progress)))
-		emit notified(m_progress);
+		Q_EMIT notified(m_progress);
 }
 
 void NetworkDeferred::replyDestroyed(QObject* reply)
@@ -117,17 +125,17 @@ void NetworkDeferred::replyDestroyed(QObject* reply)
 	QMutexLocker locker(&m_lock);
 	if (this->state() == Deferred::Pending)
 	{
-		QString errorMessage = QString("QNetworkReply 0x%1 destroyed while owning NetworkDeferred 0x%2 still pending")
-		.arg((quintptr)reply, QT_POINTER_SIZE * 2, 16, QChar('0'))
-		.arg((quintptr)this, QT_POINTER_SIZE * 2, 16, QChar('0'));
-		qDebug(errorMessage.toLatin1().data());
+		QString errorMessage = QString("QNetworkReply %1 destroyed while owning NetworkDeferred %2 still pending")
+		.arg(pointerToQString(reply))
+		.arg(pointerToQString(this));
+		qDebug("%s", qUtf8Printable(errorMessage));
 
 		m_error.code = static_cast<QNetworkReply::NetworkError>(-1);
 		m_error.message = errorMessage;
 		m_error.replyData = ReplyData(m_buffer, nullptr);
 
 		if (this->reject(QVariant::fromValue(m_error)))
-			emit rejected(m_error);
+			Q_EMIT rejected(m_error);
 	}
 	m_reply = nullptr;
 	m_error.replyData.qReply = nullptr;

@@ -29,8 +29,14 @@ public:
 	/*! Creates a NetworkPromise for a QNetworkReply.
 	 *
 	 * \param reply The QNetworkReply performing the transmission.
+	 * \note The internally created NetworkDeferred takes ownership of the
+	 * \p reply by becoming its parent. If you don't want this, change the
+	 * \p reply's parent after calling create() and ensure the \p reply
+	 * exists as long as the NetworkDeferred is pending.
 	 * \return A NetworkPromise to a new, pending NetworkDeferred for the given
 	 * \p reply.
+	 *
+	 * \sa NetworkDeferred::create(QNetworkReply*)
 	 */
 	static Ptr create(QNetworkReply* reply);
 	/*! Creates a NetworkPromise for a NetworkDeferred.
@@ -56,7 +62,7 @@ public:
 	 */
 	NetworkDeferred::Error error() const;
 
-signals:
+Q_SIGNALS:
 	/*! \copydoc NetworkDeferred::resolved()
 	 * \sa NetworkDeferred::resolved()
 	 */
@@ -75,6 +81,7 @@ protected:
 	 * then creates a NetworkPromise for that new NetworkDeferred.
 	 *
 	 * \param reply The QNetworkReply to be represented by a NetworkPromise.
+	 * \note The internal NetworkDeferred takes ownership of the \p reply.
 	 *
 	 * \sa NetworkDeferred(QNetworkReply*)
 	 */

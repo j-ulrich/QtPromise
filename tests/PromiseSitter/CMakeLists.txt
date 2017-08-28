@@ -11,3 +11,4 @@ add_executable(test_PromiseSitter
 target_link_libraries(test_PromiseSitter Qt5::Core Qt5::Test)
 
 add_test(NAME PromiseSitter COMMAND test_PromiseSitter)
+set_tests_properties(PromiseSitter PROPERTIES TIMEOUT 30)

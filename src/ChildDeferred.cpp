@@ -67,20 +67,20 @@ void ChildDeferred::setParents(QList<Deferred::Ptr> parents, bool trackResults)
 
 void ChildDeferred::onParentDestroyed(QObject* parent) const
 {
-	qCritical("Parent deferred %08p is destroyed while child %08p is still holding a reference.", parent, this);
+	qCritical("Parent deferred %s is destroyed while child %s is still holding a reference.", qUtf8Printable(pointerToQString(parent)), qUtf8Printable(pointerToQString(this)));
 }
 
 void ChildDeferred::onParentResolved(const QVariant& value)
 {
 	QMutexLocker locker(&m_lock);
 	m_resolvedCount += 1;
-	emit parentResolved(value);
+	Q_EMIT parentResolved(value);
 	if (m_resolvedCount == m_parents.size())
 	{
 		QList<QVariant> results;
 		for (Deferred::Ptr parent : m_parents)
 			results.append(parent->data());
-		emit parentsResolved(results);
+		Q_EMIT parentsResolved(results);
 	}
 }
 
@@ -88,13 +88,13 @@ void ChildDeferred::onParentRejected(const QVariant& reason)
 {
 	QMutexLocker locker(&m_lock);
 	m_rejectedCount += 1;
-	emit parentRejected(reason);
+	Q_EMIT parentRejected(reason);
 	if (m_rejectedCount == m_parents.size())
 	{
 		QList<QVariant> reasons;
 		for (Deferred::Ptr parent : m_parents)
 			reasons.append(parent->data());
-		emit parentsRejected(reasons);
+		Q_EMIT parentsRejected(reasons);
 	}
 }
 

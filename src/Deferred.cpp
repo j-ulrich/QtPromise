@@ -4,14 +4,25 @@
 
 namespace QtPromise {
 
+QAtomicInteger<qint8> Deferred::m_metaTypesRegistered{0};
+
 Deferred::Deferred()
 	: QObject(nullptr), m_state(Pending), m_lock(QMutex::Recursive)
 {
-	qRegisterMetaType<DeferredDestroyed>();
-	qRegisterMetaType<DeferredDestroyed>("QtPromise::DeferredDestroyed");
-	qRegisterMetaType<State>();
-	qRegisterMetaType<State>("Deferred::State");
-	qRegisterMetaType<State>("QtPromise::Deferred::State");
+	registerMetaTypes();
+}
+
+void Deferred::registerMetaTypes()
+{
+	if (m_metaTypesRegistered.testAndSetOrdered(0, 1))
+	{
+		qRegisterMetaType<DeferredDestroyed>();
+		qRegisterMetaType<DeferredDestroyed>("QtPromise::DeferredDestroyed");
+		qRegisterMetaType<State>();
+		QMetaType::registerEqualsComparator<State>();
+		qRegisterMetaType<State>("Deferred::State");
+		qRegisterMetaType<State>("QtPromise::Deferred::State");
+	}
 }
 
 Deferred::Ptr Deferred::create()
@@ -40,7 +51,7 @@ Deferred::~Deferred()
 {
 	if (m_state == Pending)
 	{
-		qDebug("Deferred %08p destroyed while still pending", this);
+		qDebug("Deferred %s destroyed while still pending", qUtf8Printable(pointerToQString(this)));
 #ifndef QT_NO_EXCEPTIONS
 	this->reject(QVariant::fromValue(DeferredDestroyed(this)));
 #else
@@ -57,7 +68,7 @@ void Deferred::setLogInvalidActionMessage(bool logInvalidActionMessage)
 void Deferred::logInvalidActionMessage(const char* action) const
 {
 	if (m_logInvalidActionMessage)
-		qDebug("Cannot %s Deferred %08p which is already %s", action, this, m_state==Resolved?"resolved":"rejected");
+		qDebug("Cannot %s Deferred %s which is already %s", action, qUtf8Printable(pointerToQString(this)), m_state==Resolved?"resolved":"rejected");
 }
 
 bool Deferred::resolve(const QVariant& value)
@@ -68,7 +79,7 @@ bool Deferred::resolve(const QVariant& value)
 	{
 		m_data = value;
 		m_state = Resolved;
-		emit resolved(m_data);
+		Q_EMIT resolved(m_data);
 		return true;
 	}
 	else
@@ -86,7 +97,7 @@ bool Deferred::reject(const QVariant& reason)
 	{
 		m_data = reason;
 		m_state = Rejected;
-		emit rejected(m_data);
+		Q_EMIT rejected(m_data);
 		return true;
 	}
 	else
@@ -102,7 +113,7 @@ bool Deferred::notify(const QVariant& progress)
 
 	if (m_state == Pending)
 	{
-		emit notified(progress);
+		Q_EMIT notified(progress);
 		return true;
 	}
 	else
@@ -112,6 +123,11 @@ bool Deferred::notify(const QVariant& progress)
 	}
 }
 
+QString pointerToQString(const void* pointer)
+{
+	return QString("0x%1").arg(reinterpret_cast<quintptr>(pointer),
+	                           QT_POINTER_SIZE * 2, 16, QChar('0'));
+}
 
 }  // namespace QtPromise
 

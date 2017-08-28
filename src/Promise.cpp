@@ -17,12 +17,12 @@ Promise::Promise(Deferred::Ptr deferred)
 	{
 	case Deferred::Resolved:
 		QTimer::singleShot(0, this, [this]() {
-			emit resolved(this->m_deferred->data());
+			Q_EMIT resolved(this->m_deferred->data());
 		});
 		break;
 	case Deferred::Rejected:
 		QTimer::singleShot(0, this, [this]() {
-			emit rejected(this->m_deferred->data());
+			Q_EMIT rejected(this->m_deferred->data());
 		});
 		break;
 	case Deferred::Pending:

@@ -11,11 +11,15 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) specifi
 
 
 ## Unreleased ##
+Feature addition: QFuture support
 
 ### Added ###
+- [#6] Support for QFuture: FuturePromise and FutureDeferred
 - [#7] Coverage report
 
 ### Changed ###
+- Replaced Qt custom keywords (signals, slots, emit) with the corresponding preprocessor macros
+  to be compatible with the "no_keywords" configuration.
 - NetworkPromise now filters an unexpected 0/0 upload progress signal from QNetworkReply
 
 

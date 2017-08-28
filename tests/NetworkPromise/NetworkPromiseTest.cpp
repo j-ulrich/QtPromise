@@ -20,7 +20,7 @@ class NetworkPromiseTest : public QObject
 {
 	Q_OBJECT
 
-private slots:
+private Q_SLOTS:
 	void cleanup();
 	void testSuccess();
 	void testFail();
@@ -107,7 +107,7 @@ void NetworkPromiseTest::testSuccess()
 	QVERIFY(progress.download.current > 0);
 	QVERIFY(progress.download.total > 0);
 	QVERIFY(spies.baseNotified.count() > 0);
-	QCOMPARE(spies.baseNotified.first().first(), QVariant::fromValue(progress));
+	QCOMPARE(spies.baseNotified.first().first().value<NetworkDeferred::ReplyProgress>(), progress);
 }
 
 /*! \test Tests a failed request with a NetworkPromise.
@@ -179,7 +179,7 @@ void NetworkPromiseTest::testUpload()
 	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
 
 	PromiseSpies spies(promise);
-	QVERIFY(spies.resolved.wait());
+	QTRY_VERIFY_WITH_TIMEOUT(reply->isFinished(), 20 * 1000);
 	QVERIFY(spies.notified.count() > 0);
 	QVERIFY(spies.notified.last().first().value<NetworkDeferred::ReplyProgress>().upload.current > 0);
 	QJsonDocument json = QJsonDocument::fromJson(promise->replyData().data);
@@ -191,7 +191,7 @@ void NetworkPromiseTest::testUpload()
 void NetworkPromiseTest::testFinishedReply_data()
 {
 	/* Note that this data method is also used for
-	 * the testFinishedDeferredTest()!
+	 * the testFinishedDeferred()!
 	 */
 
 	QTest::addColumn<QString>("dataPath");
@@ -303,6 +303,9 @@ void NetworkPromiseTest::testFinishedDeferred_data()
 	testFinishedReply_data();
 }
 
+/*! \test Tests the NetworkPromise with a NetworkDeferred which has finished
+ * and emitted it's events before the NetworkPromise is created.
+ */
 void NetworkPromiseTest::testFinishedDeferred()
 {
 	QFETCH(QString, dataPath);
