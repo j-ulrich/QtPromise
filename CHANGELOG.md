@@ -10,7 +10,7 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) specifi
 ---
 
 
-## Unreleased ##
+## [1.1.0] - 2017-08-28 ##
 Feature addition: QFuture support
 
 ### Added ###
