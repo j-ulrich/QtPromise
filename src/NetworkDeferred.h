@@ -62,6 +62,8 @@ public:
 		 * Use this to get additional information about the reply like
 		 * response headers, HTTP status code etc.
 		 *
+		 * \warning \p qReply can be a \c nullptr (for example in case the QNetworkReply
+		 * is destroyed before it is finished). So check the pointer before using it.
 		 * \warning Do not delete the QNetworkReply. It is owned by the NetworkDeferred.
 		 */
 		const QNetworkReply* qReply;
