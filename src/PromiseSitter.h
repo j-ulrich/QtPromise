@@ -8,8 +8,10 @@
 #define QTPROMISE_PROMISESITTER_H_
 
 #include <QObject>
+#include <QMultiHash>
 #include <QSharedPointer>
 #include <QReadWriteLock>
+#include <QVector>
 #include "Promise.h"
 
 namespace QtPromise {
@@ -50,9 +52,9 @@ public:
 	 * \param parent The parent QObject.
 	 */
 	PromiseSitter(QObject* parent = nullptr) : QObject(parent) {}
-	/*! Default destructor.
+	/*! Releases all Promise::Ptr and disconnects the context objects.
 	 */
-	virtual ~PromiseSitter() = default;
+	virtual ~PromiseSitter();
 
 	/*! Provides access to the global PromiseSitter instance.
 	 *
@@ -73,8 +75,28 @@ public:
 	 *
 	 * \param promise The Promise::Ptr which should be kept until the Promise is
 	 * resolved or rejected.
+	 * \param contextObj A QObject acting as the lifetime context for
+	 * \p promise. When the \p contextObj is destroyed (emits the QObject::destroyed() signal),
+	 * the \p promise is removed from the PromiseSitter. If the \p promise has already been added
+	 * to the PromiseSitter, the \p contextObj is added to the existing context objects.
+	 *
+	 * \sa remove()
 	 */
-	void add(QSharedPointer<Promise> promise);
+	void add(Promise::Ptr promise, const QObject* contextObj) { add(promise, {contextObj}); }
+
+	/*! \overload
+	 *
+	 * \param promise The Promise::Ptr which should be kept until the Promise is resolved
+	 * or rejected.
+	 * \param contextObjs An optional initializer list of QObjects acting as the lifetime context
+	 * for \p promise. When any of the objects in the list is destroyed (emits the
+	 * QObject::destroyed() signal), the \p promise is removed from the PromiseSitter.
+	 * If the \p promise has already been added to the PromiseSitter, the \p contextObjs
+	 * are added to the existing context objects.
+	 *
+	 * \sa remove()
+	 */
+	void add(Promise::Ptr promise, const QVector<const QObject*>& contextObjs = {});
 
 	/*! Explicitly removes a Promise from this PromiseSitter.
 	 *
@@ -89,7 +111,7 @@ public:
 	 * \return \c true if the PromiseSitter contained a Promise::Ptr to that Promise.
 	 * \c false otherwise.
 	 */
-	bool remove(QSharedPointer<Promise> promise) { return remove(promise.data()); }
+	bool remove(Promise::Ptr promise) { return remove(promise.data()); }
 
 	/*! Checks if a Promise is hold by this PromiseSitter.
 	 *
@@ -97,11 +119,13 @@ public:
 	 * \return \c true if this PromiseSitter contains a Promise::Ptr to the given
 	 * Promise. \c false otherwise.
 	 */
-	bool contains(QSharedPointer<Promise> promise) const;
+	bool contains(Promise::Ptr promise) const;
 
 private:
 	mutable QReadWriteLock m_lock;
-	QMap<const Promise*, QSharedPointer<Promise> > m_promises;
+	QHash<const Promise*, Promise::Ptr> m_promises;
+	QMultiHash<const Promise*, QMetaObject::Connection> m_sitterConnections;
+	QMultiHash<const Promise*, QMetaObject::Connection> m_contextConnections;
 };
 
 }  // namespace QtPromise
