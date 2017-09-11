@@ -82,7 +82,7 @@ public:
 	 *
 	 * \sa remove()
 	 */
-	void add(Promise::Ptr promise, const QObject* contextObj) { add(promise, {contextObj}); }
+	void add(Promise::Ptr promise, const QObject* contextObj) { add(promise, QVector<const QObject*>{contextObj}); }
 
 	/*! \overload
 	 *
