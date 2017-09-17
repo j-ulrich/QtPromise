@@ -10,6 +10,16 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) specifi
 ---
 
 
+## Unreleased ##
+
+
+### Added ###
+- [#9] Support for context objects in PromiseSitter
+
+
+---
+
+
 ## [1.1.0] - 2017-08-28 ##
 Feature addition: QFuture support
 
