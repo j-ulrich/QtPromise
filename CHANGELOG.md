@@ -10,8 +10,8 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 ---
 
 
-## Unreleased ##
-
+## [1.2.0] - 2017-09-17 ##
+Feature addition: PromiseSitter context objects
 
 ### Added ###
 - [#9] Support for context objects in PromiseSitter
@@ -54,5 +54,6 @@ Initial release.
 ---
 
 
+[1.2.0]: https://gitlab.com/julrich/QtPromise/tags/1.2.0
 [1.1.0]: https://gitlab.com/julrich/QtPromise/tags/1.1.0
 [1.0.0]: https://gitlab.com/julrich/QtPromise/tags/1.0.0
