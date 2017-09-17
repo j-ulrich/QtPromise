@@ -4,7 +4,7 @@
 
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-This changelog follows the [Keep a Changelog](http://keepachangelog.com) specification.
+This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 
 
 ---
@@ -15,6 +15,10 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) specifi
 
 ### Added ###
 - [#9] Support for context objects in PromiseSitter
+- Guide for handling object lifetime in capturing lambda expressions
+
+### Changed ###
+- Fixed unnecessary container copying/detaching
 
 
 ---

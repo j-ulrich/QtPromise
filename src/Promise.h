@@ -10,6 +10,7 @@
 #include <QObject>
 #include <QVariant>
 #include <QSharedPointer>
+#include <QVector>
 #include <functional>
 #include <type_traits>
 #include "Deferred.h"
@@ -456,7 +457,7 @@ Promise::createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, PromiseCallback
 		switch (intermedDeferred->state())
 		{
 		case Deferred::Pending:
-			newDeferred->setParents(QList<Deferred::Ptr>{originalDeferred, intermedDeferred});
+			newDeferred->setParents(QVector<Deferred::Ptr>{originalDeferred, intermedDeferred});
 			QObject::connect(intermedDeferred.data(), &Deferred::resolved, newDeferred.data(), &Deferred::notify);
 			QObject::connect(intermedDeferred.data(), &Deferred::notified, newDeferred.data(), &Deferred::notify);
 			break;
@@ -473,7 +474,7 @@ Promise::createNotifyFuncWrapper(ChildDeferred::Ptr newDeferred, PromiseCallback
 template<typename PromiseContainer>
 Promise::Ptr Promise::all_impl(PromiseContainer promises)
 {
-	QList<Deferred::Ptr> deferreds;
+	QVector<Deferred::Ptr> deferreds;
 	for (Promise::Ptr promise : promises)
 		deferreds.append(promise->m_deferred);
 	ChildDeferred::Ptr combinedDeferred = ChildDeferred::create(deferreds, true);
@@ -487,7 +488,7 @@ Promise::Ptr Promise::all_impl(PromiseContainer promises)
 template<typename PromiseContainer>
 Promise::Ptr Promise::any_impl(PromiseContainer promises)
 {
-	QList<Deferred::Ptr> deferreds;
+	QVector<Deferred::Ptr> deferreds;
 	for (Promise::Ptr promise : promises)
 		deferreds.append(promise->m_deferred);
 	ChildDeferred::Ptr combinedDeferred = ChildDeferred::create(deferreds, true);
