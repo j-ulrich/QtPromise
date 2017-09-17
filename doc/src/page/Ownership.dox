@@ -35,8 +35,11 @@ When capturing and using (pointers/references to) objects in a lambda expression
 ensured that the objects still exist when the lambda is called.
 This also applies to the callbacks of the %Qt %Promise library.
 
-Often, it is not possible to control the lifetime of an object at the place where it is
-captured in a lambda.
+One way of doing this is using smart pointers like QSharedPointer to ensure the objects exist
+until the lambda exists.
+
+Unfortunately, it is often not possible to control the lifetime of an object at the place where it
+is captured in a lambda.
 However, one can take the statement from above the other way round:
 whenever an object which has been captured in a lambda expression is destroyed, it must be
 ensured that the lambda expression will not be called anymore.
@@ -89,28 +92,73 @@ This can be used when multiple objects are captured. But it cannot be used in ev
 because it requires that one can react to the destruction of the objects and that one can release
 the QSharedPointer without creating a copy of it with a longer lifetime.
 However, those requirements are fulfilled when the captured objects are QObjects and when the Promise
-is held by the PromiseSitter.
+can be accessed by reference.
+
+\warning It's important \b NOT to capture the Promise::Ptr by value!
+Else we would extend the lifetime of the promise until \b all captured objects are destroyed.
 
 \b Example:
 \code
 using namespace QtPromise;
-void doSomething(MyFirstClass* firstObj, MySecondClass* secondObj)
+void MyClass::doSomething(MyFirstClass* firstObj, MySecondClass* secondObj)
+{
+	this->promise = startAsyncOperation()
+	->then([firstObj, secondObj](const QVariant& data) {
+		// ...
+	});
+
+	// Release the promise when one of the captured objects is destroyed
+	connect(firstObj, &QObject::destroyed, promise.data(), [this]() {
+		this->promise.reset();
+	});
+	connect(secondObj, &QObject::destroyed, promise.data(), [this]() {
+		this->promise.reset();
+	});
+}
+\endcode
+
+\subsection page_ownership_capturingLambdas_contextObjects Using Context Objects
+
+The PromiseSitter provides a convenient way to release the Promise when a QObject is destroyed:
+It can take a vector of context QObjects when \link PromiseSitter::add() adding \endlink the Promise
+to the sitter. When one of those objects is destroyed, the PromiseSitter releases it's pointer to
+the Promise.
+
+\b Example:
+\code
+using namespace QtPromise;
+void MyClass::doSomething(MyFirstClass* firstObj, MySecondClass* secondObj)
 {
 	Promise::Ptr promise = startAsyncOperation()
 	->then([firstObj, secondObj](const QVariant& data) {
 		// ...
 	});
-	PromiseSitter::instance()->add(promise);
 
-	// Release the promise when one of the captured objects is destroyed
-	Promise* rawPromisePtr = promise.data();
-	// It's important *NOT* to capture the Promise::Ptr but the raw Promise*!
-	// Else we would extend the lifetime of the promise until *all* captured objects are destroyed.
-	connect(firstObj, &QObject::destroyed, [rawPromisePtr]() {
-		PromiseSitter::instance()->remove(rawPromisePtr);
-	});
-	connect(secondObj, &QObject::destroyed, [rawPromisePtr]() {
-		PromiseSitter::instance()->remove(rawPromisePtr);
+	PromiseSitter::instance()->add(promise, {firstObj, secondObj});
+}
+\endcode
+
+\subsection page_ownership_capturingLambdas_checkObjects Check Objects in Lambda
+
+Check the captured objects in the lambda expression before using them.
+
+This requires that one can check if the captured objects are still valid. For QObjects, this can be
+achieved by capturing a QPointer to the object. The lambda then checks if the object is still valid
+before it uses it. If the object has been destroyed, the lambda can then act accordingly (for 
+example, reject the Promise).
+
+\b Example:
+\code
+using namespace QtPromise;
+Promise::Ptr MyClass::doSomething(MyFirstClass* firstObj, MySecondClass* secondObj)
+{
+	QPointer<MyFirstClass> safeFirstObj(firstObj);
+	QPointer<MySecondClass> safeSecondObj(secondObj);
+	return startAsyncOperation()
+	->then([safeFirstObj, safeSecondObj](const QVariant& data) -> Promise::Ptr {
+		if (!safeFirstObj || !safeSecondObj)
+			return Promise::createRejected(QVariant::fromValue(QString("Captured object unexpectedly destroyed")));
+		// ...
 	});
 }
 \endcode
