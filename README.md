@@ -131,7 +131,7 @@ void MyDataFetcher::printJsonData()
 	QNetworkRequest request("http://api.example.com/getJsonData");
 	QNetworkReply* reply = this->qnam->get(request);
 
-	this->promise = fetchJson(reply)
+	this->m_promise = fetchJson(reply)
 	->then([this](const QVariant& data) {
 		// Do something with JSON document
 		this->print(data.toJsonDocument().toObject());

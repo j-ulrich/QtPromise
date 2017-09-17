@@ -95,7 +95,7 @@ This section shows examples of a few common patterns of promise chaining.
 \code
 using namespace QtPromise;
 
-this->resultPromise = startFirstAsyncOperation()
+this->m_resultPromise = startFirstAsyncOperation()
 ->then([this](const QVariant& firstResult) -> Promise::Ptr {
 	// Start a second async operation which depends
 	// on the result of the first async operation
@@ -130,7 +130,7 @@ accross multiple slots.
 \code
 using namespace QtPromise;
 
-this->resultPromise = startAsyncOperation()
+this->m_resultPromise = startAsyncOperation()
 ->then([this](const QVariant& value) -> Promise::Ptr {
 	QVariant someResult = doSomething(value);
 	if (someResult.isValid())
@@ -164,7 +164,7 @@ the rejected track or switch from the resolved to the rejected track (report err
 \code
 using namespace QtPromise;
 
-this->resultPromise = startAsyncOperation()
+this->m_resultPromise = startAsyncOperation()
 // Attach action (chain step 1)
 ->then([this](const QVariant& value) -> Promise::Ptr {
 	bool somethingSucceeded = doSomething(value);
