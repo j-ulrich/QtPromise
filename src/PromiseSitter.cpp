@@ -17,12 +17,15 @@ void PromiseSitter::add(QSharedPointer<Promise> promise)
 		Promise* rawPromise = promise.data();
 		if (!m_promises.contains(rawPromise))
 		{
-			connect(rawPromise, &Promise::resolved, [this, rawPromise](const QVariant&) {
+			/* Need to use QueuedConnection since we may not delete the promise
+			 * in a slot connected to its signal.
+			 */
+			connect(rawPromise, &Promise::resolved, this, [this, rawPromise](const QVariant&) {
 				this->remove(rawPromise);
-			});
-			connect(rawPromise, &Promise::rejected, [this, rawPromise](const QVariant&) {
+			}, Qt::QueuedConnection);
+			connect(rawPromise, &Promise::rejected, this, [this, rawPromise](const QVariant&) {
 				this->remove(rawPromise);
-			});
+			}, Qt::QueuedConnection);
 			m_promises.insert(rawPromise, promise);
 		}
 	}

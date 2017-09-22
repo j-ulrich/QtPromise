@@ -30,7 +30,7 @@ FuturePromise::FuturePromise(FutureDeferred::Ptr deferred)
 
 FuturePromise::Ptr FuturePromise::create(FutureDeferred::Ptr deferred)
 {
-	return Ptr(new FuturePromise(deferred), &QObject::deleteLater);
+	return Ptr(new FuturePromise(deferred));
 }
 
 QVariantList FuturePromise::results() const

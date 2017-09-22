@@ -154,7 +154,7 @@ private:
 	QVariantList m_results;
 	Progress m_progress;
 
-	static QAtomicInteger<qint8> m_metaTypesRegistered;
+	static QAtomicInteger<int> m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 
@@ -204,7 +204,7 @@ FutureDeferred::FutureDeferred(const QFuture<T>& future)
 template<typename T>
 FutureDeferred::Ptr FutureDeferred::create(const QFuture<T>& future)
 {
-	return Ptr(new FutureDeferred(future), &QObject::deleteLater);
+	return Ptr(new FutureDeferred(future));
 }
 
 template<typename T>

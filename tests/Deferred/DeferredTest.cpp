@@ -156,8 +156,7 @@ void DeferredTest::testDestructor()
 
 	deferred.clear();
 
-	QVERIFY(spies.rejected.wait()); // Need an event loop to execute deleteLater
-	QCOMPARE(spies.rejected.count(), 1);
+	QTRY_COMPARE(spies.rejected.count(), 1); // Need an event loop to execute deleteLater
 	QVERIFY(spies.rejected.first().first().canConvert<DeferredDestroyed>());
 }
 

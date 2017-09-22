@@ -231,7 +231,7 @@ private:
 	QVariant m_data;
 	bool m_logInvalidActionMessage = true;
 
-	static QAtomicInteger<qint8> m_metaTypesRegistered;
+	static QAtomicInteger<int> m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 

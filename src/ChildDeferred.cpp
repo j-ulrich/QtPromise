@@ -22,7 +22,7 @@ ChildDeferred::Ptr ChildDeferred::create(Deferred::Ptr parent, bool trackResults
 
 ChildDeferred::Ptr ChildDeferred::create(QList<Deferred::Ptr> parents, bool trackResults)
 {
-	return Ptr(new ChildDeferred(parents, trackResults), &QObject::deleteLater);
+	return Ptr(new ChildDeferred(parents, trackResults));
 }
 
 void ChildDeferred::setParent(Deferred::Ptr parent, bool trackResults)

@@ -4,7 +4,7 @@
 
 namespace QtPromise {
 
-QAtomicInteger<qint8> Deferred::m_metaTypesRegistered{0};
+QAtomicInteger<int> Deferred::m_metaTypesRegistered{0};
 
 Deferred::Deferred()
 	: QObject(nullptr), m_state(Pending), m_lock(QMutex::Recursive)
@@ -27,7 +27,7 @@ void Deferred::registerMetaTypes()
 
 Deferred::Ptr Deferred::create()
 {
-	return Deferred::Ptr(new Deferred(), &QObject::deleteLater);
+	return Deferred::Ptr(new Deferred());
 }
 
 Deferred::Ptr Deferred::create(State state, const QVariant& data)

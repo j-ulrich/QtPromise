@@ -268,7 +268,7 @@ private:
 	ReplyProgress m_progress;
 	Error m_error;
 
-	static QAtomicInteger<qint8> m_metaTypesRegistered;
+	static QAtomicInteger<int> m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 

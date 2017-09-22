@@ -86,7 +86,7 @@ void PromiseSitterTest::testAddContainsRemove()
 
 	deferred->resolve();
 
-	QVERIFY(!sitter.contains(promise));
+	QTRY_VERIFY(!sitter.contains(promise));
 	QVERIFY(!sitter.contains(samePromise));
 	QVERIFY(!promisePointer.isNull());
 }
