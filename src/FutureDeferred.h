@@ -154,7 +154,7 @@ private:
 	QVariantList m_results;
 	Progress m_progress;
 
-	static QAtomicInteger<qint8> m_metaTypesRegistered;
+	static QAtomicInteger<int> m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 

@@ -3,7 +3,7 @@
 
 namespace QtPromise {
 
-QAtomicInteger<qint8> NetworkDeferred::m_metaTypesRegistered{0};
+QAtomicInteger<int> NetworkDeferred::m_metaTypesRegistered{0};
 
 NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 	: Deferred(), m_reply(reply), m_lock(QMutex::Recursive)
