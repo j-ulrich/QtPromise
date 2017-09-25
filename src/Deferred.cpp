@@ -55,7 +55,7 @@ Deferred::~Deferred()
 #ifndef QT_NO_EXCEPTIONS
 	this->reject(QVariant::fromValue(DeferredDestroyed(this)));
 #else
-	this->reject(QString("Deferred 0x%1 destroyed").arg(reinterpret_cast<quintptr>(this), QT_POINTER_SIZE * 2, 16, QChar('0')));
+	this->reject(QString("Deferred %1 destroyed while still pending").arg(pointerToQString(this)));
 #endif // QT_NO_EXCEPTIONS
 	}
 }

@@ -335,14 +335,31 @@ Promise::Ptr Promise::then(ResolvedFunc&& resolvedCallback, RejectedFunc&& rejec
 	case Deferred::Pending:
 	default:
 		ChildDeferred::Ptr newDeferred = ChildDeferred::create(m_deferred);
+		
+		/* For some reason, the wrapped callbacks are not called when we add a
+		 * context object. Therefore, we have to disconnect the lambdas manually
+		 * when the newDeferred is destroyed (see below).
+		 */
 		auto resolveConnect = QObject::connect(m_deferred.data(), &Deferred::resolved, createThenFuncWrapper(newDeferred.data(), resolvedCallback, Deferred::Resolved));
 		auto rejectConnect = QObject::connect(m_deferred.data(), &Deferred::rejected, createThenFuncWrapper(newDeferred.data(), rejectedCallback, Deferred::Rejected));
 		auto notifyConnect = QObject::connect(m_deferred.data(), &Deferred::notified, createNotifyFuncWrapper(newDeferred.data(), notifiedCallback));
+
+#ifdef Q_CC_MSVC
+/* Disable false warning about the need to capture 'this'.
+ * Since we only call static methods, there is no need for 'this'.
+ */
+#pragma warning(push)
+#pragma warning(disable:4573)
+#endif
 		QObject::connect(newDeferred.data(), &QObject::destroyed, [resolveConnect, rejectConnect, notifyConnect]() {
 			QObject::disconnect(resolveConnect);
 			QObject::disconnect(rejectConnect);
 			QObject::disconnect(notifyConnect);
 		});
+#ifdef Q_CC_MSVC
+#pragma warning(pop)
+#endif
+
 		return create(newDeferred.staticCast<Deferred>());
 	}
 }

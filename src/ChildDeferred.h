@@ -38,6 +38,10 @@ public:
 	/*! Smart pointer to ChildDeferred. */
 	typedef QSharedPointer<ChildDeferred> Ptr;
 
+	/*! Disconnects all signals of parent Deferreds.
+	 */
+	virtual ~ChildDeferred();
+
 	/*! Creates a ChildDeferred which holds a pointer to a parent Deferred.
 	 *
 	 * \param parent The Deferred which acts as parent to this ChildDeferred.

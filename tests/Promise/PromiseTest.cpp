@@ -53,6 +53,7 @@ private Q_SLOTS:
 	void testAllAnySync_data();
 	void testAllAnySync();
 	void testAllAnyInitializerList();
+	void testChainDestruction();
 	void cleanup();
 
 private:
@@ -950,6 +951,39 @@ void PromiseTest::testAllAnyInitializerList()
 
 	QTRY_COMPARE(allPromise->state(), Deferred::Resolved);
 	QTRY_COMPARE(anyPromise->state(), Deferred::Resolved);
+}
+
+/*! \test Tests destruction of a Promise chain.
+ */
+void PromiseTest::testChainDestruction()
+{
+	QVariantList callbackCalls;
+	{
+		Promise::Ptr finalPromise;
+		{
+			Deferred::Ptr originalDeferred = Deferred::create();
+			Promise::Ptr originalPromise = Promise::create(originalDeferred);
+
+			finalPromise = originalPromise->then([&](const QVariant& data) {
+				callbackCalls.push_back(data);
+			}, [&](const QVariant& data) {
+				callbackCalls.push_back(data);
+			}, [&](const QVariant& data) {
+				callbackCalls.push_back(data);
+			});
+		}
+
+		// Allow potential callbacks to be called
+		QTest::qWait(100);
+
+		QVERIFY(callbackCalls.isEmpty());
+	}
+
+	// The chain should be *immediatelly* destroyed, so no qWait() here!
+
+	QCOMPARE(callbackCalls.count(), 1);
+	QVERIFY(callbackCalls.first().canConvert<DeferredDestroyed>());
+
 }
 
 
