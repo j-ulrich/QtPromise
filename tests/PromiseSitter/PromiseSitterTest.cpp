@@ -1,7 +1,7 @@
 
 #include <QtTest>
 #include <QtDebug>
-#include <QPointer>
+#include <QWeakPointer>
 #include <QScopedPointer>
 #include "PromiseSitter.h"
 
@@ -29,6 +29,8 @@ private Q_SLOTS:
 	void testPromiseLifetime();
 	void testGlobalInstance_data();
 	void testGlobalInstance();
+	void testContextObjects_data();
+	void testContextObjects();
 	void cleanup();
 
 private:
@@ -69,10 +71,10 @@ void PromiseSitterTest::testAddContainsRemove()
 	PromiseSitter sitter;
 
 	Deferred::Ptr deferred = Deferred::create();
-	QPointer<Promise> promisePointer;
+	QWeakPointer<Promise> promiseWPointer;
 
 	Promise::Ptr promise = Promise::create(deferred);
-	promisePointer = promise.data();
+	promiseWPointer = promise;
 
 	sitter.add(promise);
 	QVERIFY(sitter.contains(promise));
@@ -88,7 +90,7 @@ void PromiseSitterTest::testAddContainsRemove()
 
 	QTRY_VERIFY(!sitter.contains(promise));
 	QVERIFY(!sitter.contains(samePromise));
-	QVERIFY(!promisePointer.isNull());
+	QVERIFY(!promiseWPointer.isNull());
 }
 
 /*! Provides the data for the testPromiseLifetime() test.
@@ -112,12 +114,12 @@ void PromiseSitterTest::testPromiseLifetime()
 
 	Deferred::Ptr deferred = Deferred::create();
 	QScopedPointer<PromiseSpies> spies;
-	QPointer<Promise> promisePointer;
+	QWeakPointer<Promise> promiseWPointer;
 	bool chainedActionTriggered = false;
 	{
 		Promise::Ptr promise = Promise::create(deferred);
 		sitter.add(promise);
-		promisePointer = promise.data();
+		promiseWPointer = promise;
 		spies.reset(new PromiseSpies{promise});
 
 		sitter.add(promise->always([&chainedActionTriggered](const QVariant&) {
@@ -129,7 +131,7 @@ void PromiseSitterTest::testPromiseLifetime()
 
 	// Allow a potential deleteLater to be executed
 	QTest::qWait(100);
-	QVERIFY2(!promisePointer.isNull(), "Promise was destroyed although added to the sitter");
+	QVERIFY2(!promiseWPointer.isNull(), "Promise was destroyed although added to the sitter");
 
 	QString data = "foo bar";
 	if (action == ACTION_RESOLVE)
@@ -145,9 +147,9 @@ void PromiseSitterTest::testPromiseLifetime()
 	QTest::qWait(100);
 
 	if (action == ACTION_NOTIFY)
-		QVERIFY(!promisePointer.isNull());
+		QVERIFY(!promiseWPointer.isNull());
 	else
-		QVERIFY(promisePointer.isNull());
+		QVERIFY(promiseWPointer.isNull());
 
 	// Verify actions have been triggered
 	if (action == ACTION_RESOLVE)
@@ -193,6 +195,63 @@ void PromiseSitterTest::testGlobalInstance()
 
 	deferred->resolve("data");
 	QTRY_VERIFY(!PromiseSitter::instance()->contains(promise));
+}
+
+void PromiseSitterTest::testContextObjects_data()
+{
+	QTest::addColumn<int>("contextObjectCount");
+	QTest::addColumn<int>("destroyIndex");
+
+	//                                // contextObjectCount // destroyIndex
+	QTest::newRow("single object")    << 1                  << 0;
+	QTest::newRow("multiple objects") << 3                  << 1;
+}
+
+/*! \test Tests the releasing of Promises from the PromiseSitter
+ * when their context object is deleted.
+ */
+void PromiseSitterTest::testContextObjects()
+{
+	QFETCH(int, contextObjectCount);
+	QFETCH(int, destroyIndex);
+
+	Q_ASSERT(destroyIndex < contextObjectCount);
+
+	QScopedPointer<PromiseSitter> sitter{new PromiseSitter};
+
+	Deferred::Ptr deferred = Deferred::create();
+	QWeakPointer<Promise> promiseWPointer;
+
+	QVector<QSharedPointer<QObject>> contextObjs;
+	QVector<const QObject*> rawContextObjs;
+
+	for (int i=0; i < contextObjectCount; ++i)
+	{
+		QSharedPointer<QObject> contextObj{new QObject};
+		contextObjs << contextObj;
+		rawContextObjs << contextObj.data();
+	}
+
+	// Scope for promise
+	{
+		Promise::Ptr promise = Promise::create(deferred);
+		if (contextObjectCount == 1)
+			sitter->add(promise, rawContextObjs.first());
+		else
+			sitter->add(promise, rawContextObjs);
+		promiseWPointer = promise;
+	}
+	// Allow a potential deleteLater to be executed
+	QTest::qWait(100);
+	QVERIFY2(!promiseWPointer.isNull(), "Promise was destroyed although added to the sitter");
+
+	contextObjs[destroyIndex].reset();
+
+	// PromiseSitter should now drop the reference
+	QTRY_VERIFY(promiseWPointer.isNull());
+
+	// Prevent warning
+	deferred->resolve();
 }
 
 

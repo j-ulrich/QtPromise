@@ -9,6 +9,7 @@
 
 #include "Deferred.h"
 #include <QList>
+#include <QVector>
 
 namespace QtPromise
 {
@@ -55,7 +56,7 @@ public:
 	 * and parentsResolved() signals.
 	 * \return QSharedPointer to a new, pending ChildDeferred.
 	 */
-	static Ptr create(QList<Deferred::Ptr> parents, bool trackResults = false);
+	static Ptr create(const QVector<Deferred::Ptr>& parents, bool trackResults = false);
 
 	/*! Sets the parent of this ChildDeferred.
 	 *
@@ -72,11 +73,11 @@ public:
 	 * of the \p parents and emits parentResolved(), parentRejected(), parentsResolved()
 	 * and parentsResolved() signals.
 	 */
-	void setParents(QList<Deferred::Ptr> parents, bool trackResults = false);
+	void setParents(const QVector<Deferred::Ptr>& parents, bool trackResults = false);
 
 	/*! \return The parents of this ChildDeferred.
 	 */
-	QList<Deferred::Ptr> parents() const { return m_parents; }
+	QVector<Deferred::Ptr> parents() const { return m_parents; }
 
 Q_SIGNALS:
 	/*! Emitted when one of the parent Deferreds is resolved.
@@ -111,7 +112,7 @@ protected:
 	 *
 	 * \param parent The Deferred which should exist as long as this ChildDeferred exists.
 	 */
-	ChildDeferred(QList<Deferred::Ptr> parents, bool trackResults);
+	ChildDeferred(const QVector<Deferred::Ptr>& parents, bool trackResults);
 
 private Q_SLOTS:
 	void onParentDestroyed(QObject* parent) const;
@@ -120,7 +121,7 @@ private Q_SLOTS:
 
 private:
 	mutable QMutex m_lock;
-	QList<Deferred::Ptr> m_parents;
+	QVector<Deferred::Ptr> m_parents;
 	int m_resolvedCount;
 	int m_rejectedCount;
 };

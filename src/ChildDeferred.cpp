@@ -8,7 +8,7 @@ namespace QtPromise
  * \cond INTERNAL
  */
 
-ChildDeferred::ChildDeferred(QList<Deferred::Ptr> parents, bool trackResults)
+ChildDeferred::ChildDeferred(const QVector<Deferred::Ptr>& parents, bool trackResults)
 	: Deferred(), m_lock(QMutex::Recursive), m_resolvedCount(0), m_rejectedCount(0)
 {
 	setLogInvalidActionMessage(false);
@@ -17,22 +17,22 @@ ChildDeferred::ChildDeferred(QList<Deferred::Ptr> parents, bool trackResults)
 
 ChildDeferred::Ptr ChildDeferred::create(Deferred::Ptr parent, bool trackResults)
 {
-	return create(QList<Deferred::Ptr>({parent}), trackResults);
+	return create(QVector<Deferred::Ptr>{parent}, trackResults);
 }
 
-ChildDeferred::Ptr ChildDeferred::create(QList<Deferred::Ptr> parents, bool trackResults)
+ChildDeferred::Ptr ChildDeferred::create(const QVector<Deferred::Ptr>& parents, bool trackResults)
 {
 	return Ptr(new ChildDeferred(parents, trackResults));
 }
 
 void ChildDeferred::setParent(Deferred::Ptr parent, bool trackResults)
 {
-	setParents(QList<Deferred::Ptr>({parent}), trackResults);
+	setParents(QVector<Deferred::Ptr>{parent}, trackResults);
 }
 
-void ChildDeferred::setParents(QList<Deferred::Ptr> parents, bool trackResults)
+void ChildDeferred::setParents(const QVector<Deferred::Ptr>& parents, bool trackResults)
 {
-	for (Deferred::Ptr oldParent : m_parents)
+	for (Deferred::Ptr oldParent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
 		disconnect(oldParent.data(), 0 , this, 0);
 
 	for (Deferred::Ptr parent : parents)
@@ -78,7 +78,7 @@ void ChildDeferred::onParentResolved(const QVariant& value)
 	if (m_resolvedCount == m_parents.size())
 	{
 		QList<QVariant> results;
-		for (Deferred::Ptr parent : m_parents)
+		for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
 			results.append(parent->data());
 		Q_EMIT parentsResolved(results);
 	}
@@ -92,7 +92,7 @@ void ChildDeferred::onParentRejected(const QVariant& reason)
 	if (m_rejectedCount == m_parents.size())
 	{
 		QList<QVariant> reasons;
-		for (Deferred::Ptr parent : m_parents)
+		for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
 			reasons.append(parent->data());
 		Q_EMIT parentsRejected(reasons);
 	}
