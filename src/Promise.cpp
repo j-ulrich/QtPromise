@@ -5,11 +5,6 @@
 
 namespace QtPromise {
 
-void noop(const QVariant&)
-{
-
-}
-
 Promise::Promise(Deferred::Ptr deferred)
 	: QObject(), m_deferred(deferred)
 {

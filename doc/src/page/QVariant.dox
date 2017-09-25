@@ -70,7 +70,7 @@ Q_DECLARE_METATYPE(MyException)
 
 // ...
 
-startAsyncOperation()
+this->m_promise = startAsyncOperation()
 ->then([this](const QVariant& value) {
 	try
 	{
@@ -98,7 +98,7 @@ object was used.
 
 To implement the \p rejectedCallback properly, it is necessary to check for the exact type:
 \code
-startAsyncOperation()
+this->m_promise = startAsyncOperation()
 ->then(noop, [this](const QVariant& reason) {
 	if (reason.canConvert<MyException>())
 	{
@@ -124,7 +124,7 @@ startAsyncOperation()
 Additionally, one needs to be careful to avoid [object slicing] when converting to QVariant.
 This needs attention especially when catching exceptions:
 \code
-startAsyncOperation()
+this->m_promise = startAsyncOperation()
 ->then([this](const QVariant& value) -> Promise::Ptr {
 	try
 	{
@@ -154,7 +154,9 @@ pointers for the data:
 \code
 Q_DECLARE_METATYPE(QSharedPointer<MyExceptionBase>)
 
-startAsyncOperation()
+// ...
+
+this->m_promise = startAsyncOperation()
 ->then([this](const QVariant& value) -> Promise::Ptr {
 	try
 	{

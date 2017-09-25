@@ -21,7 +21,6 @@ class NetworkPromiseTest : public QObject
 	Q_OBJECT
 
 private Q_SLOTS:
-	void cleanup();
 	void testSuccess();
 	void testFail();
 	void testHttp();
@@ -59,11 +58,6 @@ NetworkPromiseTest::PromiseSpies::PromiseSpies(NetworkPromise::Ptr promise)
 {
 }
 
-void NetworkPromiseTest::cleanup()
-{
-	// Let deleteLater be executed to clean up
-	QTest::qWait(100);
-}
 
 //####### Tests #######
 /*! \test Tests a successful request with a NetworkPromise.

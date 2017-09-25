@@ -1,7 +1,7 @@
 
 #include <QtTest>
 #include <QtDebug>
-#include <QPointer>
+#include <QWeakPointer>
 #include <QScopedPointer>
 #include "PromiseSitter.h"
 
@@ -14,6 +14,7 @@ namespace Tests
 const QString ACTION_RESOLVE = "resolve";
 const QString ACTION_REJECT = "reject";
 const QString ACTION_NOTIFY = "notify";
+const QString ACTION_REMOVE = "remove";
 
 /*! Unit tests for the PromiseSitter class.
  *
@@ -29,7 +30,8 @@ private Q_SLOTS:
 	void testPromiseLifetime();
 	void testGlobalInstance_data();
 	void testGlobalInstance();
-	void cleanup();
+	void testContextObjects_data();
+	void testContextObjects();
 
 private:
 	struct PromiseSpies
@@ -53,12 +55,6 @@ PromiseSitterTest::PromiseSpies::PromiseSpies(Promise::Ptr promise)
 {
 }
 
-void PromiseSitterTest::cleanup()
-{
-	// Let deleteLater be executed to clean up
-	QTest::qWait(100);
-}
-
 //####### Tests #######
 
 /*! \test Tests the PromiseSitter::add(), PromiseSitter::contains()
@@ -69,10 +65,10 @@ void PromiseSitterTest::testAddContainsRemove()
 	PromiseSitter sitter;
 
 	Deferred::Ptr deferred = Deferred::create();
-	QPointer<Promise> promisePointer;
+	QWeakPointer<Promise> promiseWPointer;
 
 	Promise::Ptr promise = Promise::create(deferred);
-	promisePointer = promise.data();
+	promiseWPointer = promise;
 
 	sitter.add(promise);
 	QVERIFY(sitter.contains(promise));
@@ -88,7 +84,7 @@ void PromiseSitterTest::testAddContainsRemove()
 
 	QTRY_VERIFY(!sitter.contains(promise));
 	QVERIFY(!sitter.contains(samePromise));
-	QVERIFY(!promisePointer.isNull());
+	QVERIFY(!promiseWPointer.isNull());
 }
 
 /*! Provides the data for the testPromiseLifetime() test.
@@ -100,6 +96,7 @@ void PromiseSitterTest::testPromiseLifetime_data()
 	QTest::newRow("resolve") << ACTION_RESOLVE;
 	QTest::newRow("reject") << ACTION_REJECT;
 	QTest::newRow("notify") << ACTION_NOTIFY;
+	QTest::newRow("remove") << ACTION_REMOVE;
 }
 
 /*! \test Tests the releasing of Promises from the PromiseSitter.
@@ -112,12 +109,12 @@ void PromiseSitterTest::testPromiseLifetime()
 
 	Deferred::Ptr deferred = Deferred::create();
 	QScopedPointer<PromiseSpies> spies;
-	QPointer<Promise> promisePointer;
+	QWeakPointer<Promise> promiseWPointer;
 	bool chainedActionTriggered = false;
 	{
 		Promise::Ptr promise = Promise::create(deferred);
 		sitter.add(promise);
-		promisePointer = promise.data();
+		promiseWPointer = promise;
 		spies.reset(new PromiseSpies{promise});
 
 		sitter.add(promise->always([&chainedActionTriggered](const QVariant&) {
@@ -127,9 +124,7 @@ void PromiseSitterTest::testPromiseLifetime()
 		// Our Promise::Ptr goes out of scope
 	}
 
-	// Allow a potential deleteLater to be executed
-	QTest::qWait(100);
-	QVERIFY2(!promisePointer.isNull(), "Promise was destroyed although added to the sitter");
+	QVERIFY2(!promiseWPointer.isNull(), "Promise was destroyed although added to the sitter");
 
 	QString data = "foo bar";
 	if (action == ACTION_RESOLVE)
@@ -138,16 +133,17 @@ void PromiseSitterTest::testPromiseLifetime()
 		deferred->reject(data);
 	else if (action == ACTION_NOTIFY)
 		deferred->notify(data);
+	else if (action == ACTION_REMOVE)
+		sitter.remove(promiseWPointer.data());
 	else
 		QFAIL("Invalid value for \"action\"");
 
-	// Give the sitter the chance to drop its reference.
-	QTest::qWait(100);
-
 	if (action == ACTION_NOTIFY)
-		QVERIFY(!promisePointer.isNull());
+		QVERIFY(!promiseWPointer.isNull());
+	else if (action == ACTION_REMOVE)
+		QVERIFY(promiseWPointer.isNull());
 	else
-		QVERIFY(promisePointer.isNull());
+		QTRY_VERIFY(promiseWPointer.isNull());
 
 	// Verify actions have been triggered
 	if (action == ACTION_RESOLVE)
@@ -160,13 +156,17 @@ void PromiseSitterTest::testPromiseLifetime()
 		QCOMPARE(spies->rejected.count(), 1);
 		QCOMPARE(spies->rejected.at(0).at(0).toString(), data);
 	}
-	if (action == ACTION_NOTIFY)
+	else if (action == ACTION_NOTIFY)
 	{
 		QCOMPARE(spies->notified.count(), 1);
 		QCOMPARE(spies->notified.at(0).at(0).toString(), data);
 	}
+
+	if (action == ACTION_NOTIFY || action == ACTION_REMOVE)
+		QVERIFY(!chainedActionTriggered);
 	else
 		QVERIFY(chainedActionTriggered);
+
 }
 
 /*! Provides the data for the testGlobalInstance() test.
@@ -193,6 +193,62 @@ void PromiseSitterTest::testGlobalInstance()
 
 	deferred->resolve("data");
 	QTRY_VERIFY(!PromiseSitter::instance()->contains(promise));
+}
+
+void PromiseSitterTest::testContextObjects_data()
+{
+	QTest::addColumn<int>("contextObjectCount");
+	QTest::addColumn<int>("destroyIndex");
+
+	//                                // contextObjectCount // destroyIndex
+	QTest::newRow("single object")    << 1                  << 0;
+	QTest::newRow("multiple objects") << 3                  << 1;
+}
+
+/*! \test Tests the releasing of Promises from the PromiseSitter
+ * when their context object is deleted.
+ */
+void PromiseSitterTest::testContextObjects()
+{
+	QFETCH(int, contextObjectCount);
+	QFETCH(int, destroyIndex);
+
+	Q_ASSERT(destroyIndex < contextObjectCount);
+
+	QScopedPointer<PromiseSitter> sitter{new PromiseSitter};
+
+	Deferred::Ptr deferred = Deferred::create();
+	QWeakPointer<Promise> promiseWPointer;
+
+	QVector<QSharedPointer<QObject>> contextObjs;
+	QVector<const QObject*> rawContextObjs;
+
+	for (int i=0; i < contextObjectCount; ++i)
+	{
+		QSharedPointer<QObject> contextObj{new QObject};
+		contextObjs << contextObj;
+		rawContextObjs << contextObj.data();
+	}
+
+	// Scope for promise
+	{
+		Promise::Ptr promise = Promise::create(deferred);
+		if (contextObjectCount == 1)
+			sitter->add(promise, rawContextObjs.first());
+		else
+			sitter->add(promise, rawContextObjs);
+		promiseWPointer = promise;
+	}
+
+	QVERIFY2(!promiseWPointer.isNull(), "Promise was destroyed although added to the sitter");
+
+	contextObjs[destroyIndex].reset();
+
+	// PromiseSitter should now drop the reference
+	QTRY_VERIFY(promiseWPointer.isNull());
+
+	// Prevent warning
+	deferred->resolve();
 }
 
 

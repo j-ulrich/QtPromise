@@ -33,6 +33,8 @@ private Q_SLOTS:
 	void testResolve();
 	void testReject();
 	void testNotify();
+	void testThenNullCallback_data();
+	void testThenNullCallback();
 	void testThenVoidCallback_data();
 	void testThenVoidCallback();
 	void testThenVariantCallback_data();
@@ -54,7 +56,6 @@ private Q_SLOTS:
 	void testAllAnySync();
 	void testAllAnyInitializerList();
 	void testChainDestruction();
-	void cleanup();
 
 private:
 	struct PromiseSpies
@@ -102,11 +103,6 @@ void PromiseTest::callActionOnDeferred(Deferred::Ptr& deferred, const QString& a
 	}
 }
 
-void PromiseTest::cleanup()
-{
-	// Let deleteLater be executed to clean up
-	QTest::qWait(100);
-}
 
 //####### Tests #######
 
@@ -255,6 +251,81 @@ void PromiseTest::testNotify()
 	QCOMPARE(spies.notified.at(1).first().toInt(), secondValue);
 }
 
+/*! Provides the data for the testThenNullCallback() test.
+ */
+void PromiseTest::testThenNullCallback_data()
+{
+	QTest::addColumn<bool>("async");
+	QTest::addColumn<QString>("action");
+	QTest::addColumn<QVariant>("data");
+	QTest::addColumn<Deferred::State>("expectedState");
+	QTest::addColumn<QVariant>("expectedData");
+	QTest::addColumn<QVariantList>("expectedResolvedCalls");
+	QTest::addColumn<QVariantList>("expectedRejectedCalls");
+	QTest::addColumn<QVariantList>("expectedNotifiedCalls");
+
+	QVariant data("my string value");
+	//                              // async // action         // data // expectedState      // expectedData // expectedResolvedCalls    // expectedRejectedCalls    // expectedNotifiedCalls
+	QTest::newRow("sync resolve")  << false  << ACTION_RESOLVE << data << Deferred::Resolved << data         << (QVariantList() << data) << (QVariantList())         << (QVariantList());
+	QTest::newRow("sync reject")   << false  << ACTION_REJECT  << data << Deferred::Rejected << data         << (QVariantList())         << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("sync notify")   << false  << ACTION_NOTIFY  << data << Deferred::Pending  << QVariant()   << (QVariantList())         << (QVariantList())         << (QVariantList());
+	QTest::newRow("async resolve") << true   << ACTION_RESOLVE << data << Deferred::Resolved << data         << (QVariantList() << data) << (QVariantList())         << (QVariantList());
+	QTest::newRow("async reject")  << true   << ACTION_REJECT  << data << Deferred::Rejected << data         << (QVariantList())         << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("async notify")  << true   << ACTION_NOTIFY  << data << Deferred::Pending  << QVariant()   << (QVariantList())         << (QVariantList())         << (QVariantList() << data << data);
+}
+
+/*! \test Tests the Promise::then() method with a \c nullptr as parameter.
+ */
+void PromiseTest::testThenNullCallback()
+{
+	QFETCH(bool, async);
+	QFETCH(QString, action);
+	QFETCH(QVariant, data);
+
+
+	Deferred::Ptr deferred = Deferred::create();
+
+	if (!async)
+		callActionOnDeferred(deferred, action, data, 2);
+
+	Promise::Ptr promise = Promise::create(deferred);
+
+	QVariantList resolvedCalls;
+	QVariantList rejectedCalls;
+	QVariantList notifiedCalls;
+
+	Promise::Ptr newPromise = promise->then(nullptr, nullptr, nullptr);
+	Promise::Ptr spyPromise = newPromise->then([&resolvedCalls](const QVariant& value) {
+		resolvedCalls.push_back(value);
+	}, [&rejectedCalls](const QVariant& reason) {
+		rejectedCalls.push_back(reason);
+	}, [&notifiedCalls](const QVariant& progress) {
+		notifiedCalls.push_back(progress);
+	});
+
+	if (async)
+	{
+		QCOMPARE(promise->state(), Deferred::Pending);
+		QCOMPARE(newPromise->state(), Deferred::Pending);
+		QCOMPARE(resolvedCalls.count(), 0);
+		QCOMPARE(rejectedCalls.count(), 0);
+		QCOMPARE(notifiedCalls.count(), 0);
+
+		callActionOnDeferred(deferred, action, data, 2);
+	}
+
+	QTEST(promise->state(), "expectedState");
+	QTEST(newPromise->state(), "expectedState");
+	QTEST(promise->data(), "expectedData");
+	QTEST(newPromise->data(), "expectedData");
+	QTEST(resolvedCalls, "expectedResolvedCalls");
+	QTEST(rejectedCalls, "expectedRejectedCalls");
+	QTEST(notifiedCalls, "expectedNotifiedCalls");
+
+	if (deferred->state() == Deferred::Pending)
+		deferred->resolve();
+}
+
 /*! Provides the data for the testThenVoidCallback() test.
  */
 void PromiseTest::testThenVoidCallback_data()
@@ -308,7 +379,7 @@ void PromiseTest::testThenVoidCallback()
 
 	QVariantList chainedNotifiedCalls;
 
-	Promise::Ptr chainedNotifyPromise = newPromise->then(noop, noop, [&chainedNotifiedCalls] (const QVariant& progress) {
+	Promise::Ptr chainedNotifyPromise = newPromise->then(nullptr, nullptr, [&chainedNotifiedCalls] (const QVariant& progress) {
 		chainedNotifiedCalls.push_back(progress);
 	});
 
@@ -331,6 +402,9 @@ void PromiseTest::testThenVoidCallback()
 	QTEST(rejectedCalls, "expectedRejectedCalls");
 	QTEST(notifiedCalls, "expectedNotifiedCalls");
 	QTEST(chainedNotifiedCalls, "expectedNotifiedCalls");
+
+	if (deferred->state() == Deferred::Pending)
+		deferred->resolve(); // Avoid warning
 }
 
 /*! Provides the data for the testThenVariantCallback() test.
@@ -416,6 +490,9 @@ void PromiseTest::testThenVariantCallback()
 	QTEST(resolvedCalls, "expectedResolvedCalls");
 	QTEST(rejectedCalls, "expectedRejectedCalls");
 	QTEST(notifiedCalls, "expectedNotifiedCalls");
+
+	if (deferred->state() == Deferred::Pending)
+		deferred->resolve(); // Avoid warning
 }
 
 /*! Provides the data for the testThenPromiseCallback() test.
@@ -499,6 +576,9 @@ void PromiseTest::testThenPromiseCallback()
 	QTEST(newPromise->data(), "expectedChainedData");
 	QTEST(resolvedCalls, "expectedResolvedCalls");
 	QTEST(rejectedCalls, "expectedRejectedCalls");
+
+	if (deferred->state() == Deferred::Pending)
+		deferred->resolve(); // Avoid warning
 }
 
 /*! \test Tests notifying the promise returned by Promise::then().
@@ -515,7 +595,7 @@ void PromiseTest::testThenNotify()
 	Promise::Ptr chainedPromise = originalPromise
 			->then([&](const QVariant& data) -> Promise::Ptr {
 		return Promise::create(resolveDeferred);
-	}, noop, [&](const QVariant& progress) -> Promise::Ptr {
+	}, nullptr, [&](const QVariant& progress) -> Promise::Ptr {
 		return Promise::create(notifyDeferred);
 	});
 
@@ -557,12 +637,15 @@ void PromiseTest::testThenNotify()
 	// Resolve the original Deferred should "enable" the resolveDeferred.
 	originalDeferred->resolve();
 
-	QTRY_VERIFY(spies.notified.empty());
+	QTRY_COMPARE(originalPromise->state(), Deferred::Resolved);
+	QCOMPARE(chainedPromise->state(), Deferred::Pending);
+	QVERIFY(spies.notified.empty());
 
 	QVariant sixthNotify{"sixth notify"};
 	resolveDeferred->notify(sixthNotify);
 
-	QTRY_COMPARE(spies.notified.last().first(), sixthNotify);
+	QTRY_VERIFY(!spies.notified.empty());
+	QCOMPARE(spies.notified.last().first(), sixthNotify);
 	spies.notified.clear();
 
 	// The resolveDeferred is now in control of notifying.
@@ -571,6 +654,7 @@ void PromiseTest::testThenNotify()
 
 	QTRY_VERIFY(spies.notified.empty());
 
+	// Avoid warning
 	notifyDeferred->resolve();
 	resolveDeferred->resolve();
 }
@@ -615,20 +699,23 @@ void PromiseTest::testThenNotifyPromiseCallback()
 
 	auto iResolveRejectSeq = QListIterator<bool>{resolveRejectSequence};
 	auto iNotifyData = QListIterator<QVariant>{notifyData};
-	Promise::Ptr resultPromise = promise->then(noop, noop,
+	Promise::Ptr resultPromise = promise->then(nullptr, nullptr,
 	                                           [&](const QVariant& progress) -> Promise::Ptr {
 		if (iResolveRejectSeq.next())
 			return Promise::createResolved(iNotifyData.next());
 		else
 			return Promise::createRejected(iNotifyData.next());
 	})
-	->then(noop, noop, [&](const QVariant& progress) {
+	->then(nullptr, nullptr, [&](const QVariant& progress) {
 		notifiedCalls.push_back(progress);
 	});
 
 	callActionOnDeferred(deferred, ACTION_NOTIFY, QVariant{"dummy data"}, resolveRejectSequence.count());
 
 	QTEST(notifiedCalls, "expectedNotifyCalls");
+
+	// Avoid warning
+	deferred->resolve();
 }
 
 /*! Provides the data for the testAlways() test.
@@ -679,9 +766,6 @@ void PromiseTest::testThreeLevelChain()
 		callbackCalls.push_back(data);
 	});
 
-	// Ensure deleteLater can be called on intermediate Promise
-	QTest::qWait(100);
-
 	QVariant data("my data");
 	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);
 	QCOMPARE(callbackCalls, QVariantList() << data << data);
@@ -702,9 +786,6 @@ void PromiseTest::testAsyncChain()
 		                 secondDeferred.data(), &Deferred::resolve);
 		return Promise::create(secondDeferred);
 	});
-
-	// Ensure deleteLater can be called on intermediate objects
-	QTest::qWait(100);
 
 	QVariant data("my data");
 	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);
@@ -794,6 +875,9 @@ void PromiseTest::testAllReject()
 	QTRY_COMPARE(spies.rejected.count(), 1);
 	QTRY_COMPARE(spies.notified.count(), 0);
 	QTRY_COMPARE(spies.rejected.first().first(), rejectReason);
+
+	// Avoid warning
+	deferreds[2]->resolve();
 }
 
 /*! \test Tests resolving a combined Promise created with Promise::any().
@@ -830,6 +914,9 @@ void PromiseTest::testAny()
 	QTRY_COMPARE(spies.rejected.count(), 0);
 	QTRY_COMPARE(spies.notified.count(), 0);
 	QTRY_COMPARE(spies.resolved.first().first(), QVariant::fromValue(result));
+
+	// Avoid warning
+	deferreds[2]->resolve();
 }
 
 /*! \test Tests rejecting a combined Promise created with Promise::any().
@@ -936,6 +1023,11 @@ void PromiseTest::testAllAnySync()
 	QTRY_COMPARE(anySpies.resolved.count(), expectedAnySignalCounts[0]);
 	QTRY_COMPARE(anySpies.rejected.count(), expectedAnySignalCounts[1]);
 	QTRY_COMPARE(anySpies.notified.count(), expectedAnySignalCounts[2]);
+
+	// Avoid warnings
+	for (Deferred::Ptr deferred : deferreds)
+		if (deferred->state() == Deferred::Pending)
+			deferred->resolve();
 }
 
 /*! \test Tests Promise::all() and Promise::any()

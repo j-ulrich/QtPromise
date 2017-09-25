@@ -68,14 +68,17 @@ private:
 \code
 using namespace QtPromise;
 
-Deferred::Ptr deferred = Deferred::create();
-MyAsyncObject* asyncObj = new MyAsyncObject(deferred.data()); // We use the Deferred as parent of
-                                                              // asyncObj so we do not leak memory.
-connect(asyncObj, &MyAsyncObject::success, deferred.data(), &Deferred::resolve);
-connect(asyncObj, &MyAsyncObject::failure, deferred.data(), &Deferred::reject);
-connect(asyncObj, &MyAsyncObject::progress, deferred.data(), &Deferred::notify);
-asyncObj->start();
-return Promise::create(deferred);
+Promise::Ptr startAsyncOperation()
+{
+	Deferred::Ptr deferred = Deferred::create();
+	MyAsyncObject* asyncObj = new MyAsyncObject(deferred.data()); // We use the Deferred as parent of
+	                                                              // asyncObj so we do not leak memory.
+	connect(asyncObj, &MyAsyncObject::success, deferred.data(), &Deferred::resolve);
+	connect(asyncObj, &MyAsyncObject::failure, deferred.data(), &Deferred::reject);
+	connect(asyncObj, &MyAsyncObject::progress, deferred.data(), &Deferred::notify);
+	asyncObj->start();
+	return Promise::create(deferred);
+}
 \endcode
  *
  * ## Subclassing ##

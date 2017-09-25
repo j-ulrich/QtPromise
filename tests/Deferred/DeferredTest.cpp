@@ -22,7 +22,6 @@ private Q_SLOTS:
 	void testNotify();
 	void testDestructor();
 	void testDeferredDestroyedException();
-	void cleanup();
 
 private:
 	struct DeferredSpies
@@ -36,6 +35,7 @@ private:
 
 };
 
+//####### Helpers #######
 DeferredTest::DeferredSpies::DeferredSpies(Deferred::Ptr deferred)
 	: resolved(deferred.data(), &Deferred::resolved),
 	  rejected(deferred.data(), &Deferred::rejected),
@@ -43,12 +43,8 @@ DeferredTest::DeferredSpies::DeferredSpies(Deferred::Ptr deferred)
 {
 }
 
-void DeferredTest::cleanup()
-{
-	// Let deleteLater be executed to clean up
-	QTest::qWait(100);
-}
 
+//####### Tests #######
 /*! \test Tests the Deferred::create() method.
  */
 void DeferredTest::testConstructor()
