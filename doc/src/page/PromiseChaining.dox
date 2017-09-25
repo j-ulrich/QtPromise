@@ -174,7 +174,7 @@ this->m_resultPromise = startAsyncOperation()
 		return Promise::createRejected(QString("Something failed! :-("));
 })
 // Catch all (chain step 2)
-->then(noop, [this](const QVariant& reason) -> void {
+->then(nullptr, [this](const QVariant& reason) -> void {
 	if (reason.canConvert<QString>())
 		logError(reason.toString());
 });

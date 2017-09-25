@@ -5,7 +5,7 @@
 namespace QtPromise
 {
 
-QAtomicInteger<qint8> FutureDeferred::m_metaTypesRegistered{0};
+QAtomicInteger<int> FutureDeferred::m_metaTypesRegistered{0};
 
 void FutureDeferred::registerMetaTypes()
 {
