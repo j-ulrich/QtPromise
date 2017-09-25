@@ -307,7 +307,7 @@ void PromiseTest::testThenVoidCallback()
 
 	QVariantList chainedNotifiedCalls;
 
-	newPromise->then(noop, noop, [&chainedNotifiedCalls] (const QVariant& progress) {
+	Promise::Ptr chainedNotifyPromise = newPromise->then(noop, noop, [&chainedNotifiedCalls] (const QVariant& progress) {
 		chainedNotifiedCalls.push_back(progress);
 	});
 
@@ -392,7 +392,7 @@ void PromiseTest::testThenVariantCallback()
 	QVariantList rejectedCalls;
 	QVariantList notifiedCalls;
 
-	newPromise->then([&](const QVariant& value) {
+	Promise::Ptr spyPromise = newPromise->then([&](const QVariant& value) {
 		resolvedCalls.push_back(value);
 	}, [&](const QVariant& reason) {
 		rejectedCalls.push_back(reason);
@@ -479,7 +479,7 @@ void PromiseTest::testThenPromiseCallback()
 	QVariantList resolvedCalls;
 	QVariantList rejectedCalls;
 
-	newPromise->then([&](const QVariant& value) {
+	Promise::Ptr spyPromise = newPromise->then([&](const QVariant& value) {
 		resolvedCalls.push_back(value);
 	}, [&](const QVariant& reason) {
 		rejectedCalls.push_back(reason);
