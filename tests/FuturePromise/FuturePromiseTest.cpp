@@ -22,7 +22,6 @@ class FuturePromiseTest : public QObject
 
 private Q_SLOTS:
 	void initTestCase();
-	void cleanup();
 	void testBasicFuture();
 	void testMultipleResults();
 	void testProgressReporting();
@@ -66,12 +65,6 @@ void FuturePromiseTest::initTestCase()
 	 * predictable manner.
 	 */
 	QThreadPool::globalInstance()->setMaxThreadCount(2);
-}
-
-void FuturePromiseTest::cleanup()
-{
-	// Let deleteLater be executed to clean up
-	QTest::qWait(100);
 }
 
 
