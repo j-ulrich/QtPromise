@@ -166,15 +166,15 @@ public:
 	 * by the callback will notify the returned Promise.
 	 *
 	 * For the \p notifiedCallback, the following rules apply:
-	 * - If the callback returns `void`, the returned Promise is notified identical to
+	 * - If the callback returns `void`, the returned Promise is notified identically to
 	 * this Promise.
-	 * - If the callback returns `QVariant`, the returned Promise is notified with the
-	 * returned value whenever this Promise is notified.
+	 * - If the callback returns `QVariant`, the callback is called when this promise is notified
+	 * and the returned Promise is notified with the value returned by the callback.
 	 * - If the callback returns `Promise::Ptr`, the returned Promise is notified identical
 	 * to the Promise returned by the callback.
 	 * Additionally, resolving the Promise returned by the callback or returning an already resolved
 	 * Promise will also notify the returned Promise with the resolve data.
-	 * Rejecting the Promise or returning a rejected Promise will do nothing which means it blocks
+	 * Rejecting the Promise or returning a rejected Promise will do nothing which means it filters
 	 * the notification.
 	 *
 	 * Note the special behavior of notifications:\n
