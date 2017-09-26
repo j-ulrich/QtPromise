@@ -119,7 +119,7 @@ protected:
 	ChildDeferred(const QVector<Deferred::Ptr>& parents, bool trackResults);
 
 private Q_SLOTS:
-	void onParentDestroyed(QObject* parent) const;
+	void onParentDestroyed(QObject* parent);
 	void onParentResolved(const QVariant& value);
 	void onParentRejected(const QVariant& reason);
 

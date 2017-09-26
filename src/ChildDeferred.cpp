@@ -80,9 +80,23 @@ void ChildDeferred::setParents(const QVector<Deferred::Ptr>& parents, bool track
 	m_parents = parents;
 }
 
-void ChildDeferred::onParentDestroyed(QObject* parent) const
+void ChildDeferred::onParentDestroyed(QObject* parent)
 {
 	qCritical("Parent deferred %s is destroyed while child %s is still holding a reference.", qUtf8Printable(pointerToQString(parent)), qUtf8Printable(pointerToQString(this)));
+	QObject::disconnect(parent, 0, this, 0);
+	auto deferredParent = static_cast<Deferred*>(parent);
+	QVector<int> removeIndices;
+	for (int i = m_parents.size()-1; i >= 0; --i)
+	{
+		if (m_parents.at(i) == deferredParent)
+		{
+			removeIndices.append(i);
+		}
+	}
+
+	for (int i : const_cast<const QVector<int>&>(removeIndices))
+		m_parents.removeAt(i);
+		
 }
 
 void ChildDeferred::onParentResolved(const QVariant& value)
