@@ -512,15 +512,15 @@ void PromiseTest::testThenPromiseCallback_data()
 
 
 	QVariant data("my string value");
-	//                                        // async // action         // callbackAction      // callbackData // expectedOriginalState // expectedChainedState expectedChainedData // expectedResolvedCalls    // expectedRejectedCalls
-	QTest::newRow("sync resolve -> reject")   << false << ACTION_RESOLVE << ACTION_REJECT       << data         << Deferred::Resolved    << Deferred::Rejected   << data             << (QVariantList())         << (QVariantList() << data);
-	QTest::newRow("sync resolve -> resolve")  << false << ACTION_RESOLVE << ACTION_RESOLVE      << data         << Deferred::Resolved    << Deferred::Resolved   << data             << (QVariantList() << data) << (QVariantList());
-	QTest::newRow("sync reject -> resolve")   << false << ACTION_REJECT  << ACTION_RESOLVE      << data         << Deferred::Rejected    << Deferred::Resolved   << data             << (QVariantList() << data) << (QVariantList());
-	QTest::newRow("sync reject -> reject")    << false << ACTION_REJECT  << ACTION_REJECT       << data         << Deferred::Rejected    << Deferred::Rejected   << data             << (QVariantList())         << (QVariantList() << data);
-	QTest::newRow("async resolve -> reject")  << true  << ACTION_RESOLVE << ACTION_REJECT       << data         << Deferred::Resolved    << Deferred::Rejected   << data             << (QVariantList())         << (QVariantList() << data);
-	QTest::newRow("async resolve -> resolve") << true  << ACTION_RESOLVE << ACTION_RESOLVE      << data         << Deferred::Resolved    << Deferred::Resolved   << data             << (QVariantList() << data) << (QVariantList());
-	QTest::newRow("async reject -> resolve")  << true  << ACTION_REJECT  << ACTION_RESOLVE      << data         << Deferred::Rejected    << Deferred::Resolved   << data             << (QVariantList() << data) << (QVariantList());
-	QTest::newRow("async reject -> reject")   << true  << ACTION_REJECT  << ACTION_REJECT       << data         << Deferred::Rejected    << Deferred::Rejected   << data             << (QVariantList())         << (QVariantList() << data);
+	//                                        // async // action         // callbackAction      // callbackData // expectedOriginalState // expectedChainedState // expectedChainedData // expectedResolvedCalls    // expectedRejectedCalls
+	QTest::newRow("sync resolve -> reject")   << false << ACTION_RESOLVE << ACTION_REJECT       << data         << Deferred::Resolved    << Deferred::Rejected   << data                << (QVariantList())         << (QVariantList() << data);
+	QTest::newRow("sync resolve -> resolve")  << false << ACTION_RESOLVE << ACTION_RESOLVE      << data         << Deferred::Resolved    << Deferred::Resolved   << data                << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("sync reject -> resolve")   << false << ACTION_REJECT  << ACTION_RESOLVE      << data         << Deferred::Rejected    << Deferred::Resolved   << data                << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("sync reject -> reject")    << false << ACTION_REJECT  << ACTION_REJECT       << data         << Deferred::Rejected    << Deferred::Rejected   << data                << (QVariantList())         << (QVariantList() << data);
+	QTest::newRow("async resolve -> reject")  << true  << ACTION_RESOLVE << ACTION_REJECT       << data         << Deferred::Resolved    << Deferred::Rejected   << data                << (QVariantList())         << (QVariantList() << data);
+	QTest::newRow("async resolve -> resolve") << true  << ACTION_RESOLVE << ACTION_RESOLVE      << data         << Deferred::Resolved    << Deferred::Resolved   << data                << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("async reject -> resolve")  << true  << ACTION_REJECT  << ACTION_RESOLVE      << data         << Deferred::Rejected    << Deferred::Resolved   << data                << (QVariantList() << data) << (QVariantList());
+	QTest::newRow("async reject -> reject")   << true  << ACTION_REJECT  << ACTION_REJECT       << data         << Deferred::Rejected    << Deferred::Rejected   << data                << (QVariantList())         << (QVariantList() << data);
 }
 
 /*! \test Tests the Promise::then() method with a callback returning Promise::Ptr.
@@ -674,9 +674,9 @@ void PromiseTest::testThenNotifyPromiseCallback_data()
 	QTest::newRow("resolve") << (QList<bool>{} << true)
 	                         << (QVariantList{} << notifyData)
 	                         << (QVariantList{} << notifyData);
-	QTest::newRow("reject") << (QList<bool>{} << false)
-	                        << (QVariantList{} << notifyData)
-	                        << QVariantList();
+	QTest::newRow("reject")  << (QList<bool>{} << false)
+	                         << (QVariantList{} << notifyData)
+	                         << QVariantList();
 	QTest::newRow("resolve, reject") << (QList<bool>{} << true << false)
 	                                 << (QVariantList{} << notifyData << notifyData2)
 	                                 << (QVariantList{} << notifyData);

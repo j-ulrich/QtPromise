@@ -92,6 +92,7 @@ void ChildDeferred::onParentResolved(const QVariant& value)
 	Q_EMIT parentResolved(value);
 	if (m_resolvedCount == m_parents.size())
 	{
+		// All parents have been resolved
 		QList<QVariant> results;
 		for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
 			results.append(parent->data());
@@ -106,6 +107,7 @@ void ChildDeferred::onParentRejected(const QVariant& reason)
 	Q_EMIT parentRejected(reason);
 	if (m_rejectedCount == m_parents.size())
 	{
+		// All parents have been rejected
 		QList<QVariant> reasons;
 		for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
 			reasons.append(parent->data());
