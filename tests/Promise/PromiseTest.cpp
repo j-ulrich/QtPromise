@@ -55,6 +55,7 @@ private Q_SLOTS:
 	void testAllAnySync_data();
 	void testAllAnySync();
 	void testAllAnyInitializerList();
+	void testPromiseDestruction();
 	void testChainDestruction();
 
 private:
@@ -1045,18 +1046,46 @@ void PromiseTest::testAllAnyInitializerList()
 	QTRY_COMPARE(anyPromise->state(), Deferred::Resolved);
 }
 
-/*! \test Tests destruction of a Promise chain.
+/*! \test Tests destruction of a Promise only.
+ */
+void PromiseTest::testPromiseDestruction()
+{
+	Deferred::Ptr deferred = Deferred::create();
+	QVariantList callbackCalls;
+	{
+		Promise::Ptr promise = Promise::create(deferred);
+		auto finalPromise = promise->always([&](const QVariant& data) {
+			callbackCalls.push_back(data);
+		});
+	}
+	/* Only the Promise is destroyed.
+	 * The Deferred still exists so no rejection with DeferredDestroyed.
+	 */
+	QCOMPARE(callbackCalls.count(), 0);
+
+	deferred->resolve("foo");
+
+	/* Ensure that the callbacks are *NOT* called after the chain
+	 * has been destructed.
+	 */
+	QTest::qWait(100);
+	QCOMPARE(callbackCalls.count(), 0);
+}
+
+/*! \test Tests destruction of a complete Promise chain.
  */
 void PromiseTest::testChainDestruction()
 {
+	Deferred::Ptr deferred = Deferred::create();
 	QVariantList callbackCalls;
 	{
 		Promise::Ptr finalPromise;
 		{
-			Deferred::Ptr originalDeferred = Deferred::create();
-			Promise::Ptr originalPromise = Promise::create(originalDeferred);
+			Promise::Ptr originalPromise = Promise::create(deferred);
 
-			finalPromise = originalPromise->then([&](const QVariant& data) {
+			finalPromise = originalPromise
+			->then(nullptr, nullptr, nullptr)
+			->then([&](const QVariant& data) {
 				callbackCalls.push_back(data);
 			}, [&](const QVariant& data) {
 				callbackCalls.push_back(data);
@@ -1071,11 +1100,20 @@ void PromiseTest::testChainDestruction()
 		QVERIFY(callbackCalls.isEmpty());
 	}
 
-	// The chain should be *immediatelly* destroyed, so no qWait() here!
-
+	/* The chain should be *immediatelly* destroyed, so no qWait() here!
+	 * Since there are intermediate Deferreds which are destroyed,
+	 * the chain is rejected before being destroyed.
+	 */
 	QCOMPARE(callbackCalls.count(), 1);
 	QVERIFY(callbackCalls.first().canConvert<DeferredDestroyed>());
 
+	deferred->resolve("foo");
+
+	/* Ensure that the callbacks are *NOT* called after the chain
+	 * has been destructed.
+	 */
+	QTest::qWait(100);
+	QCOMPARE(callbackCalls.count(), 1);
 }
 
 

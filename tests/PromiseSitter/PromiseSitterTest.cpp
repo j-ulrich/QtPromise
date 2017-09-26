@@ -96,7 +96,6 @@ void PromiseSitterTest::testPromiseLifetime_data()
 	QTest::newRow("resolve") << ACTION_RESOLVE;
 	QTest::newRow("reject") << ACTION_REJECT;
 	QTest::newRow("notify") << ACTION_NOTIFY;
-	QTest::newRow("remove") << ACTION_REMOVE;
 }
 
 /*! \test Tests the releasing of Promises from the PromiseSitter.
@@ -133,19 +132,20 @@ void PromiseSitterTest::testPromiseLifetime()
 		deferred->reject(data);
 	else if (action == ACTION_NOTIFY)
 		deferred->notify(data);
-	else if (action == ACTION_REMOVE)
-		sitter.remove(promiseWPointer.data());
 	else
 		QFAIL("Invalid value for \"action\"");
 
 	if (action == ACTION_NOTIFY)
 		QVERIFY(!promiseWPointer.isNull());
-	else if (action == ACTION_REMOVE)
-		QVERIFY(promiseWPointer.isNull());
 	else
+		/* When the promise is resolved or rejected,
+		 * it will not be deleted immediatelly since one
+		 * cannot delete an object in a slot attached to one
+		 * of its signals.
+		 */
 		QTRY_VERIFY(promiseWPointer.isNull());
 
-	// Verify actions have been triggered
+	// Verify if actions have been triggered
 	if (action == ACTION_RESOLVE)
 	{
 		QCOMPARE(spies->resolved.count(), 1);
@@ -162,11 +162,14 @@ void PromiseSitterTest::testPromiseLifetime()
 		QCOMPARE(spies->notified.at(0).at(0).toString(), data);
 	}
 
-	if (action == ACTION_NOTIFY || action == ACTION_REMOVE)
+	if (action == ACTION_NOTIFY)
 		QVERIFY(!chainedActionTriggered);
 	else
 		QVERIFY(chainedActionTriggered);
 
+	// Avoid warning
+	if (deferred->state() == Deferred::Pending)
+		deferred->resolve();
 }
 
 /*! Provides the data for the testGlobalInstance() test.
