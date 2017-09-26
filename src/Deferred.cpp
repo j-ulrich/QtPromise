@@ -27,7 +27,7 @@ void Deferred::registerMetaTypes()
 
 Deferred::Ptr Deferred::create()
 {
-	return Deferred::Ptr(new Deferred(), &QObject::deleteLater);
+	return Deferred::Ptr(new Deferred());
 }
 
 Deferred::Ptr Deferred::create(State state, const QVariant& data)

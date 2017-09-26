@@ -36,17 +36,17 @@ Promise::Promise(Deferred::State state, const QVariant& data)
 
 Promise::Ptr Promise::create(Deferred::Ptr deferred)
 {
-	return Ptr(new Promise(deferred), &QObject::deleteLater);
+	return Ptr(new Promise(deferred));
 }
 
 Promise::Ptr Promise::createResolved(const QVariant& value)
 {
-	return Ptr(new Promise(Deferred::Resolved, value), &QObject::deleteLater);
+	return Ptr(new Promise(Deferred::Resolved, value));
 }
 
 Promise::Ptr Promise::createRejected(const QVariant& reason)
 {
-	return Ptr(new Promise(Deferred::Rejected, reason), &QObject::deleteLater);
+	return Ptr(new Promise(Deferred::Rejected, reason));
 }
 
 

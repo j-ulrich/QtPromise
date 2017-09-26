@@ -204,7 +204,7 @@ FutureDeferred::FutureDeferred(const QFuture<T>& future)
 template<typename T>
 FutureDeferred::Ptr FutureDeferred::create(const QFuture<T>& future)
 {
-	return Ptr(new FutureDeferred(future), &QObject::deleteLater);
+	return Ptr(new FutureDeferred(future));
 }
 
 template<typename T>

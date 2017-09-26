@@ -14,6 +14,7 @@ namespace Tests
 const QString ACTION_RESOLVE = "resolve";
 const QString ACTION_REJECT = "reject";
 const QString ACTION_NOTIFY = "notify";
+const QString ACTION_REMOVE = "remove";
 
 /*! Unit tests for the PromiseSitter class.
  *
@@ -31,7 +32,6 @@ private Q_SLOTS:
 	void testGlobalInstance();
 	void testContextObjects_data();
 	void testContextObjects();
-	void cleanup();
 
 private:
 	struct PromiseSpies
@@ -53,12 +53,6 @@ PromiseSitterTest::PromiseSpies::PromiseSpies(Promise::Ptr promise)
 	  rejected(promise.data(), &Promise::rejected),
 	  notified(promise.data(), &Promise::notified)
 {
-}
-
-void PromiseSitterTest::cleanup()
-{
-	// Let deleteLater be executed to clean up
-	QTest::qWait(100);
 }
 
 //####### Tests #######
@@ -88,7 +82,7 @@ void PromiseSitterTest::testAddContainsRemove()
 
 	deferred->resolve();
 
-	QVERIFY(!sitter.contains(promise));
+	QTRY_VERIFY(!sitter.contains(promise));
 	QVERIFY(!sitter.contains(samePromise));
 	QVERIFY(!promiseWPointer.isNull());
 }
@@ -102,6 +96,7 @@ void PromiseSitterTest::testPromiseLifetime_data()
 	QTest::newRow("resolve") << ACTION_RESOLVE;
 	QTest::newRow("reject") << ACTION_REJECT;
 	QTest::newRow("notify") << ACTION_NOTIFY;
+	QTest::newRow("remove") << ACTION_REMOVE;
 }
 
 /*! \test Tests the releasing of Promises from the PromiseSitter.
@@ -129,8 +124,6 @@ void PromiseSitterTest::testPromiseLifetime()
 		// Our Promise::Ptr goes out of scope
 	}
 
-	// Allow a potential deleteLater to be executed
-	QTest::qWait(100);
 	QVERIFY2(!promiseWPointer.isNull(), "Promise was destroyed although added to the sitter");
 
 	QString data = "foo bar";
@@ -140,16 +133,17 @@ void PromiseSitterTest::testPromiseLifetime()
 		deferred->reject(data);
 	else if (action == ACTION_NOTIFY)
 		deferred->notify(data);
+	else if (action == ACTION_REMOVE)
+		sitter.remove(promiseWPointer.data());
 	else
 		QFAIL("Invalid value for \"action\"");
 
-	// Give the sitter the chance to drop its reference.
-	QTest::qWait(100);
-
 	if (action == ACTION_NOTIFY)
 		QVERIFY(!promiseWPointer.isNull());
-	else
+	else if (action == ACTION_REMOVE)
 		QVERIFY(promiseWPointer.isNull());
+	else
+		QTRY_VERIFY(promiseWPointer.isNull());
 
 	// Verify actions have been triggered
 	if (action == ACTION_RESOLVE)
@@ -162,13 +156,17 @@ void PromiseSitterTest::testPromiseLifetime()
 		QCOMPARE(spies->rejected.count(), 1);
 		QCOMPARE(spies->rejected.at(0).at(0).toString(), data);
 	}
-	if (action == ACTION_NOTIFY)
+	else if (action == ACTION_NOTIFY)
 	{
 		QCOMPARE(spies->notified.count(), 1);
 		QCOMPARE(spies->notified.at(0).at(0).toString(), data);
 	}
+
+	if (action == ACTION_NOTIFY || action == ACTION_REMOVE)
+		QVERIFY(!chainedActionTriggered);
 	else
 		QVERIFY(chainedActionTriggered);
+
 }
 
 /*! Provides the data for the testGlobalInstance() test.
@@ -241,8 +239,7 @@ void PromiseSitterTest::testContextObjects()
 			sitter->add(promise, rawContextObjs);
 		promiseWPointer = promise;
 	}
-	// Allow a potential deleteLater to be executed
-	QTest::qWait(100);
+
 	QVERIFY2(!promiseWPointer.isNull(), "Promise was destroyed although added to the sitter");
 
 	contextObjs[destroyIndex].reset();

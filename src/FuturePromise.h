@@ -94,7 +94,7 @@ FuturePromise::FuturePromise(QFuture<T> future)
 template<typename T>
 FuturePromise::Ptr FuturePromise::create(QFuture<T> future)
 {
-	return Ptr(new FuturePromise(future), &QObject::deleteLater);
+	return Ptr(new FuturePromise(future));
 }
 
 

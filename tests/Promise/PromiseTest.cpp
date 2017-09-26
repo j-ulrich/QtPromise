@@ -55,7 +55,6 @@ private Q_SLOTS:
 	void testAllAnySync_data();
 	void testAllAnySync();
 	void testAllAnyInitializerList();
-	void cleanup();
 
 private:
 	struct PromiseSpies
@@ -103,11 +102,6 @@ void PromiseTest::callActionOnDeferred(Deferred::Ptr& deferred, const QString& a
 	}
 }
 
-void PromiseTest::cleanup()
-{
-	// Let deleteLater be executed to clean up
-	QTest::qWait(100);
-}
 
 //####### Tests #######
 
@@ -771,9 +765,6 @@ void PromiseTest::testThreeLevelChain()
 		callbackCalls.push_back(data);
 	});
 
-	// Ensure deleteLater can be called on intermediate Promise
-	QTest::qWait(100);
-
 	QVariant data("my data");
 	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);
 	QCOMPARE(callbackCalls, QVariantList() << data << data);
@@ -794,9 +785,6 @@ void PromiseTest::testAsyncChain()
 		                 secondDeferred.data(), &Deferred::resolve);
 		return Promise::create(secondDeferred);
 	});
-
-	// Ensure deleteLater can be called on intermediate objects
-	QTest::qWait(100);
 
 	QVariant data("my data");
 	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);

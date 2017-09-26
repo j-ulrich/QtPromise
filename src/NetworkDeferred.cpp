@@ -39,7 +39,7 @@ NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 
 NetworkDeferred::Ptr NetworkDeferred::create(QNetworkReply* reply)
 {
-	return Ptr(new NetworkDeferred(reply), &QObject::deleteLater);
+	return Ptr(new NetworkDeferred(reply));
 }
 
 void NetworkDeferred::registerMetaTypes()

@@ -34,12 +34,12 @@ NetworkPromise::NetworkPromise(NetworkDeferred::Ptr deferred)
 
 NetworkPromise::Ptr NetworkPromise::create(QNetworkReply* reply)
 {
-	return Ptr(new NetworkPromise(reply), &QObject::deleteLater);
+	return Ptr(new NetworkPromise(reply));
 }
 
 NetworkPromise::Ptr NetworkPromise::create(NetworkDeferred::Ptr deferred)
 {
-	return Ptr(new NetworkPromise(deferred), &QObject::deleteLater);
+	return Ptr(new NetworkPromise(deferred));
 }
 
 NetworkDeferred::ReplyData NetworkPromise::replyData() const

@@ -25,13 +25,16 @@ void PromiseSitter::add(Promise::Ptr promise, const QVector<const QObject*>& con
 		Promise* rawPromise = promise.data();
 		if (!m_promises.contains(rawPromise))
 		{
-			auto resolveConnection = QObject::connect(rawPromise, &Promise::resolved, rawPromise, [this, rawPromise](const QVariant&) {
+			/* Need to use QueuedConnection since we may not delete the promise
+			 * in a slot connected to its signal.
+			 */
+			auto resolveConnection = QObject::connect(rawPromise, &Promise::resolved, this, [this, rawPromise](const QVariant&) {
 				this->remove(rawPromise);
-			});
+			}, Qt::QueuedConnection);
 			m_sitterConnections.insert(rawPromise, resolveConnection);
-			auto rejectConnection = QObject::connect(rawPromise, &Promise::rejected, rawPromise, [this, rawPromise](const QVariant&) {
+			auto rejectConnection = QObject::connect(rawPromise, &Promise::rejected, this, [this, rawPromise](const QVariant&) {
 				this->remove(rawPromise);
-			});
+			}, Qt::QueuedConnection);
 			m_sitterConnections.insert(rawPromise, rejectConnection);
 			m_promises.insert(rawPromise, promise);
 		}
