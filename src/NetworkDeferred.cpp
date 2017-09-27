@@ -3,7 +3,7 @@
 
 namespace QtPromise {
 
-QAtomicInteger<int> NetworkDeferred::m_metaTypesRegistered{0};
+QAtomicInt NetworkDeferred::m_metaTypesRegistered{0};
 
 NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 	: Deferred(), m_reply(reply), m_lock(QMutex::Recursive)
@@ -44,7 +44,7 @@ NetworkDeferred::Ptr NetworkDeferred::create(QNetworkReply* reply)
 
 void NetworkDeferred::registerMetaTypes()
 {
-	if (m_metaTypesRegistered.testAndSetOrdered(0, 1))
+	if (m_metaTypesRegistered.testAndSetAcquire(0, 1))
 	{
 		qRegisterMetaType<ReplyData>();
 		QMetaType::registerEqualsComparator<ReplyData>();

@@ -5,11 +5,11 @@
 namespace QtPromise
 {
 
-QAtomicInteger<int> FutureDeferred::m_metaTypesRegistered{0};
+QAtomicInt FutureDeferred::m_metaTypesRegistered{0};
 
 void FutureDeferred::registerMetaTypes()
 {
-	if (m_metaTypesRegistered.testAndSetOrdered(0, 1))
+	if (m_metaTypesRegistered.testAndSetAcquire(0, 1))
 	{
 		qRegisterMetaType<Progress>();
 		QMetaType::registerEqualsComparator<Progress>();

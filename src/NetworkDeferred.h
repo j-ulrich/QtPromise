@@ -8,7 +8,7 @@
 #define QTPROMISE_NETWORKDEFERRED_H_
 
 #include <QNetworkReply>
-#include <QAtomicInteger>
+#include <QAtomicInt>
 #include "Deferred.h"
 
 
@@ -270,7 +270,7 @@ private:
 	ReplyProgress m_progress;
 	Error m_error;
 
-	static QAtomicInteger<int> m_metaTypesRegistered;
+	static QAtomicInt m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 

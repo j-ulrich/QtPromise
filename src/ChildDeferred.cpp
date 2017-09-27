@@ -82,6 +82,7 @@ void ChildDeferred::setParents(const QVector<Deferred::Ptr>& parents, bool track
 
 void ChildDeferred::onParentDestroyed(QObject* parent)
 {
+	QMutexLocker locker(&m_lock);
 	qCritical("Parent deferred %s is destroyed while child %s is still holding a reference.", qUtf8Printable(pointerToQString(parent)), qUtf8Printable(pointerToQString(this)));
 	QObject::disconnect(parent, 0, this, 0);
 	auto deferredParent = static_cast<Deferred*>(parent);

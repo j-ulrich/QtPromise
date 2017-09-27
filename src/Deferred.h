@@ -12,7 +12,7 @@
 #include <QMutex>
 #include <QException>
 #include <QSharedPointer>
-#include <QAtomicInteger>
+#include <QAtomicInt>
 
 
 namespace QtPromise {
@@ -234,7 +234,7 @@ private:
 	QVariant m_data;
 	bool m_logInvalidActionMessage = true;
 
-	static QAtomicInteger<int> m_metaTypesRegistered;
+	static QAtomicInt m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 

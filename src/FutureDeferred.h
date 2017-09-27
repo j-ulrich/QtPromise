@@ -11,7 +11,7 @@
 
 #include <QFutureWatcher>
 #include <QTimer>
-#include <QAtomicInteger>
+#include <QAtomicInt>
 #include "Deferred.h"
 
 namespace QtPromise
@@ -154,7 +154,7 @@ private:
 	QVariantList m_results;
 	Progress m_progress;
 
-	static QAtomicInteger<int> m_metaTypesRegistered;
+	static QAtomicInt m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 

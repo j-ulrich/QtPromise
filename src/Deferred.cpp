@@ -4,7 +4,7 @@
 
 namespace QtPromise {
 
-QAtomicInteger<int> Deferred::m_metaTypesRegistered{0};
+QAtomicInt Deferred::m_metaTypesRegistered{0};
 
 Deferred::Deferred()
 	: QObject(nullptr), m_state(Pending), m_lock(QMutex::Recursive)
@@ -14,7 +14,7 @@ Deferred::Deferred()
 
 void Deferred::registerMetaTypes()
 {
-	if (m_metaTypesRegistered.testAndSetOrdered(0, 1))
+	if (m_metaTypesRegistered.testAndSetAcquire(0, 1))
 	{
 		qRegisterMetaType<DeferredDestroyed>();
 		qRegisterMetaType<DeferredDestroyed>("QtPromise::DeferredDestroyed");
