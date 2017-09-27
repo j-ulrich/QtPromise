@@ -202,6 +202,12 @@ public:
 		}
 	};
 
+	/*! Checks for usage errors.
+	 *
+	 * \sa Deferred::checkDestructionInSignalHandler()
+	 */
+	virtual ~NetworkDeferred();
+
 	/*! Creates a NetworkDeferred for a QNetworkReply.
 	 *
 	 * \param reply The QNetworkReply performing the transmission.

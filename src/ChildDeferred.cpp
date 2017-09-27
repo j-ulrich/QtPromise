@@ -27,6 +27,9 @@ ChildDeferred::Ptr ChildDeferred::create(const QVector<Deferred::Ptr>& parents, 
 
 ChildDeferred::~ChildDeferred()
 {
+	checkDestructionInSignalHandler();
+
+	QMutexLocker locker(&m_lock);
 	/* We disconnect all parent Deferreds to avoid that they trigger
 	 * onParentDestroyed() and onParentRejected() when m_parents is released
 	 * and they are still pending.

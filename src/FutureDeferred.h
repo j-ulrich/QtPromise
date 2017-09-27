@@ -55,6 +55,12 @@ public:
 	/*! Smart pointer to FutureDeferred. */
 	typedef QSharedPointer<FutureDeferred> Ptr;
 
+	/*! Checks for usage errors.
+	 *
+	 * \sa Deferred::checkDestructionInSignalHandler()
+	 */
+	virtual ~FutureDeferred();
+
 	/*! Creates a FutureDeferred for a QFuture.
 	 *
 	 * \tparam T The result type of the \p future.
