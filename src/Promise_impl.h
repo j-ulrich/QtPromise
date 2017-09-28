@@ -7,6 +7,8 @@
 #ifndef QTPROMISE_PROMISE_IMPL_H_
 #define QTPROMISE_PROMISE_IMPL_H_
 
+#include <cstddef>
+
 namespace QtPromise {
 
 template<typename ResolvedFunc, typename RejectedFunc, typename NotifiedFunc>
@@ -160,7 +162,11 @@ Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDe
 			break;
 		case Deferred::Pending:
 		default:
-			newDeferred->setParent(intermedDeferred);
+			/* We just add the intermedDeferred and do explicitly *NOT* remove the
+			 * original m_deferred although we don't need it anymore because that would lead to
+			 * its destruction but we are currently handling one of its signals.
+			 */
+			newDeferred->addParent(intermedDeferred);
 			QObject::connect(intermedDeferred.data(), &Deferred::resolved, newDeferred, &Deferred::resolve);
 			QObject::connect(intermedDeferred.data(), &Deferred::rejected, newDeferred, &Deferred::reject);
 			QObject::connect(intermedDeferred.data(), &Deferred::notified, newDeferred, &Deferred::notify);
@@ -202,12 +208,7 @@ Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred*
 		{
 		case Deferred::Pending:
 		{
-			auto parents = newDeferred->parents();
-			if (!parents.contains(intermedDeferred))
-			{
-				parents.append(intermedDeferred);
-				newDeferred->setParents(parents);
-			}
+			newDeferred->addParent(intermedDeferred);
 			QObject::connect(intermedDeferred.data(), &Deferred::resolved, newDeferred, &Deferred::notify);
 			QObject::connect(intermedDeferred.data(), &Deferred::notified, newDeferred, &Deferred::notify);
 			break;

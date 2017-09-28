@@ -12,7 +12,8 @@ ChildDeferred::ChildDeferred(const QVector<Deferred::Ptr>& parents, bool trackRe
 	: Deferred(), m_lock(QMutex::Recursive), m_resolvedCount(0), m_rejectedCount(0)
 {
 	setLogInvalidActionMessage(false);
-	setParents(parents, trackResults);
+	setParents(parents);
+	setTrackParentResults(trackResults);
 }
 
 ChildDeferred::Ptr ChildDeferred::create(Deferred::Ptr parent, bool trackResults)
@@ -39,48 +40,81 @@ ChildDeferred::~ChildDeferred()
 		QObject::disconnect(parent.data(), 0, this, 0);
 }
 
-void ChildDeferred::setParent(Deferred::Ptr parent, bool trackResults)
+void ChildDeferred::setParent(Deferred::Ptr parent)
 {
-	setParents(QVector<Deferred::Ptr>{parent}, trackResults);
+	setParents(QVector<Deferred::Ptr>{parent});
 }
 
-void ChildDeferred::setParents(const QVector<Deferred::Ptr>& parents, bool trackResults)
+void ChildDeferred::setParents(const QVector<Deferred::Ptr>& parents)
 {
 	QMutexLocker locker(&m_lock);
 
 	for (Deferred::Ptr oldParent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
-		QObject::disconnect(oldParent.data(), 0 , this, 0);
+		QObject::disconnect(oldParent.data(), 0, this, 0);
 
 	for (Deferred::Ptr parent : parents)
 		QObject::connect(parent.data(), &QObject::destroyed, this, &ChildDeferred::onParentDestroyed);
 
-	if (trackResults)
+	m_parents = parents;
+
+	// If it is enabled, "restart" the result tracking with the new parents
+	if (m_trackParentResults)
+		setTrackParentResults(true);
+}
+
+void ChildDeferred::addParent(Deferred::Ptr parent)
+{
+	QMutexLocker locker(&m_lock);
+
+	QObject::connect(parent.data(), &QObject::destroyed, this, &ChildDeferred::onParentDestroyed, Qt::UniqueConnection);
+
+	m_parents.append(parent);
+
+	if (m_trackParentResults)
+		trackParentResult(parent.data());
+}
+
+void ChildDeferred::setTrackParentResults(bool trackParentResults)
+{
+	QMutexLocker locker(&m_lock);
+
+	m_trackParentResults = trackParentResults;
+	if (m_trackParentResults)
 	{
 		m_resolvedCount = m_rejectedCount = 0;
 
-		for (Deferred::Ptr parent : parents)
+		for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
+			trackParentResult(parent.data());
+	}
+	else
+	{
+		for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
 		{
-			switch(parent->state())
-			{
-			case Resolved:
-				QTimer::singleShot(0, this, [this, parent]() {
-					this->onParentResolved(parent->data());
-				});
-				break;
-			case Rejected:
-				QTimer::singleShot(0, this, [this, parent]() {
-					this->onParentRejected(parent->data());
-				});
-				break;
-			case Pending:
-			default:
-				QObject::connect(parent.data(), &Deferred::resolved, this, &ChildDeferred::onParentResolved);
-				QObject::connect(parent.data(), &Deferred::rejected, this, &ChildDeferred::onParentRejected);
-			}
+			QObject::disconnect(parent.data(), &Deferred::resolved, this, &ChildDeferred::onParentResolved);
+			QObject::disconnect(parent.data(), &Deferred::rejected, this, &ChildDeferred::onParentRejected);
 		}
 	}
+}
 
-	m_parents = parents;
+void ChildDeferred::trackParentResult(Deferred* parent)
+{
+	switch(parent->state())
+	{
+	case Resolved:
+		QTimer::singleShot(0, this, [this, parent]() {
+			this->onParentResolved(parent->data());
+		});
+		break;
+	case Rejected:
+		QTimer::singleShot(0, this, [this, parent]() {
+			this->onParentRejected(parent->data());
+		});
+		break;
+	case Pending:
+	default:
+		QObject::connect(parent, &Deferred::resolved, this, &ChildDeferred::onParentResolved, Qt::UniqueConnection);
+		QObject::connect(parent, &Deferred::rejected, this, &ChildDeferred::onParentRejected, Qt::UniqueConnection);
+	}
 }
 
 void ChildDeferred::onParentDestroyed(QObject* parent)
