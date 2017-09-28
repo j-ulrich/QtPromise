@@ -84,6 +84,7 @@ public:
 	 * \p promise. When the \p contextObj is destroyed (emits the QObject::destroyed() signal),
 	 * the \p promise is removed from the PromiseSitter. If the \p promise has already been added
 	 * to the PromiseSitter, the \p contextObj is added to the existing context objects.
+	 * This parameter was added in 1.2.0.
 	 *
 	 * \sa remove()
 	 */
@@ -98,6 +99,7 @@ public:
 	 * QObject::destroyed() signal), the \p promise is removed from the PromiseSitter.
 	 * If the \p promise has already been added to the PromiseSitter, the \p contextObjs
 	 * are added to the existing context objects.
+	 * This parameter was added in 1.2.0.
 	 *
 	 * \sa remove()
 	 */

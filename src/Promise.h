@@ -80,6 +80,31 @@ public:
 	 */
 	static Ptr createRejected(const QVariant& reason = QVariant());
 
+	/*! Creates a Promise which is resolved after a delay.
+	 *
+	 * \param delayInMillisec The delay in milliseconds.
+	 * If \p delayInMillisec is 0, the resolve is delayed
+	 * until control reaches the event loop.
+	 * \param value The value used to resolve the Promise.
+	 * \return QSharedPointer to a new Promise which will be resolved
+	 * with \p value after the given \p delayInMillisec.
+	 *
+	 * \since 2.0.0
+	 */
+	static Ptr delayedResolve(int delayInMillisec = 0, const QVariant& value = QVariant());
+	/*! Creates a Promise which is rejected after a delay.
+	 *
+	 * \param delayInMillisec The delay in milliseconds.
+	 * If \p delayInMillisec is 0, the reject is delayed
+	 * until control reaches the event loop.
+	 * \param reason The reason used to reject the Promise.
+	 * \return QSharedPointer to a new Promise which will be rejected
+	 * with \p reason after the given \p delayInMillisec.
+	 *
+	 * \since 2.0.0
+	 */
+	static Ptr delayedReject(int delayInMillisec = 0, const QVariant& reason = QVariant());
+
 	/*! Combines multiple Promises using "and" semantics.
 	 *
 	 * Creates a Promise which is resolved when *all* provided promises

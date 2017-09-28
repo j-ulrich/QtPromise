@@ -13,6 +13,9 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 ## Unreleased ##
 
 
+### Added ###
+- `Promise::delayedResolve()` and `Promise::delayedReject()`
+
 ### Breaking Changes ###
 - [!30] Improves passing of parameters.
 This is a breaking change because the signature of Promise::all() and Promise::any() changes.
