@@ -242,6 +242,8 @@ protected:
 	 * This helps users to debug crashes. To solve the issue, the destruction
 	 * of the Deferred (that is the deletion of the last QSharedPointer) must
 	 * be done asynchronously, for example using QTimer::singleShot().
+	 *
+	 * \since 2.0.0
 	 */
 	void checkDestructionInSignalHandler();
 
@@ -261,6 +263,7 @@ protected:
 	 *
 	 * \sa resolve()
 	 * \sa checkDestructionInSignalHandler()
+	 * \since 2.0.0
 	 */
 	template<typename ValueType, typename Signal>
 	void resolveAndEmit(const ValueType& value, Signal&& signal);
@@ -281,6 +284,7 @@ protected:
 	 *
 	 * \sa reject()
 	 * \sa checkDestructionInSignalHandler()
+	 * \since 2.0.0
 	 */
 	template<typename ReasonType, typename Signal>
 	void rejectAndEmit(const ReasonType& reason, Signal&& signal);
@@ -301,6 +305,7 @@ protected:
 	 *
 	 * \sa notify()
 	 * \sa checkDestructionInSignalHandler()
+	 * \since 2.0.0
 	 */
 	template<typename ProgressType, typename Signal>
 	void notifyAndEmit(const ProgressType& progress, Signal&& signal);

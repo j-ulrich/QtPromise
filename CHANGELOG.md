@@ -12,10 +12,14 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 
 ## Unreleased ##
 
+### Added ###
+- Detection of "destruction in signal handler" in Deferred class.
+Subclasses of Deferred should now use `Deferred::resolveAndEmit()` etc. to emit specialized
+(overloaded) signals and should call `Deferred::checkDestructionInSignalHandler()` in their destructor.
 
 ### Breaking Changes ###
 - [!30] Improves passing of parameters.
-This is a breaking change because the signature of Promise::all() and Promise::any() changes.
+This is a breaking change because the signature of Promise::all() and Promise::any() changed.
 However, as long as you do not rely on the exact signature, the break will not affect you since it
 is just changing call-by-value to call-by-reference.
 - [!31] Switched from using `QObject::deleteLater()` to using "immediate" delete.
