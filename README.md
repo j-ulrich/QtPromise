@@ -153,6 +153,7 @@ void MyDataFetcher::printJsonData()
 <a name="documentation"></a>
 ## Documentation ##
 - [API Documentation](https://julrich.gitlab.io/QtPromise/docs/)
+- [Guides](https://julrich.gitlab.io/QtPromise/docs/pages.html)
 - [Changelog](CHANGELOG.md)
 
 
