@@ -184,6 +184,10 @@ public:
 	 * or \p rejectedCallback) returns a Promise::Ptr, the Promise returned by then() will be
 	 * notified with the notifications from that Promise.
 	 *
+	 * \warning Do not trigger any action which could lead to the deletion of the Promise directly
+	 * from a callback. Defer such actions to the event loop. See \ref page_ownership for more
+	 * information.
+	 *
 	 * \tparam ResolvedFunc A callback function type expecting a `const QVariant&` as parameter
 	 * and returning either `void`, `QVariant` or `Promise::Ptr`. Or `std::nullptr_t`.
 	 * \tparam RejectedFunc A callback function type expecting a `const QVariant&` as parameter

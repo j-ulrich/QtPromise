@@ -11,7 +11,7 @@
 
 #include <QFutureWatcher>
 #include <QTimer>
-#include <QAtomicInteger>
+#include <QAtomicInt>
 #include "Deferred.h"
 
 namespace QtPromise
@@ -54,6 +54,12 @@ class FutureDeferred : public Deferred
 public:
 	/*! Smart pointer to FutureDeferred. */
 	typedef QSharedPointer<FutureDeferred> Ptr;
+
+	/*! Checks for usage errors.
+	 *
+	 * \sa Deferred::checkDestructionInSignalHandler()
+	 */
+	virtual ~FutureDeferred();
 
 	/*! Creates a FutureDeferred for a QFuture.
 	 *
@@ -154,7 +160,7 @@ private:
 	QVariantList m_results;
 	Progress m_progress;
 
-	static QAtomicInteger<int> m_metaTypesRegistered;
+	static QAtomicInt m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 

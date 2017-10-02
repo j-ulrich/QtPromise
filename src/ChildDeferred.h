@@ -47,8 +47,7 @@ public:
 	 *
 	 * \param parent The Deferred which acts as parent to this ChildDeferred.
 	 * \param trackResults If \c true, the ChildDeferred listens to the signals
-	 * of the \p parent and emits parentResolved(), parentRejected(), parentsResolved()
-	 * and parentsResolved() signals.
+	 * of the \p parent. See setTrackParentResults().
 	 * \return QSharedPointer to a new, pending ChildDeferred.
 	 */
 	static Ptr create(Deferred::Ptr parent, bool trackResults = false);
@@ -56,8 +55,7 @@ public:
 	 *
 	 * \param parents List of parent Deferreds.
 	 * \param trackResults If \c true, the ChildDeferred listens to the signals
-	 * of the \p parents and emits parentResolved(), parentRejected(), parentsResolved()
-	 * and parentsResolved() signals.
+	 * of the \p parents. See setTrackParentResults().
 	 * \return QSharedPointer to a new, pending ChildDeferred.
 	 */
 	static Ptr create(const QVector<Deferred::Ptr>& parents, bool trackResults = false);
@@ -65,23 +63,45 @@ public:
 	/*! Sets the parent of this ChildDeferred.
 	 *
 	 * \param parent The new parent for this ChildDeferred.
-	 * \param trackResults If \c true, the ChildDeferred listens to the signals
-	 * of the \p parent and emits parentResolved(), parentRejected(), parentsResolved()
-	 * and parentsResolved() signals.
 	 */
-	void setParent(Deferred::Ptr parent, bool trackResults = false);
+	void setParent(Deferred::Ptr parent);
 	/*! Sets the parents of this ChildDeferred.
 	 *
 	 * \param parents The new parents of this ChildDeferred.
-	 * \param trackResults If \c true, the ChildDeferred listens to the signals
-	 * of the \p parents and emits parentResolved(), parentRejected(), parentsResolved()
-	 * and parentsResolved() signals.
 	 */
-	void setParents(const QVector<Deferred::Ptr>& parents, bool trackResults = false);
+	void setParents(const QVector<Deferred::Ptr>& parents);
+
+	/*! Adds a parent to this ChildDeferred.
+	 *
+	 * \param parent The parent to be added to this ChildDeferred.
+	 */
+	void addParent(Deferred::Ptr parent);
 
 	/*! \return The parents of this ChildDeferred.
 	 */
 	QVector<Deferred::Ptr> parents() const { return m_parents; }
+
+	/*! Defines whether this ChildDeferred watches the results of its parent.
+	 *
+	 * If enabled, the ChildDeferred emits the parentResolved(), parentRejected(), parentsResolved()
+	 * and parentsResolved() signals.
+	 *
+	 * \note When enabling the tracking and there are parents that are already resolved or rejected,
+	 * this method will emit appropriate signals asynchronously, that is when the control returns to the event loop,
+	 * and no matter if those signals have already been emitted before.
+	 * Therefore, enabling this settings should rather be done directly when creating the ChildDeferred.
+	 *
+	 * \param trackParentResults If \c true, the ChildDeferred listens to the signals
+	 * of the \p parents and emits the parentResolved(), parentRejected(), parentsResolved()
+	 * and parentsResolved() signals.
+	 */
+	void setTrackParentResults(bool trackParentResults);
+
+	/*! \returns \c true if this ChildDeferred is watching the results of its parents.
+	 *
+	 * \sa setTrackResults()
+	 */
+	bool isTrackingParentResults() const { return m_trackParentResults; }
 
 Q_SIGNALS:
 	/*! Emitted when one of the parent Deferreds is resolved.
@@ -119,15 +139,19 @@ protected:
 	ChildDeferred(const QVector<Deferred::Ptr>& parents, bool trackResults);
 
 private Q_SLOTS:
-	void onParentDestroyed(QObject* parent) const;
+	void onParentDestroyed(QObject* parent);
 	void onParentResolved(const QVariant& value);
 	void onParentRejected(const QVariant& reason);
 
 private:
+	void trackParentResult(Deferred* parent);
+
+
 	mutable QMutex m_lock;
 	QVector<Deferred::Ptr> m_parents;
 	int m_resolvedCount;
 	int m_rejectedCount;
+	bool m_trackParentResults;
 };
 
 /*!

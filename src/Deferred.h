@@ -12,7 +12,7 @@
 #include <QMutex>
 #include <QException>
 #include <QSharedPointer>
-#include <QAtomicInteger>
+#include <QAtomicInt>
 
 
 namespace QtPromise {
@@ -91,9 +91,14 @@ Promise::Ptr startAsyncOperation()
  * Instead use a QTimer::singleShot() with a \c 0 timeout to resolve/reject
  * the Deferred when the control returns to the event loop.
  *
- * When providing specialized resolved() / rejected() / notified() signals in subclasses
- * (see for example NetworkDeferred::resolved()), check if the return value of
- * resolve() / reject() / notify() is \c true before emitting those signals.
+ * A subclass should call checkDestructionInSignalHandler() in its destructor to help
+ * debugging crashes caused by deleting the Deferred as reaction to its own signal.
+
+ * When providing specialized (overloaded) resolved() / rejected() / notified() signals in subclasses
+ * (see for example NetworkDeferred::resolved()), use the methods
+ * resolveAndEmit() / rejectAndEmit() / notifyAndEmit() to resolve/reject/notify and emit the
+ * specialized signal in one operation. This is necessary to ensure that
+ * checkDestructionInSignalHandler() is working correctly.
  *
  * \threadsafeClass
  * \author jochen.ulrich
@@ -133,12 +138,14 @@ public:
 	 * \return A QSharedPointer to a new, resolved or rejected Deferred.
 	 */
 	static Ptr create(State state, const QVariant& data);
-	/*! Destroys a Deferred.
+	/*! Checks for usage errors and rejects the Deferred when necessary.
 	 *
 	 * When the Deferred is still pending when being destroyed,
 	 * it logs a warning using qDebug() and rejects the Deferred with either
 	 * a DeferredDestroyed exception if exceptions are enabled or
 	 * a QString if exceptions are disabled (\c QT_NO_EXCEPTIONS is defined).
+	 *
+	 * \sa checkDestructionInSignalHandler()
 	 */
 	virtual ~Deferred();
 
@@ -220,11 +227,89 @@ protected:
 	 *
 	 * By default, the debug message is logged.
 	 *
-	 * @param logInvalidActionMessage If \c true, the message is logged.
+	 * \param logInvalidActionMessage If \c true, the message is logged.
 	 * If \c false, no message is logged when resolve() / reject() is called
 	 * multiple times.
 	 */
 	void setLogInvalidActionMessage(bool logInvalidActionMessage);
+
+	/*! Checks for destruction in a signal handler and logs an error.
+	 *
+	 * This method is intended to be used by the destructor of derived classes.
+	 * It checks if the current method is executed as reaction to an
+	 * own signal of this Deferred. And if it is, it logs a critical message.
+	 *
+	 * This helps users to debug crashes. To solve the issue, the destruction
+	 * of the Deferred (that is the deletion of the last QSharedPointer) must
+	 * be done asynchronously, for example using QTimer::singleShot().
+	 *
+	 * \since 2.0.0
+	 */
+	void checkDestructionInSignalHandler();
+
+	/*! Resolves this Deferred and emits a signal.
+	 *
+	 * This is a convenience method which resolves this Deferred with \p value and if it was resolved,
+	 * emits the \p signal with \p value. If this Deferred was not resolved, \p signal is *not* emitted.
+	 * Typically, \p signal is a specialized form of the resolved() signal.
+	 * This method helps detecting deletion of this Deferred in a slot/functor connected to \p signal.
+	 *
+	 * \tparam ValueType The type of the \p value. Must be registered with Qt's meta type system
+	 * since it will be converted to QVariant to call resolve().
+	 * \tparam Signal The type of the signal to be emitted. Must be invocable with exactly one parameter
+	 * of type \p ValueType.
+	 * \param value The data used to resolve this Deferred and emit \p signal.
+	 * \param signal The signal which is emitted with \p value.
+	 *
+	 * \sa resolve()
+	 * \sa checkDestructionInSignalHandler()
+	 * \since 2.0.0
+	 */
+	template<typename ValueType, typename Signal>
+	void resolveAndEmit(const ValueType& value, Signal&& signal);
+
+	/*! Rejects this Deferred and emits a signal.
+	 *
+	 * This is a convenience method which rejects this Deferred with \p reason and if it was rejected,
+	 * emits the \p signal with \p reason. If this Deferred was not rejected, \p signal is *not* emitted.
+	 * Typically, \p signal is a specialized form of the rejected() signal.
+	 * This method helps detecting deletion of this Deferred in a slot/functor connected to \p signal.
+
+	 * \tparam ReasonType The type of the \p reason. Must be registered with Qt's meta type system
+	 * since it will be converted to QVariant to call reject().
+	 * \tparam Signal The type of the signal to be emitted. Must be invocable with exactly one parameter
+	 * of type \p ReasonType.
+	 * \param reason The reason used to reject this Deferred.
+	 * \param signal The signal which is emitted with \p reason.
+	 *
+	 * \sa reject()
+	 * \sa checkDestructionInSignalHandler()
+	 * \since 2.0.0
+	 */
+	template<typename ReasonType, typename Signal>
+	void rejectAndEmit(const ReasonType& reason, Signal&& signal);
+
+	/*! Notifies this Deferred and emits a signal.
+	 *
+	 * This is a convenience method which notifies this Deferred with \p progress and if it was notified,
+	 * emits the \p signal with \p progress. If this Deferred was not notified, \p signal is *not* emitted.
+	 * Typically, \p signal is a specialized form of the notified() signal.
+	 * This method helps detecting deletion of this Deferred in a slot/functor attached to \p signal.
+	 *
+	 * \tparam ProgressType The type of the \p progress. Must be registered with Qt's meta type system
+	 * since it will be converted to QVariant to call notify().
+	 * \tparam Signal The type of the signal to be emitted. Must be invocable with exactly one parameter
+	 * of type \p ProgressType.
+	 * \param progress The progress used to notify this Deferred.
+	 * \param signal The signal which is emitted with \p progress.
+	 *
+	 * \sa notify()
+	 * \sa checkDestructionInSignalHandler()
+	 * \since 2.0.0
+	 */
+	template<typename ProgressType, typename Signal>
+	void notifyAndEmit(const ProgressType& progress, Signal&& signal);
+
 
 private:
 	void logInvalidActionMessage(const char* action) const;
@@ -233,14 +318,17 @@ private:
 	State m_state;
 	QVariant m_data;
 	bool m_logInvalidActionMessage = true;
+	QAtomicInt m_isInSignalHandler;
 
-	static QAtomicInteger<int> m_metaTypesRegistered;
+	static QAtomicInt m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 
 QString pointerToQString(const void* pointer);
 
 }  // namespace QtPromise
+
+#include "Deferred_impl.h"
 
 Q_DECLARE_METATYPE(QtPromise::DeferredDestroyed)
 Q_DECLARE_METATYPE(QtPromise::Deferred::State)
