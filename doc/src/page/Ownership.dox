@@ -116,10 +116,10 @@ void MyClass::doSomething(MyFirstClass* firstObj, MySecondClass* secondObj)
 	});
 
 	// Release the promise when one of the captured objects is destroyed
-	connect(firstObj, &QObject::destroyed, promise.data(), [this]() {
+	connect(firstObj, &QObject::destroyed, promise.data(), [this]() mutable {
 		this->promise.reset();
 	});
-	connect(secondObj, &QObject::destroyed, promise.data(), [this]() {
+	connect(secondObj, &QObject::destroyed, promise.data(), [this]() mutable {
 		this->promise.reset();
 	});
 }
