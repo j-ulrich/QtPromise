@@ -47,30 +47,10 @@ Promise::Ptr Promise::then(ResolvedFunc&& resolvedCallback, RejectedFunc&& rejec
 	default:
 		ChildDeferred::Ptr newDeferred = ChildDeferred::create(m_deferred);
 
-		/* For some reason, the wrapped callbacks are not called when we add a
-		 * context object. Therefore, we have to disconnect the lambdas manually
-		 * when the newDeferred is destroyed (see below).
-		 */
-		auto resolveConnect = QObject::connect(m_deferred.data(), &Deferred::resolved,       createCallbackWrapper(newDeferred.data(), std::forward<ResolvedFunc>(resolvedCallback), Deferred::Resolved));
-		auto rejectConnect  = QObject::connect(m_deferred.data(), &Deferred::rejected,       createCallbackWrapper(newDeferred.data(), std::forward<RejectedFunc>(rejectedCallback), Deferred::Rejected));
-		auto notifyConnect  = QObject::connect(m_deferred.data(), &Deferred::notified, createNotifyCallbackWrapper(newDeferred.data(), std::forward<NotifiedFunc>(notifiedCallback)));
+		newDeferred->connectParent(m_deferred,       createCallbackWrapper(newDeferred.data(), std::forward<ResolvedFunc>(resolvedCallback), Deferred::Resolved),
+		                                             createCallbackWrapper(newDeferred.data(), std::forward<RejectedFunc>(rejectedCallback), Deferred::Rejected),
+		                                       createNotifyCallbackWrapper(newDeferred.data(), std::forward<NotifiedFunc>(notifiedCallback)));
 		
-#ifdef Q_CC_MSVC
-/* Disable false warning about the need to capture 'this'.
- * Since we only call static methods, there is no need for 'this'.
- */
-#pragma warning(push)
-#pragma warning(disable:4573)
-#endif
-		QObject::connect(newDeferred.data(), &QObject::destroyed, [resolveConnect, rejectConnect, notifyConnect]() {
-			QObject::disconnect(resolveConnect);
-			QObject::disconnect(rejectConnect);
-			QObject::disconnect(notifyConnect);
-		});
-#ifdef Q_CC_MSVC
-#pragma warning(pop)
-#endif
-
 		return create(newDeferred.staticCast<Deferred>());
 	}
 }
@@ -108,7 +88,7 @@ Promise::Ptr Promise::callCallback(PromiseCallbackFunc&& func) const
 
 
 template <typename NullCallbackFunc, typename std::enable_if<std::is_same<NullCallbackFunc, std::nullptr_t>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, NullCallbackFunc, Deferred::State state)
+ChildDeferred::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, NullCallbackFunc, Deferred::State state)
 {
 	Q_ASSERT_X(state != Deferred::Pending, "Promise::createCallbackWrapper()", "state must not be Pending (this is a bug in QtPromise)");
 	using namespace std::placeholders;
@@ -120,7 +100,7 @@ Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDe
 }
 
 template <typename VoidCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, VoidCallbackFunc func, Deferred::State state)
+ChildDeferred::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, VoidCallbackFunc func, Deferred::State state)
 {
 	Q_ASSERT_X(state != Deferred::Pending, "Promise::createCallbackWrapper()", "state must not be Pending (this is a bug in QtPromise)");
 	if (state == Deferred::Resolved)
@@ -136,7 +116,7 @@ Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDe
 }
 
 template<typename VariantCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, VariantCallbackFunc func, Deferred::State)
+ChildDeferred::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, VariantCallbackFunc func, Deferred::State)
 {
 	return [newDeferred, func](const QVariant& data) {
 		QVariant newValue = QVariant::fromValue(func(data));
@@ -148,7 +128,7 @@ Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDe
 }
 
 template<typename PromiseCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, PromiseCallbackFunc func, Deferred::State)
+ChildDeferred::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, PromiseCallbackFunc func, Deferred::State)
 {
 	return [newDeferred, func](const QVariant& data) {
 		Deferred::Ptr intermedDeferred = func(data)->m_deferred;
@@ -162,28 +142,28 @@ Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDe
 			break;
 		case Deferred::Pending:
 		default:
-			/* We just add the intermedDeferred and do explicitly *NOT* remove the
-			 * original m_deferred although we don't need it anymore because that would lead to
-			 * its destruction but we are currently handling one of its signals.
-			 */
-			newDeferred->addParent(intermedDeferred);
-			QObject::connect(intermedDeferred.data(), &Deferred::resolved, newDeferred, &Deferred::resolve);
-			QObject::connect(intermedDeferred.data(), &Deferred::rejected, newDeferred, &Deferred::reject);
-			QObject::connect(intermedDeferred.data(), &Deferred::notified, newDeferred, &Deferred::notify);
+			// Disconnect and remove all previous parents
+			newDeferred->removeParents(true);
+			// The intermedDeferred is the new parent
+			newDeferred->setParent(intermedDeferred);
+			using namespace std::placeholders;
+			newDeferred->connectParent(intermedDeferred, std::bind(&ChildDeferred::resolve, newDeferred, _1),
+			                                             std::bind(&ChildDeferred::reject, newDeferred, _1),
+			                                             std::bind(&ChildDeferred::notify, newDeferred, _1));
 			break;
 		}
 	};
 }
 
-template <typename NullCallbackFunc, typename std::enable_if<std::is_same<NullCallbackFunc, std::nullptr_t>::value, Promise::WrappedCallbackFunc>::type*>
-Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, NullCallbackFunc)
+template <typename NullCallbackFunc, typename std::enable_if<std::is_same<NullCallbackFunc, std::nullptr_t>::value>::type*>
+ChildDeferred::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, NullCallbackFunc)
 {
 	using namespace std::placeholders;
 	return std::bind(&ChildDeferred::notify, newDeferred, _1);
 }
 
 template <typename VoidCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, VoidCallbackFunc func)
+ChildDeferred::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, VoidCallbackFunc func)
 {
 	return [newDeferred, func](const QVariant& data) {
 		func(data);
@@ -192,7 +172,7 @@ Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred*
 }
 
 template<typename VariantCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, VariantCallbackFunc func)
+ChildDeferred::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, VariantCallbackFunc func)
 {
 	return [newDeferred, func](const QVariant& data) {
 		newDeferred->notify(func(data));
@@ -200,7 +180,7 @@ Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred*
 }
 
 template<typename PromiseCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, PromiseCallbackFunc func)
+ChildDeferred::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, PromiseCallbackFunc func)
 {
 	return [newDeferred, func](const QVariant& data) {
 		Deferred::Ptr intermedDeferred = func(data)->m_deferred;

@@ -653,7 +653,8 @@ void PromiseTest::testThenNotify()
 	originalDeferred->notify(QVariant("seventh notify"));
 	notifyDeferred->notify(QVariant("eighth notify"));
 
-	QTRY_VERIFY(spies.notified.empty());
+	QTest::qWait(100);
+	QVERIFY(spies.notified.empty());
 
 	// Avoid warning
 	notifyDeferred->resolve();
@@ -1058,9 +1059,7 @@ void PromiseTest::testPromiseDestruction()
 			callbackCalls.push_back(data);
 		});
 	}
-	/* Only the Promise is destroyed.
-	 * The Deferred still exists so no rejection with DeferredDestroyed.
-	 */
+
 	QCOMPARE(callbackCalls.count(), 0);
 
 	deferred->resolve("foo");
@@ -1100,12 +1099,8 @@ void PromiseTest::testChainDestruction()
 		QVERIFY(callbackCalls.isEmpty());
 	}
 
-	/* The chain should be *immediatelly* destroyed, so no qWait() here!
-	 * Since there are intermediate Deferreds which are destroyed,
-	 * the chain is rejected before being destroyed.
-	 */
-	QCOMPARE(callbackCalls.count(), 1);
-	QVERIFY(callbackCalls.first().canConvert<DeferredDestroyed>());
+	// The chain should be *immediately* destroyed, so no qWait() here!
+	QVERIFY(callbackCalls.isEmpty());
 
 	deferred->resolve("foo");
 
@@ -1113,7 +1108,7 @@ void PromiseTest::testChainDestruction()
 	 * has been destructed.
 	 */
 	QTest::qWait(100);
-	QCOMPARE(callbackCalls.count(), 1);
+	QVERIFY(callbackCalls.isEmpty());
 }
 
 

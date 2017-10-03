@@ -17,41 +17,6 @@
 
 namespace QtPromise {
 
-class Deferred;
-
-#ifndef QT_NO_EXCEPTIONS
-
-/*! \brief Exception indicating that a Deferred was destroyed while still pending.
- *
- * This exception is used to reject a Deferred when it is still pending when being destroyed.
- *
- * \note If QtPromise is compiled with \c QT_NO_EXCEPTIONS defined, this class is omitted.
- */
-class DeferredDestroyed : public QException
-{
-public:
-	/*! Constructs the exception without a Deferred. */
-	DeferredDestroyed() : m_deferred(nullptr) {}
-	/*! Constructs the exception and saves the Deferred for debugging purposes.
-	 *
-	 * \param deferred Pointer to the Deferred being destroyed.
-	 */
-	DeferredDestroyed(const Deferred* const deferred) : m_deferred(deferred) {}
-	/*! Default destructor. */
-	virtual ~DeferredDestroyed() = default;
-
-	/*! \return The pointer to the Deferred being destroyed.
-	 * Can be a \c nullptr, depending on how the exception was constructed.
-	 */
-	const Deferred* const deferred() const { return m_deferred; }
-
-private:
-	const Deferred* const m_deferred;
-};
-
-#endif // QT_NO_EXCEPTIONS
-
-
 /*! \brief Communicates the outcome of an asynchronous operation.
  *
  * The usage pattern of Deferred is:
@@ -114,11 +79,11 @@ public:
 	/*! Possible states of a Deferred or Promise. */
 	enum State
 	{
-		Pending = 0, /*!< The outcome of the asynchronous operation has not
-		              * been reported yet.
-		              */
-		Resolved = 1,//!< The asynchronous operation completed successfully.
-		Rejected = -1//!< The asynchronous operation failed.
+		Pending = 0,  /*!< The outcome of the asynchronous operation has not
+		               * been reported yet.
+		               */
+		Resolved = 1, //!< The asynchronous operation completed successfully.
+		Rejected = -1 //!< The asynchronous operation failed.
 	};
 
 	/*! Creates a pending Deferred object.
@@ -141,9 +106,7 @@ public:
 	/*! Checks for usage errors and rejects the Deferred when necessary.
 	 *
 	 * When the Deferred is still pending when being destroyed,
-	 * it logs a warning using qDebug() and rejects the Deferred with either
-	 * a DeferredDestroyed exception if exceptions are enabled or
-	 * a QString if exceptions are disabled (\c QT_NO_EXCEPTIONS is defined).
+	 * it logs a warning using qDebug().
 	 *
 	 * \sa checkDestructionInSignalHandler()
 	 */
@@ -330,13 +293,12 @@ QString pointerToQString(const void* pointer);
 
 #include "Deferred_impl.h"
 
-Q_DECLARE_METATYPE(QtPromise::DeferredDestroyed)
 Q_DECLARE_METATYPE(QtPromise::Deferred::State)
 
 /*! Returns the hash value for a Deferred smart pointer.
- * @param deferredPtr The QSharedPointer who's hash value should be returned.
- * @param seed The seed used for the calculation.
- * @return The hash value based on the address of the pointer.
+ * \param deferredPtr The QSharedPointer who's hash value should be returned.
+ * \param seed The seed used for the calculation.
+ * \return The hash value based on the address of the pointer.
  */
 uint qHash(const QtPromise::Deferred::Ptr& deferredPtr, uint seed = 0);
 

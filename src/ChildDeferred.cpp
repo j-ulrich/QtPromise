@@ -14,6 +14,9 @@ ChildDeferred::ChildDeferred(const QVector<Deferred::Ptr>& parents, bool trackRe
 	setLogInvalidActionMessage(false);
 	setParents(parents);
 	setTrackParentResults(trackResults);
+
+	QObject::connect(this, &Deferred::resolved, this, &ChildDeferred::removeParentsDelayed);
+	QObject::connect(this, &Deferred::rejected, this, &ChildDeferred::removeParentsDelayed);
 }
 
 ChildDeferred::Ptr ChildDeferred::create(Deferred::Ptr parent, bool trackResults)
@@ -36,8 +39,7 @@ ChildDeferred::~ChildDeferred()
 	 * and they are still pending.
 	 * This ChildDeferred itself will be rejected by the Deferred destructor.
 	 */
-	for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
-		QObject::disconnect(parent.data(), 0, this, 0);
+	disconnectParents();
 }
 
 void ChildDeferred::setParent(Deferred::Ptr parent)
@@ -49,8 +51,7 @@ void ChildDeferred::setParents(const QVector<Deferred::Ptr>& parents)
 {
 	QMutexLocker locker(&m_lock);
 
-	for (Deferred::Ptr oldParent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
-		QObject::disconnect(oldParent.data(), 0, this, 0);
+	disconnectParents();
 
 	for (Deferred::Ptr parent : parents)
 		QObject::connect(parent.data(), &QObject::destroyed, this, &ChildDeferred::onParentDestroyed);
@@ -72,6 +73,26 @@ void ChildDeferred::addParent(Deferred::Ptr parent)
 
 	if (m_trackParentResults)
 		trackParentResult(parent.data());
+}
+
+void ChildDeferred::removeParents(bool delayed)
+{
+	QMutexLocker locker(&m_lock);
+
+	disconnectParents();
+
+	if (delayed)
+	{
+		auto oldParents = m_parents;
+		QTimer::singleShot(0, [oldParents]() mutable {
+			/* No need to do anything in here.
+			 * We just need to hold the parent pointers until the event loop.
+			 */
+			oldParents.clear();
+		});
+	}
+
+	m_parents.clear();
 }
 
 void ChildDeferred::setTrackParentResults(bool trackParentResults)
@@ -117,21 +138,35 @@ void ChildDeferred::trackParentResult(Deferred* parent)
 	}
 }
 
+void ChildDeferred::disconnectParents()
+{
+	for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
+		disconnectParent(parent.data());
+}
+
+void ChildDeferred::disconnectParent(Deferred* parent)
+{
+	QObject::disconnect(parent, 0, this, 0);
+	for (auto connection : m_parentConnections.value(parent))
+		QObject::disconnect(connection);
+	m_parentConnections.remove(parent);
+}
+
+
 void ChildDeferred::onParentDestroyed(QObject* parent)
 {
 	QMutexLocker locker(&m_lock);
 	qCritical("Parent deferred %s is destroyed while child %s is still holding a reference.", qUtf8Printable(pointerToQString(parent)), qUtf8Printable(pointerToQString(this)));
-	QObject::disconnect(parent, 0, this, 0);
 	auto deferredParent = static_cast<Deferred*>(parent);
+	disconnectParent(deferredParent);
 	QVector<int> removeIndices;
 	for (int i = m_parents.size()-1; i >= 0; --i)
 	{
 		if (m_parents.at(i) == deferredParent)
-		{
 			removeIndices.append(i);
-		}
 	}
 
+	// removeIndices contains indices sorted from highest to lowest
 	for (int i : const_cast<const QVector<int>&>(removeIndices))
 		m_parents.removeAt(i);
 		
