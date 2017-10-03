@@ -28,9 +28,14 @@ This is a breaking change because the signature of Promise::all() and Promise::a
 However, as long as you do not rely on the exact signature, the break will not affect you since it
 is just changing call-by-value to call-by-reference.
 - [!31] Switched from using `QObject::deleteLater()` to using "immediate" delete.
+- Deferreds are no longer rejected when destroyed while pending. This doesn't make sense anymore since
+there won't be any promises which could receive the signal when the deferred is destroyed.
 
 ### Fixed ###
 - [!32] Fixes Deferreds not being deleted properly.
+
+### Removed ###
+- Obsolete DeferredDestroyed exception
 
 
 ---

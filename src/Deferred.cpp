@@ -19,8 +19,6 @@ void Deferred::registerMetaTypes()
 {
 	if (m_metaTypesRegistered.testAndSetAcquire(0, 1))
 	{
-		qRegisterMetaType<DeferredDestroyed>();
-		qRegisterMetaType<DeferredDestroyed>("QtPromise::DeferredDestroyed");
 		qRegisterMetaType<State>();
 		QMetaType::registerEqualsComparator<State>();
 		qRegisterMetaType<State>("Deferred::State");
@@ -56,14 +54,7 @@ Deferred::~Deferred()
 
 	QMutexLocker locker(&m_lock);
 	if (m_state == Pending)
-	{
 		qDebug("Deferred %s destroyed while still pending", qUtf8Printable(pointerToQString(this)));
-#ifndef QT_NO_EXCEPTIONS
-	this->reject(QVariant::fromValue(DeferredDestroyed(this)));
-#else
-	this->reject(QString("Deferred %1 destroyed while still pending").arg(pointerToQString(this)));
-#endif // QT_NO_EXCEPTIONS
-	}
 }
 
 void Deferred::setLogInvalidActionMessage(bool logInvalidActionMessage)
