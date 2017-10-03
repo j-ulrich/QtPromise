@@ -12,9 +12,9 @@ namespace QtPromise
 namespace Tests
 {
 
-const QString ACTION_RESOLVE = "resolve";
-const QString ACTION_REJECT = "reject";
-const QString ACTION_NOTIFY = "notify";
+const QString ACTION_RESOLVE = QStringLiteral("resolve");
+const QString ACTION_REJECT = QStringLiteral("reject");
+const QString ACTION_NOTIFY = QStringLiteral("notify");
 
 /*! Unit tests for the Promise class.
  *
@@ -57,6 +57,8 @@ private Q_SLOTS:
 	void testAllAnyInitializerList();
 	void testPromiseDestruction();
 	void testChainDestruction();
+	void testDelay_data();
+	void testDelay();
 
 private:
 	struct PromiseSpies
@@ -1109,6 +1111,60 @@ void PromiseTest::testChainDestruction()
 	 */
 	QTest::qWait(100);
 	QVERIFY(callbackCalls.isEmpty());
+}
+
+void PromiseTest::testDelay_data()
+{
+	QTest::addColumn<QString>("action");
+	QTest::addColumn<int>("delay");
+
+	//                                // action         // delay
+	QTest::newRow("deferred resolve") << ACTION_RESOLVE << 0;
+	QTest::newRow("deferred reject")  << ACTION_REJECT  << 0;
+	QTest::newRow("delayed resolve")  << ACTION_RESOLVE << 100;
+	QTest::newRow("delayed reject")   << ACTION_REJECT  << 100;
+}
+
+void PromiseTest::testDelay()
+{
+	QFETCH(QString, action);
+	QFETCH(int, delay);
+
+	Deferred::Ptr deferred = Deferred::create();
+	Promise::Ptr promise = Promise::create(deferred);
+
+	QVariant data = QVariant::fromValue(QString("foo bar"));
+	auto finalPromise = promise->then([=](const QVariant&) {
+		if (action == ACTION_RESOLVE)
+			return Promise::delayedResolve(data, delay);
+		else if (action == ACTION_REJECT)
+			return Promise::delayedReject(data, delay);
+		else
+			return Promise::createRejected("Unexpected action");
+	});
+
+	int delayDelta = delay * 0.3;
+
+	deferred->resolve("original data");
+
+	QCOMPARE(finalPromise->state(), Deferred::Pending);
+
+	QTest::qWait(delay - delayDelta + 1);
+
+	if (delay > 0)
+	{
+		QCOMPARE(finalPromise->state(), Deferred::Pending);
+
+		QTest::qWait(2 * delayDelta);
+	}
+
+	if (action == ACTION_RESOLVE)
+		QCOMPARE(finalPromise->state(), Deferred::Resolved);
+	else if (action == ACTION_REJECT)
+		QCOMPARE(finalPromise->state(), Deferred::Rejected);
+	else
+		QFAIL("Unexpected action");
+	QCOMPARE(finalPromise->data(), data);
 }
 
 
