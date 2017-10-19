@@ -60,6 +60,7 @@ private Q_SLOTS:
 	void testParentDeferredDestruction();
 	void testDelay_data();
 	void testDelay();
+	void testQHash();
 
 private:
 	struct PromiseSpies
@@ -1201,6 +1202,16 @@ void PromiseTest::testDelay()
 	QCOMPARE(finalPromise->data(), data);
 }
 
+/*! \test Tests the qHash(const QtPromise::Promise::Ptr&, uint) function.
+ */
+void PromiseTest::testQHash()
+{
+	Promise::Ptr firstPromise = Promise::createResolved();
+	Promise::Ptr secondPromise = Promise::createResolved();
+
+	QCOMPARE(qHash(firstPromise), qHash(firstPromise.data()));
+	QVERIFY(qHash(firstPromise) != qHash(secondPromise));
+}
 
 
 }  // namespace Tests
