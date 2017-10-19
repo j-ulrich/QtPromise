@@ -132,12 +132,6 @@ bool Deferred::notify(const QVariant& progress)
 	}
 }
 
-QString pointerToQString(const void* pointer)
-{
-	return QString("0x%1").arg(reinterpret_cast<quintptr>(pointer),
-	                           QT_POINTER_SIZE * 2, 16, QChar('0'));
-}
-
 }  // namespace QtPromise
 
 

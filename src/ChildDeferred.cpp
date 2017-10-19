@@ -156,7 +156,7 @@ void ChildDeferred::disconnectParent(Deferred* parent)
 void ChildDeferred::onParentDestroyed(QObject* parent)
 {
 	QMutexLocker locker(&m_lock);
-	qCritical("Parent deferred %s is destroyed while child %s is still holding a reference.", qUtf8Printable(pointerToQString(parent)), qUtf8Printable(pointerToQString(this)));
+	qCritical("Parent deferred %s is destroyed while child %s is still holding a reference", qUtf8Printable(pointerToQString(parent)), qUtf8Printable(pointerToQString(this)));
 	auto deferredParent = static_cast<Deferred*>(parent);
 	disconnectParent(deferredParent);
 	QVector<int> removeIndices;

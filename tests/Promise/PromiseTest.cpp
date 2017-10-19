@@ -57,6 +57,7 @@ private Q_SLOTS:
 	void testAllAnyInitializerList();
 	void testPromiseDestruction();
 	void testChainDestruction();
+	void testParentDeferredDestruction();
 
 private:
 	struct PromiseSpies
@@ -1109,6 +1110,35 @@ void PromiseTest::testChainDestruction()
 	 */
 	QTest::qWait(100);
 	QVERIFY(callbackCalls.isEmpty());
+}
+
+/*! \test Tests destruction of a parent Deferred while a ChildDeferred
+ * is still holding a reference.
+ * This is testing behavior of the library in case of defective usage.
+ */
+void PromiseTest::testParentDeferredDestruction()
+{
+	/* We need to dynamically allocate the Deferred::Ptr and
+	 * explicitly leak it. This prevents that the QSharedPointer class
+	 * tries to delete the Deferred object after we have deleted it
+	 * because there still is a QSharedPointer holding a reference.
+	 * This way, we can delete the Deferred object without having the
+	 * test crash.
+	 */
+	Deferred::Ptr* deferred = new Deferred::Ptr(Deferred::create());
+
+	ChildDeferred::Ptr childDeferred = ChildDeferred::create(*deferred);
+
+	QCOMPARE(childDeferred->parents().size(), 1);
+
+	(*deferred)->resolve(); // Avoid warning
+
+	// This is buggy code which would lead to a crash in a real application
+	delete deferred->data(); // THIS IS AN ERROR! DON'T DO THIS IN A REAL APPLICATION!
+
+	QCOMPARE(childDeferred->parents().size(), 0);
+
+	childDeferred->resolve(); // Avoid warning
 }
 
 
