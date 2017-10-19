@@ -1,0 +1,57 @@
+/*!
+
+\page page_logMessages Log Messages
+
+\tableofcontents
+
+\brief This page explains the messages logged by the %Qt %Promise library.
+
+The %Qt %Promise library logs messages using qDebug() or qCritical() in certain situations.
+These messages can help you debugging the usage of %Qt %Promise library in your application.
+To do so, run your application in a debugger and set a breakpoint to the places in the %Qt %Promise
+library where the messages are logged.
+
+
+\section page_logMessages_debug Debug Messages
+
+\subsection page_logMessages_debug_deferredDestroyedWhilePending Deferred 0x??? destroyed while still pending
+
+This message is logged when a Deferred object is destroyed before being resolved or rejected.
+This typically happens when an asynchronous operation is started and before it is finished,
+all Promises waiting for the result are destroyed.
+
+This is fine and can be ignored in situations when no component is interessted in the result anymore.
+For example, when the user cancels the action which started the asynchronous operation.
+
+It can also indicate that components are not "correctly" waiting for the result of an asynchronous
+operation. That is, the components are destroyed or continue before the result of the operation
+is available.
+
+And finally, it can indicate that a Promise::Ptr is not stored correctly. Meaning, the Promise::Ptr
+goes out of scope before the asynchronous operation finishes.
+If you are not interessted in the result of the asynchronous operation but only want its side effects
+to happen, you can store the Promise::Ptr in the PromiseSitter. This will ensure that the Promise
+is alive until the operation finished. However, be aware of the pitfalls when
+\ref page_ownership_capturingLambdas.
+
+
+\subsection page_logMessages_debug_cannotActionDeferredWhichIsAlreadyState Cannot resolve Deferred 0x??? which is already resolved
+
+This message is logged when trying to resolve, reject or notify a Deferred which is already resolved or rejected.
+
+After a Deferred (and its Promises) has been resolved or rejected, this state cannot be changed anymore
+and it cannot be notified anymore. Trying to do so anyway will log this message.
+
+If you see this message and want to avoid it, you can simply check the Deferred::state() to be 
+Deferred::Pending before calling Deferred::resolve(), Deferred::reject() or Deferred::notify().
+
+
+\section page_logMessages_error (Critical) Error Messages
+
+\subsection page_logMessages_error_parentDeferredDestroyedWhileChildHoldingReference Parent deferred 0x??? is destroyed while child 0x??? is still holding a reference
+
+\subsection page_logMessages_error_deferredDestroyedReactionToOwnSignal Deferred 0x??? destroyed as reaction to its own signal
+
+\subsection page_logMessages_error_qNetworkReplyDestroyed QNetworkReply %1 destroyed while owning NetworkDeferred %2 still pending
+
+*/
