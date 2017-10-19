@@ -1113,6 +1113,8 @@ void PromiseTest::testChainDestruction()
 	QVERIFY(callbackCalls.isEmpty());
 }
 
+/*! Provides the data for the PromiseTest::testDelay() test.
+ */
 void PromiseTest::testDelay_data()
 {
 	QTest::addColumn<QString>("action");
@@ -1125,6 +1127,8 @@ void PromiseTest::testDelay_data()
 	QTest::newRow("delayed reject")   << ACTION_REJECT  << 100;
 }
 
+/*! \test Tests the Promise::delayedResolve() and Promise::delayedReject() methods.
+ */
 void PromiseTest::testDelay()
 {
 	QFETCH(QString, action);
