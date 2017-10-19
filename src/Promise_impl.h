@@ -7,6 +7,8 @@
 #ifndef QTPROMISE_PROMISE_IMPL_H_
 #define QTPROMISE_PROMISE_IMPL_H_
 
+#include <cstddef>
+
 namespace QtPromise {
 
 template<typename ResolvedFunc, typename RejectedFunc, typename NotifiedFunc>
@@ -44,10 +46,12 @@ Promise::Ptr Promise::then(ResolvedFunc&& resolvedCallback, RejectedFunc&& rejec
 	case Deferred::Pending:
 	default:
 		ChildDeferred::Ptr newDeferred = ChildDeferred::create(m_deferred);
-		QObject::connect(m_deferred.data(), &Deferred::resolved, createCallbackWrapper(newDeferred, std::forward<ResolvedFunc>(resolvedCallback), Deferred::Resolved));
-		QObject::connect(m_deferred.data(), &Deferred::rejected, createCallbackWrapper(newDeferred, std::forward<RejectedFunc>(rejectedCallback), Deferred::Rejected));
-		QObject::connect(m_deferred.data(), &Deferred::notified, createNotifyCallbackWrapper(newDeferred, std::forward<NotifiedFunc>(notifiedCallback)));
-		return create(static_cast<Deferred::Ptr>(newDeferred));
+
+		newDeferred->connectParent(m_deferred,       createCallbackWrapper(newDeferred.data(), std::forward<ResolvedFunc>(resolvedCallback), Deferred::Resolved),
+		                                             createCallbackWrapper(newDeferred.data(), std::forward<RejectedFunc>(rejectedCallback), Deferred::Rejected),
+		                                       createNotifyCallbackWrapper(newDeferred.data(), std::forward<NotifiedFunc>(notifiedCallback)));
+		
+		return create(newDeferred.staticCast<Deferred>());
 	}
 }
 
@@ -84,19 +88,19 @@ Promise::Ptr Promise::callCallback(PromiseCallbackFunc&& func) const
 
 
 template <typename NullCallbackFunc, typename std::enable_if<std::is_same<NullCallbackFunc, std::nullptr_t>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred::Ptr newDeferred, NullCallbackFunc, Deferred::State state)
+ChildDeferred::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, NullCallbackFunc, Deferred::State state)
 {
 	Q_ASSERT_X(state != Deferred::Pending, "Promise::createCallbackWrapper()", "state must not be Pending (this is a bug in QtPromise)");
 	using namespace std::placeholders;
 
 	if (state == Deferred::Resolved)
-		return std::bind(&ChildDeferred::resolve, newDeferred.data(), _1);
+		return std::bind(&ChildDeferred::resolve, newDeferred, _1);
 	else // state == Deferred::Rejected
-		return std::bind(&ChildDeferred::reject, newDeferred.data(), _1);
+		return std::bind(&ChildDeferred::reject, newDeferred, _1);
 }
 
 template <typename VoidCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state)
+ChildDeferred::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, VoidCallbackFunc func, Deferred::State state)
 {
 	Q_ASSERT_X(state != Deferred::Pending, "Promise::createCallbackWrapper()", "state must not be Pending (this is a bug in QtPromise)");
 	if (state == Deferred::Resolved)
@@ -112,7 +116,7 @@ Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred::Ptr n
 }
 
 template<typename VariantCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State)
+ChildDeferred::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, VariantCallbackFunc func, Deferred::State)
 {
 	return [newDeferred, func](const QVariant& data) {
 		QVariant newValue = QVariant::fromValue(func(data));
@@ -124,7 +128,7 @@ Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred::Ptr n
 }
 
 template<typename PromiseCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State)
+ChildDeferred::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred* newDeferred, PromiseCallbackFunc func, Deferred::State)
 {
 	return [newDeferred, func](const QVariant& data) {
 		Deferred::Ptr intermedDeferred = func(data)->m_deferred;
@@ -138,24 +142,28 @@ Promise::WrappedCallbackFunc Promise::createCallbackWrapper(ChildDeferred::Ptr n
 			break;
 		case Deferred::Pending:
 		default:
+			// Disconnect and remove all previous parents
+			newDeferred->removeParents(true);
+			// The intermedDeferred is the new parent
 			newDeferred->setParent(intermedDeferred);
-			QObject::connect(intermedDeferred.data(), &Deferred::resolved, newDeferred.data(), &Deferred::resolve);
-			QObject::connect(intermedDeferred.data(), &Deferred::rejected, newDeferred.data(), &Deferred::reject);
-			QObject::connect(intermedDeferred.data(), &Deferred::notified, newDeferred.data(), &Deferred::notify);
+			using namespace std::placeholders;
+			newDeferred->connectParent(intermedDeferred, std::bind(&ChildDeferred::resolve, newDeferred, _1),
+			                                             std::bind(&ChildDeferred::reject, newDeferred, _1),
+			                                             std::bind(&ChildDeferred::notify, newDeferred, _1));
 			break;
 		}
 	};
 }
 
-template <typename NullCallbackFunc, typename std::enable_if<std::is_same<NullCallbackFunc, std::nullptr_t>::value, Promise::WrappedCallbackFunc>::type*>
-Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred::Ptr newDeferred, NullCallbackFunc)
+template <typename NullCallbackFunc, typename std::enable_if<std::is_same<NullCallbackFunc, std::nullptr_t>::value>::type*>
+ChildDeferred::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, NullCallbackFunc)
 {
 	using namespace std::placeholders;
-	return std::bind(&ChildDeferred::notify, newDeferred.data(), _1);
+	return std::bind(&ChildDeferred::notify, newDeferred, _1);
 }
 
 template <typename VoidCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred::Ptr newDeferred, VoidCallbackFunc func)
+ChildDeferred::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, VoidCallbackFunc func)
 {
 	return [newDeferred, func](const QVariant& data) {
 		func(data);
@@ -164,7 +172,7 @@ Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred:
 }
 
 template<typename VariantCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred::Ptr newDeferred, VariantCallbackFunc func)
+ChildDeferred::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, VariantCallbackFunc func)
 {
 	return [newDeferred, func](const QVariant& data) {
 		newDeferred->notify(func(data));
@@ -172,19 +180,19 @@ Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred:
 }
 
 template<typename PromiseCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value>::type*>
-Promise::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFunc func)
+ChildDeferred::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDeferred* newDeferred, PromiseCallbackFunc func)
 {
-	// There can be only one parent at this time.
-	Deferred::Ptr originalDeferred = newDeferred->parents().first();
-	return [originalDeferred, newDeferred, func](const QVariant& data) {
+	return [newDeferred, func](const QVariant& data) {
 		Deferred::Ptr intermedDeferred = func(data)->m_deferred;
 		switch (intermedDeferred->state())
 		{
 		case Deferred::Pending:
-			newDeferred->setParents(QVector<Deferred::Ptr>{originalDeferred, intermedDeferred});
-			QObject::connect(intermedDeferred.data(), &Deferred::resolved, newDeferred.data(), &Deferred::notify);
-			QObject::connect(intermedDeferred.data(), &Deferred::notified, newDeferred.data(), &Deferred::notify);
+		{
+			newDeferred->addParent(intermedDeferred);
+			QObject::connect(intermedDeferred.data(), &Deferred::resolved, newDeferred, &Deferred::notify);
+			QObject::connect(intermedDeferred.data(), &Deferred::notified, newDeferred, &Deferred::notify);
 			break;
+		}
 		case Deferred::Resolved:
 			newDeferred->notify(intermedDeferred->data());
 			break;

@@ -49,6 +49,26 @@ Promise::Ptr Promise::createRejected(const QVariant& reason)
 	return Ptr(new Promise(Deferred::Rejected, reason));
 }
 
+Promise::Ptr Promise::delayedResolve(const QVariant& value, int delayInMillisec)
+{
+	Deferred::Ptr deferred = Deferred::create();
+	Deferred* rawDeferred = deferred.data();
+	QTimer::singleShot(delayInMillisec, rawDeferred, [rawDeferred, value]() {
+		rawDeferred->resolve(value);
+	});
+	return Promise::create(deferred);
+}
+
+Promise::Ptr Promise::delayedReject(const QVariant& reason, int delayInMillisec)
+{
+	Deferred::Ptr deferred = Deferred::create();
+	Deferred* rawDeferred = deferred.data();
+	QTimer::singleShot(delayInMillisec, rawDeferred, [rawDeferred, reason]() {
+		rawDeferred->reject(reason);
+	});
+	return Promise::create(deferred);
+}
+
 
 Deferred::State Promise::state() const
 {

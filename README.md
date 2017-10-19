@@ -144,7 +144,7 @@ void MyDataFetcher::printJsonData()
 
 <a name="requirements"></a>
 ## Requirements ##
- - Qt 5
+ - Qt 5.4 or later
  - Compiler supporting C++11 (tested with Microsoft Visual Studio 2015, GCC 4.9.2 and GCC 6.3.0)
  - An event loop which also handles [DeferredDelete](http://doc.qt.io/qt-5/qevent.html#Type-enum) events
  (e.g. `QCoreApplication::exec()` or `QEventLoop::exec()`)
@@ -153,6 +153,7 @@ void MyDataFetcher::printJsonData()
 <a name="documentation"></a>
 ## Documentation ##
 - [API Documentation](https://julrich.gitlab.io/QtPromise/docs/)
+- [Guides](https://julrich.gitlab.io/QtPromise/docs/pages.html)
 - [Changelog](CHANGELOG.md)
 
 

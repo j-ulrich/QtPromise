@@ -23,6 +23,11 @@ namespace QtPromise {
  * To avoid storing the Promise as a class member, you can hand over the Promise::Ptr
  * to the PromiseSitter which holds it until the Promise is resolved or rejected.
  *
+ * \note Since the Promise will typically be destroyed after removing from the PromiseSitter,
+ * it is not removed immediately after it has been resolved or rejected but when the control
+ * returns to the event loop. This is necessary to prevent that the Promise is deleted in
+ * a handler connected to its own signal.
+ *
  * ### Global Instance ###
  * For convenience, there is a global instance of a PromiseSitter which can be retrieved
  * using PromiseSitter::instance().
@@ -79,6 +84,7 @@ public:
 	 * \p promise. When the \p contextObj is destroyed (emits the QObject::destroyed() signal),
 	 * the \p promise is removed from the PromiseSitter. If the \p promise has already been added
 	 * to the PromiseSitter, the \p contextObj is added to the existing context objects.
+	 * This parameter was added in 1.2.0.
 	 *
 	 * \sa remove()
 	 */
@@ -93,6 +99,7 @@ public:
 	 * QObject::destroyed() signal), the \p promise is removed from the PromiseSitter.
 	 * If the \p promise has already been added to the PromiseSitter, the \p contextObjs
 	 * are added to the existing context objects.
+	 * This parameter was added in 1.2.0.
 	 *
 	 * \sa remove()
 	 */

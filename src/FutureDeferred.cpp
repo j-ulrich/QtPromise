@@ -5,11 +5,16 @@
 namespace QtPromise
 {
 
-QAtomicInteger<int> FutureDeferred::m_metaTypesRegistered{0};
+QAtomicInt FutureDeferred::m_metaTypesRegistered{0};
+
+FutureDeferred::~FutureDeferred()
+{
+	checkDestructionInSignalHandler();
+}
 
 void FutureDeferred::registerMetaTypes()
 {
-	if (m_metaTypesRegistered.testAndSetOrdered(0, 1))
+	if (m_metaTypesRegistered.testAndSetAcquire(0, 1))
 	{
 		qRegisterMetaType<Progress>();
 		QMetaType::registerEqualsComparator<Progress>();
@@ -22,16 +27,14 @@ void FutureDeferred::futureFinished(const QVariantList& results)
 {
 	QMutexLocker locker(&m_lock);
 	m_results = results;
-	if (this->resolve(QVariant::fromValue(results)))
-		Q_EMIT resolved(results);
+	this->resolveAndEmit(m_results, &FutureDeferred::resolved);
 }
 
 void FutureDeferred::futureCanceled(const QVariantList& results)
 {
 	QMutexLocker locker(&m_lock);
 	m_results = results;
-	if (this->reject(QVariant::fromValue(results)))
-		Q_EMIT rejected(results);
+	this->rejectAndEmit(m_results, &FutureDeferred::rejected);
 }
 
 void FutureDeferred::futureProgressRangeChanged(int min, int max)
@@ -39,24 +42,21 @@ void FutureDeferred::futureProgressRangeChanged(int min, int max)
 	QMutexLocker locker(&m_lock);
 	m_progress.min = min;
 	m_progress.max = max;
-	if (this->notify(QVariant::fromValue(m_progress)))
-		Q_EMIT notified(m_progress);
+	this->notifyAndEmit(m_progress, &FutureDeferred::notified);
 }
 
 void FutureDeferred::futureProgressTextChanged(const QString& text)
 {
 	QMutexLocker locker(&m_lock);
 	m_progress.text = text;
-	if (this->notify(QVariant::fromValue(m_progress)))
-		Q_EMIT notified(m_progress);
+	this->notifyAndEmit(m_progress, &FutureDeferred::notified);
 }
 
 void FutureDeferred::futureProgressValueChanged(int value)
 {
 	QMutexLocker locker(&m_lock);
 	m_progress.value = value;
-	if (this->notify(QVariant::fromValue(m_progress)))
-		Q_EMIT notified(m_progress);
+	this->notifyAndEmit(m_progress, &FutureDeferred::notified);
 }
 
 

@@ -80,6 +80,31 @@ public:
 	 */
 	static Ptr createRejected(const QVariant& reason = QVariant());
 
+	/*! Creates a Promise which is resolved after a delay.
+	 *
+	 * \param value The value used to resolve the Promise.
+	 * \param delayInMillisec The delay in milliseconds.
+	 * If \p delayInMillisec is 0, the resolve is delayed
+	 * until control reaches the event loop.
+	 * \return QSharedPointer to a new Promise which will be resolved
+	 * with \p value after the given \p delayInMillisec.
+	 *
+	 * \since 2.0.0
+	 */
+	static Ptr delayedResolve(const QVariant& value = QVariant(), int delayInMillisec = 0);
+	/*! Creates a Promise which is rejected after a delay.
+	 *
+	 * \param reason The reason used to reject the Promise.
+	 * \param delayInMillisec The delay in milliseconds.
+	 * If \p delayInMillisec is 0, the reject is delayed
+	 * until control reaches the event loop.
+	 * \return QSharedPointer to a new Promise which will be rejected
+	 * with \p reason after the given \p delayInMillisec.
+	 *
+	 * \since 2.0.0
+	 */
+	static Ptr delayedReject(const QVariant& reason = QVariant(), int delayInMillisec = 0);
+
 	/*! Combines multiple Promises using "and" semantics.
 	 *
 	 * Creates a Promise which is resolved when *all* provided promises
@@ -184,6 +209,10 @@ public:
 	 * or \p rejectedCallback) returns a Promise::Ptr, the Promise returned by then() will be
 	 * notified with the notifications from that Promise.
 	 *
+	 * \warning Do not trigger any action which could lead to the deletion of the Promise directly
+	 * from a callback. Defer such actions to the event loop. See \ref page_ownership for more
+	 * information.
+	 *
 	 * \tparam ResolvedFunc A callback function type expecting a `const QVariant&` as parameter
 	 * and returning either `void`, `QVariant` or `Promise::Ptr`. Or `std::nullptr_t`.
 	 * \tparam RejectedFunc A callback function type expecting a `const QVariant&` as parameter
@@ -258,10 +287,6 @@ Q_SIGNALS:
 
 protected:
 
-	/*! Defines the type of functions returned by createCallbackWrapper() and createNotifyCallbackWrapper()
-	 */
-	typedef std::function<void(const QVariant&)> WrappedCallbackFunc;
-
 	/*! Creates a Promise object for a Deferred.
 	 *
 	 * \param deferred The Deferred which should be represented by the Promise.
@@ -296,22 +321,22 @@ private:
 	Ptr callCallback(PromiseCallbackFunc&& func) const;
 
 	template <typename NullCallbackFunc, typename std::enable_if<std::is_same<NullCallbackFunc, std::nullptr_t>::value>::type* = nullptr>
-	static WrappedCallbackFunc createCallbackWrapper(ChildDeferred::Ptr newDeferred, NullCallbackFunc func, Deferred::State state);
+	static ChildDeferred::WrappedCallbackFunc createCallbackWrapper(ChildDeferred* newDeferred, NullCallbackFunc func, Deferred::State state);
 	template <typename VoidCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value>::type* = nullptr>
-	static WrappedCallbackFunc createCallbackWrapper(ChildDeferred::Ptr newDeferred, VoidCallbackFunc func, Deferred::State state);
+	static ChildDeferred::WrappedCallbackFunc createCallbackWrapper(ChildDeferred* newDeferred, VoidCallbackFunc func, Deferred::State state);
 	template<typename VariantCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value>::type* = nullptr>
-	static WrappedCallbackFunc createCallbackWrapper(ChildDeferred::Ptr newDeferred, VariantCallbackFunc func, Deferred::State state);
+	static ChildDeferred::WrappedCallbackFunc createCallbackWrapper(ChildDeferred* newDeferred, VariantCallbackFunc func, Deferred::State state);
 	template<typename PromiseCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value>::type* = nullptr>
-	static WrappedCallbackFunc createCallbackWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFunc func, Deferred::State state);
+	static ChildDeferred::WrappedCallbackFunc createCallbackWrapper(ChildDeferred* newDeferred, PromiseCallbackFunc func, Deferred::State state);
 
-	template <typename NullCallbackFunc, typename std::enable_if<std::is_same<NullCallbackFunc, std::nullptr_t>::value, Promise::WrappedCallbackFunc>::type* = nullptr>
-	static WrappedCallbackFunc createNotifyCallbackWrapper(ChildDeferred::Ptr newDeferred, NullCallbackFunc func);
+	template <typename NullCallbackFunc, typename std::enable_if<std::is_same<NullCallbackFunc, std::nullptr_t>::value>::type* = nullptr>
+	static ChildDeferred::WrappedCallbackFunc createNotifyCallbackWrapper(ChildDeferred* newDeferred, NullCallbackFunc func);
 	template <typename VoidCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VoidCallbackFunc(const QVariant&)>::type, void>::value>::type* = nullptr>
-	static WrappedCallbackFunc createNotifyCallbackWrapper(ChildDeferred::Ptr newDeferred, VoidCallbackFunc func);
+	static ChildDeferred::WrappedCallbackFunc createNotifyCallbackWrapper(ChildDeferred* newDeferred, VoidCallbackFunc func);
 	template<typename VariantCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<VariantCallbackFunc(const QVariant&)>::type, QVariant>::value>::type* = nullptr>
-	static WrappedCallbackFunc createNotifyCallbackWrapper(ChildDeferred::Ptr newDeferred, VariantCallbackFunc func);
+	static ChildDeferred::WrappedCallbackFunc createNotifyCallbackWrapper(ChildDeferred* newDeferred, VariantCallbackFunc func);
 	template<typename PromiseCallbackFunc, typename std::enable_if<std::is_convertible<typename std::result_of<PromiseCallbackFunc(const QVariant&)>::type, Promise::Ptr>::value>::type* = nullptr>
-	static WrappedCallbackFunc createNotifyCallbackWrapper(ChildDeferred::Ptr newDeferred, PromiseCallbackFunc func);
+	static ChildDeferred::WrappedCallbackFunc createNotifyCallbackWrapper(ChildDeferred* newDeferred, PromiseCallbackFunc func);
 
 
 	template<typename PromiseContainer>

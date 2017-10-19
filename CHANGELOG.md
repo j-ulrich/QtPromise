@@ -11,16 +11,32 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 
 
 ## Unreleased ##
+This release fundamentally changes the way object deletion is handled:
+instead of using deferred deletion (`QObject::deleteLater()`), the objects are now
+delete immediately when their last `QSharedPointer` is deleted.
+This has proven necessary because with a deferred delete, a callback can still be invoked between
+the destruction of one of its captured dependencies and its scheduled deletion.
 
+### Added ###
+- Detection of "destruction in signal handler" in Deferred class.
+Subclasses of Deferred should now use `Deferred::resolveAndEmit()` etc. to emit specialized
+(overloaded) signals and should call `Deferred::checkDestructionInSignalHandler()` in their destructor.
+- `Promise::delayedResolve()` and `Promise::delayedReject()`
 
 ### Breaking Changes ###
 - [!30] Improves passing of parameters.
-This is a breaking change because the signature of Promise::all() and Promise::any() changes.
+This is a breaking change because the signature of Promise::all() and Promise::any() changed.
 However, as long as you do not rely on the exact signature, the break will not affect you since it
 is just changing call-by-value to call-by-reference.
 - [!31] Switched from using `QObject::deleteLater()` to using "immediate" delete.
-This has proven necessary because with a deferred delete, a callback can still be invoked between
-the destruction of one of its captured dependencies and its scheduled deletion.
+- Deferreds are no longer rejected when destroyed while pending. This doesn't make sense anymore since
+there won't be any promises which could receive the signal when the deferred is destroyed.
+
+### Fixed ###
+- [!32] Fixes Deferreds not being deleted properly.
+
+### Removed ###
+- Obsolete DeferredDestroyed exception
 
 
 ---
