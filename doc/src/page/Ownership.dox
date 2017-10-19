@@ -24,9 +24,17 @@ Therefore, the promises and deferreds hold QSharedPointers to the deferreds they
 in the chain exists until the promise is resolved/rejected. Else the promise chain will
 be destructed and the attached callbacks will not be executed.\n
 The PromiseSitter class can be used to store those pointers. However, be careful regarding the
-lifetime of objects captured in lambda expressions used as callbacks of promises, especially when
-adding them to the PromiseSitter since those promises will stay alive until they are resolved or
-rejected.
+lifetime of objects captured in lambda expressions used as callbacks of promises since the promises
+will stay alive until they are resolved or rejected. See the next section for ways to restrict
+the lifetimes of promises.
+
+\warning As with any QObject, promises and deferreds *must not* be deleted in a slot or functor
+connected to one of their own signals. This also applies to the callbacks passed to Promise::then().
+So if you need to execute actions from a Promise::then() callback that could lead to the deletion of
+the Promise itself, defer the action, for example using QTimer::singleShot().\n
+The Deferred class has a detection which produces a log message using qCritical() in case it detects
+its destruction as reaction to one of its signals.
+See Deferred::checkDestructionInSignalHandler().
 
 
 \section page_ownership_capturingLambdas Capturing Objects in Lambda Expressions
@@ -108,10 +116,10 @@ void MyClass::doSomething(MyFirstClass* firstObj, MySecondClass* secondObj)
 	});
 
 	// Release the promise when one of the captured objects is destroyed
-	connect(firstObj, &QObject::destroyed, promise.data(), [this]() {
+	connect(firstObj, &QObject::destroyed, promise.data(), [this]() mutable {
 		this->promise.reset();
 	});
-	connect(secondObj, &QObject::destroyed, promise.data(), [this]() {
+	connect(secondObj, &QObject::destroyed, promise.data(), [this]() mutable {
 		this->promise.reset();
 	});
 }

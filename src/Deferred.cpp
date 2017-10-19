@@ -4,20 +4,21 @@
 
 namespace QtPromise {
 
-QAtomicInteger<int> Deferred::m_metaTypesRegistered{0};
+QAtomicInt Deferred::m_metaTypesRegistered{0};
 
 Deferred::Deferred()
-	: QObject(nullptr), m_state(Pending), m_lock(QMutex::Recursive)
+	: QObject(nullptr)
+	, m_state(Pending)
+	, m_lock(QMutex::Recursive)
+	, m_isInSignalHandler{0}
 {
 	registerMetaTypes();
 }
 
 void Deferred::registerMetaTypes()
 {
-	if (m_metaTypesRegistered.testAndSetOrdered(0, 1))
+	if (m_metaTypesRegistered.testAndSetAcquire(0, 1))
 	{
-		qRegisterMetaType<DeferredDestroyed>();
-		qRegisterMetaType<DeferredDestroyed>("QtPromise::DeferredDestroyed");
 		qRegisterMetaType<State>();
 		QMetaType::registerEqualsComparator<State>();
 		qRegisterMetaType<State>("Deferred::State");
@@ -49,15 +50,11 @@ Deferred::Ptr Deferred::create(State state, const QVariant& data)
 
 Deferred::~Deferred()
 {
+	checkDestructionInSignalHandler();
+
+	QMutexLocker locker(&m_lock);
 	if (m_state == Pending)
-	{
 		qDebug("Deferred %s destroyed while still pending", qUtf8Printable(pointerToQString(this)));
-#ifndef QT_NO_EXCEPTIONS
-	this->reject(QVariant::fromValue(DeferredDestroyed(this)));
-#else
-	this->reject(QString("Deferred 0x%1 destroyed").arg(reinterpret_cast<quintptr>(this), QT_POINTER_SIZE * 2, 16, QChar('0')));
-#endif // QT_NO_EXCEPTIONS
-	}
 }
 
 void Deferred::setLogInvalidActionMessage(bool logInvalidActionMessage)
@@ -71,6 +68,12 @@ void Deferred::logInvalidActionMessage(const char* action) const
 		qDebug("Cannot %s Deferred %s which is already %s", action, qUtf8Printable(pointerToQString(this)), m_state==Resolved?"resolved":"rejected");
 }
 
+void Deferred::checkDestructionInSignalHandler()
+{
+	if (m_isInSignalHandler.fetchAndStoreOrdered(0) > 0)
+		qCritical("Deferred %s destroyed as reaction to its own signal", qUtf8Printable(pointerToQString(this)));
+}
+
 bool Deferred::resolve(const QVariant& value)
 {
 	QMutexLocker locker(&m_lock);
@@ -79,7 +82,9 @@ bool Deferred::resolve(const QVariant& value)
 	{
 		m_data = value;
 		m_state = Resolved;
+		m_isInSignalHandler.fetchAndAddAcquire(1);
 		Q_EMIT resolved(m_data);
+		m_isInSignalHandler.fetchAndSubRelease(1);
 		return true;
 	}
 	else
@@ -97,7 +102,9 @@ bool Deferred::reject(const QVariant& reason)
 	{
 		m_data = reason;
 		m_state = Rejected;
+		m_isInSignalHandler.fetchAndAddAcquire(1);
 		Q_EMIT rejected(m_data);
+		m_isInSignalHandler.fetchAndSubRelease(1);
 		return true;
 	}
 	else
@@ -113,7 +120,9 @@ bool Deferred::notify(const QVariant& progress)
 
 	if (m_state == Pending)
 	{
+		m_isInSignalHandler.fetchAndAddAcquire(1);
 		Q_EMIT notified(progress);
+		m_isInSignalHandler.fetchAndSubRelease(1);
 		return true;
 	}
 	else
@@ -121,12 +130,6 @@ bool Deferred::notify(const QVariant& progress)
 		logInvalidActionMessage("notify");
 		return false;
 	}
-}
-
-QString pointerToQString(const void* pointer)
-{
-	return QString("0x%1").arg(reinterpret_cast<quintptr>(pointer),
-	                           QT_POINTER_SIZE * 2, 16, QChar('0'));
 }
 
 }  // namespace QtPromise

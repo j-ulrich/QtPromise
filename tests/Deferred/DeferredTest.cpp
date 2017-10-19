@@ -20,8 +20,6 @@ private Q_SLOTS:
 	void testResolve();
 	void testReject();
 	void testNotify();
-	void testDestructor();
-	void testDeferredDestroyedException();
 
 private:
 	struct DeferredSpies
@@ -139,29 +137,6 @@ void DeferredTest::testNotify()
 	QCOMPARE(spies.rejected.count(), 0);
 	QCOMPARE(spies.notified.count(), 2);
 	QCOMPARE(spies.notified.at(1).first().toInt(), secondValue);
-}
-
-/*! \test Tests the destructor Deferred::~Deferred().
- */
-void DeferredTest::testDestructor()
-{
-	Deferred::Ptr deferred = Deferred::create();
-	qDebug() << "Deferred:" << deferred.data();
-
-	DeferredSpies spies(deferred);
-
-	deferred.clear();
-
-	QTRY_COMPARE(spies.rejected.count(), 1); // Need an event loop to execute deleteLater
-	QVERIFY(spies.rejected.first().first().canConvert<DeferredDestroyed>());
-}
-
-/*! \test Tests the default constructor of DeferredDestroyed.
- */
-void DeferredTest::testDeferredDestroyedException()
-{
-	DeferredDestroyed ex;
-	QVERIFY(ex.deferred() == nullptr);
 }
 
 

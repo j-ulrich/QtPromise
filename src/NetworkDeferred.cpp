@@ -3,7 +3,7 @@
 
 namespace QtPromise {
 
-QAtomicInteger<int> NetworkDeferred::m_metaTypesRegistered{0};
+QAtomicInt NetworkDeferred::m_metaTypesRegistered{0};
 
 NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 	: Deferred(), m_reply(reply), m_lock(QMutex::Recursive)
@@ -37,6 +37,11 @@ NetworkDeferred::NetworkDeferred(QNetworkReply* reply)
 	connect(m_reply, &QObject::destroyed, this, &NetworkDeferred::replyDestroyed);
 }
 
+NetworkDeferred::~NetworkDeferred()
+{
+	checkDestructionInSignalHandler();
+}
+
 NetworkDeferred::Ptr NetworkDeferred::create(QNetworkReply* reply)
 {
 	return Ptr(new NetworkDeferred(reply));
@@ -44,7 +49,7 @@ NetworkDeferred::Ptr NetworkDeferred::create(QNetworkReply* reply)
 
 void NetworkDeferred::registerMetaTypes()
 {
-	if (m_metaTypesRegistered.testAndSetOrdered(0, 1))
+	if (m_metaTypesRegistered.testAndSetAcquire(0, 1))
 	{
 		qRegisterMetaType<ReplyData>();
 		QMetaType::registerEqualsComparator<ReplyData>();
@@ -77,13 +82,11 @@ void NetworkDeferred::replyFinished()
 		m_error.code = m_reply->error();
 		m_error.message = m_reply->errorString();
 		m_error.replyData = replyData;
-		if (this->reject(QVariant::fromValue(m_error)))
-			Q_EMIT rejected(m_error);
+		this->rejectAndEmit(m_error, &NetworkDeferred::rejected);
 	}
 	else
 	{
-		if (this->resolve(QVariant::fromValue(replyData)))
-			Q_EMIT resolved(replyData);
+		this->resolveAndEmit(replyData, &NetworkDeferred::resolved);
 	}
 }
 
@@ -98,8 +101,7 @@ void NetworkDeferred::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTo
 		return;
 	m_progress.download.current = bytesReceived;
 	m_progress.download.total = bytesTotal;
-	if (this->notify(QVariant::fromValue(m_progress)))
-		Q_EMIT notified(m_progress);
+	this->notifyAndEmit(m_progress, &NetworkDeferred::notified);
 }
 
 void NetworkDeferred::replyUploadProgress(qint64 bytesSent, qint64 bytesTotal)
@@ -112,8 +114,7 @@ void NetworkDeferred::replyUploadProgress(qint64 bytesSent, qint64 bytesTotal)
 		return;
 	m_progress.upload.current = bytesSent;
 	m_progress.upload.total = bytesTotal;
-	if (this->notify(QVariant::fromValue(m_progress)))
-		Q_EMIT notified(m_progress);
+	this->notifyAndEmit(m_progress, &NetworkDeferred::notified);
 }
 
 void NetworkDeferred::replyDestroyed(QObject* reply)
@@ -134,8 +135,7 @@ void NetworkDeferred::replyDestroyed(QObject* reply)
 		m_error.message = errorMessage;
 		m_error.replyData = ReplyData(m_buffer, nullptr);
 
-		if (this->reject(QVariant::fromValue(m_error)))
-			Q_EMIT rejected(m_error);
+		this->rejectAndEmit(m_error, &NetworkDeferred::rejected);
 	}
 	m_reply = nullptr;
 	m_error.replyData.qReply = nullptr;

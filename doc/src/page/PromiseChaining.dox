@@ -46,14 +46,15 @@ To handle all such cases with promise chaining, Promise::then() returns a _new_ 
 resolved, rejected or notified depending on the return type and value of the callbacks:
 The callbacks can either return `void`, a QVariant or a Promise::Ptr.
 
-\subsection page_promiseChaining_voidCallbacks Void Callbacks
-If a callback returns `void`, the Promise returned by Promise::then() is resolved, rejected or
-notified exactly like the original Promise (the one on which \ref Promise::then() "then()" was
-called). This means:
-- If the original Promise is resolved and the \p resolvedCallback returns `void`,
+\subsection page_promiseChaining_voidCallbacks Void and nullptr Callbacks
+If a callback returns `void` or is \c nullptr, the Promise returned by Promise::then() is resolved,
+rejected or notified exactly like the original Promise (the one on which \ref Promise::then()
+"then()" was called). This means:
+- If the original Promise is resolved and the \p resolvedCallback returns `void` or is \c nullptr,
 the Promise returned by Promise::then() is also resolved with the same value as the original Promise.
 - Similarly, if the original Promise is rejected or notified and the corresponding callbacks return
-`void`, the returned Promise is rejected or notified with the same value as the original Promise.
+`void` or is \c nullptr, the returned Promise is rejected or notified with the same value as the
+original Promise.
 
 \subsection page_promiseChaining_qVariantCallbacks QVariant Callbacks
 If a callback returns a QVariant, the Promise returned by Promise::then() is resolved or notified
@@ -87,6 +88,8 @@ returned by the corresponding callback. In case those callbacks do not return a 
 Promise returned by Promise::then() will be resolved or rejected directly so it cannot no longer 
 receive notifications anyway.
 
+\warning Do not trigger any action which could lead to the deletion of the Promise directly
+from a callback. Defer such actions to the event loop. See \ref page_ownership for more information.
 
 \section page_promiseChaining_commonPatterns Common Patterns
 This section shows examples of a few common patterns of promise chaining.
