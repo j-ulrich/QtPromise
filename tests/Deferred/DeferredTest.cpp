@@ -20,6 +20,7 @@ private Q_SLOTS:
 	void testResolve();
 	void testReject();
 	void testNotify();
+	void testQHash();
 
 private:
 	struct DeferredSpies
@@ -137,6 +138,17 @@ void DeferredTest::testNotify()
 	QCOMPARE(spies.rejected.count(), 0);
 	QCOMPARE(spies.notified.count(), 2);
 	QCOMPARE(spies.notified.at(1).first().toInt(), secondValue);
+}
+
+/*! \test Tests the qHash(const QtPromise::Deferred::Ptr&, uint) function.
+ */
+void DeferredTest::testQHash()
+{
+	Deferred::Ptr firstDeferred = Deferred::create();
+	Deferred::Ptr secondDeferred = Deferred::create();
+
+	QCOMPARE(qHash(firstDeferred), qHash(firstDeferred.data()));
+	QVERIFY(qHash(firstDeferred) != qHash(secondDeferred));
 }
 
 
