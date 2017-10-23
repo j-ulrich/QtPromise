@@ -1,5 +1,3 @@
-# #
-
 # QtPromise #
 
 > Promise Pattern for Qt
@@ -44,8 +42,11 @@ However, it is using a different API, more oriented to the Observable pattern, a
 
 Benoit Walter's [QtPromise](https://github.com/bwalter/qt-promise) is based on Ben Lau's AsyncFuture
 and provides an API similar to this implementation of QtPromise. However, it has some difference:
-It uses context objects to manage lifetime of promises and to store additional data. It also doesn't provide
-progress reporting (yet?). 
+It uses context objects to manage lifetime of promises and to store additional data. It also doesn't provide progress reporting (yet?).
+
+Simon Brunel's [QtPromise](https://github.com/simonbrunel/qtpromise) is an implementation which is very close to the Promises/A+ specification.
+In contrast to this implementation of QtPromise, it uses static typing instead of dynamic typing (templates instead of QVariant) and has
+nice support for exceptions. However, it does not provide progress reporting (yet?).
 
 <a name="further-reading"></a>
 ### Further reading ###
@@ -63,7 +64,8 @@ progress reporting (yet?).
 ## Features ##
 - Promise chaining
 - Error handling and progress reporting
-> **Note:** QtPromise does **not** support exceptions since Qt's signal & slot mechanism does not support exceptions.
+> **Note:** QtPromise does **not** support throwing exceptions from Promise chain callbacks since Qt's signal & slot mechanism does not support exceptions.
+However, exceptions can be [wrapped and handled](https://julrich.gitlab.io/QtPromise/docs/page_q_variant.html#using-smart-pointers) using the error handling.
 - Can be used with or without threads
 - Can be used with any asynchronous operation
 - Supports signals & slots
