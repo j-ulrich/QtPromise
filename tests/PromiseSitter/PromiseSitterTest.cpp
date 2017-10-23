@@ -32,6 +32,7 @@ private Q_SLOTS:
 	void testGlobalInstance();
 	void testContextObjects_data();
 	void testContextObjects();
+	void testDestructor();
 
 private:
 	struct PromiseSpies
@@ -249,6 +250,38 @@ void PromiseSitterTest::testContextObjects()
 
 	// PromiseSitter should now drop the reference
 	QTRY_VERIFY(promiseWPointer.isNull());
+
+	// Prevent warning
+	deferred->resolve();
+}
+
+/*! \test Tests \link PromiseSitter::~PromiseSitter() the destructor \endlink of the PromiseSitter.
+ */
+void PromiseSitterTest::testDestructor()
+{
+	QScopedPointer<PromiseSitter> sitter{new PromiseSitter};
+
+	Deferred::Ptr deferred = Deferred::create();
+	QWeakPointer<Promise> promiseWPointer;
+
+	QScopedPointer<QObject> contextObject{new QObject};
+
+	// Scope for promise
+	{
+		Promise::Ptr promise = Promise::create(deferred);
+		sitter->add(promise, contextObject.data());
+		promiseWPointer = promise;
+	}
+
+	QVERIFY2(!promiseWPointer.isNull(), "Promise was destroyed although added to the sitter");
+
+	sitter.reset();
+
+	// Promise should now have gone out of scope
+	QTRY_VERIFY(promiseWPointer.isNull());
+
+	// Deleting the context object afterwards should not have any effect
+	contextObject.reset();
 
 	// Prevent warning
 	deferred->resolve();

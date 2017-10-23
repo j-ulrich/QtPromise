@@ -32,9 +32,13 @@ the lifetimes of promises.
 connected to one of their own signals. This also applies to the callbacks passed to Promise::then().
 So if you need to execute actions from a Promise::then() callback that could lead to the deletion of
 the Promise itself, defer the action, for example using QTimer::singleShot().\n
-The Deferred class has a detection which produces a log message using qCritical() in case it detects
-its destruction as reaction to one of its signals.
-See Deferred::checkDestructionInSignalHandler().
+The deletion can sometimes be hard to spot. For example, it can be triggered by a
+QCoreApplication::processEvents() in combination with context objects and the PromiseSitter.\n
+The Deferred class has a detection which produces
+\ref page_logMessages_error_deferredDestroyedReactionToOwnSignal "a log message" using qCritical()
+in case it detects its destruction as reaction to one of its signals.
+See also Deferred::checkDestructionInSignalHandler().
+For examples, see \ref page_logMessages_error_deferredDestroyedReactionToOwnSignal "the Log Messages page".
 
 
 \section page_ownership_capturingLambdas Capturing Objects in Lambda Expressions

@@ -28,6 +28,7 @@ private Q_SLOTS:
 	void testFinishedReply_data();
 	void testFinishedReply();
 	void testDestroyReply();
+	void testAbortReply();
 	void testCachedData();
 	void testFinishedDeferred_data();
 	void testFinishedDeferred();
@@ -261,6 +262,30 @@ void NetworkPromiseTest::testDestroyReply()
 	delete reply;
 
 	QCOMPARE(promise->state(), Deferred::Rejected);
+	QCOMPARE(static_cast<int>(promise->error().code), -1);
+	QCOMPARE(promise->replyData().qReply, static_cast<QNetworkReply*>(nullptr));
+}
+
+/*! \test Tests aborting a QNetworkReply while it is attached to a NetworkPromise.
+ */
+void NetworkPromiseTest::testAbortReply()
+{
+	QNetworkAccessManager qnam;
+	if(qnam.networkAccessible() == QNetworkAccessManager::NotAccessible)
+		QSKIP("Network not accessible");
+
+	QNetworkRequest request(QUrl("http://www.google.com"));
+	QNetworkReply* reply = qnam.get(request);
+
+	NetworkPromise::Ptr promise = NetworkPromise::create(reply);
+
+	QCOMPARE(promise->state(), Deferred::Pending);
+
+	reply->abort();
+
+	QCOMPARE(promise->state(), Deferred::Rejected);
+	QCOMPARE(promise->error().code, QNetworkReply::OperationCanceledError);
+	QCOMPARE(promise->replyData().qReply, reply);
 }
 
 /*! \test Tests the NetworkPromise with cached data.

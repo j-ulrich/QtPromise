@@ -73,8 +73,12 @@ void NetworkDeferred::registerMetaTypes()
 void NetworkDeferred::replyFinished()
 {
 	QMutexLocker locker(&m_lock);
-	// Save reply data since it will be removed from QNetworkReply when calling readAll()
-	m_buffer = m_reply->readAll();
+
+	if (m_reply->isReadable())
+	{
+		// Save reply data since it will be removed from QNetworkReply when calling readAll()
+		m_buffer = m_reply->readAll();
+	}
 
 	ReplyData replyData = this->replyData();
 	if (m_reply->error() != QNetworkReply::NoError)
