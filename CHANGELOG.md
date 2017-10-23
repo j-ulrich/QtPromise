@@ -10,7 +10,7 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 ---
 
 
-## Unreleased ##
+## [2.0.0] - 2017-10-24 ##
 This release fundamentally changes the way object deletion is handled:
 instead of using deferred deletion (`QObject::deleteLater()`), the objects are now
 delete immediately when their last `QSharedPointer` is deleted.
@@ -22,7 +22,7 @@ the destruction of one of its captured dependencies and its scheduled deletion.
 Subclasses of Deferred should now use `Deferred::resolveAndEmit()` etc. to emit specialized
 (overloaded) signals and should call `Deferred::checkDestructionInSignalHandler()` in their destructor.
 - [!33] `Promise::delayedResolve()` and `Promise::delayedReject()`
-- Documentation and explanation of the log messages.
+- [!35] Documentation and explanation of the log messages.
 
 ### Breaking Changes ###
 - [!30] Improves passing of parameters.
