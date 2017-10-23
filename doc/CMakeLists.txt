@@ -5,7 +5,7 @@ if(DOXYGEN_FOUND)
 		file(GLOB QT5_DOCS_DIRS "${QT5_DOCS_BASE_DIR}/*")
 		list(SORT QT5_DOCS_DIRS)
 		list(REVERSE QT5_DOCS_DIRS)
-		find_path(QT5_LATEST_DOCS_DIR qtcore.qch qtcore.tags
+		find_path(QT5_LATEST_DOCS_DIR qtcore.qch qtcore/qtcore.tags
 		          PATHS ${QT5_DOCS_DIRS} "/usr/share/qt5/doc"
 		          DOC "Directory containing Qt5 documentation")
 	endif()
