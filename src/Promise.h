@@ -82,25 +82,42 @@ public:
 
 	/*! Creates a Promise which is resolved after a delay.
 	 *
+	 * This is useful to do event processing in a Promise chain:
+	 * \code
+	 * void MyClass::doSomething()
+	 * {
+	 *     this->myPromise = startAsyncOperation()
+	 *     ->then([] (const QVariant& data) -> Promise::Ptr {
+	 *         // do something
+	 *         return Promise::delayedResolve();
+	 *     })->then([] (const QVariant& data) {
+	 *         // do something after events have been processed
+	 *     });
+	 * }
+	 * \endcode
+	 *
 	 * \param value The value used to resolve the Promise.
 	 * \param delayInMillisec The delay in milliseconds.
-	 * If \p delayInMillisec is 0, the resolve is delayed
-	 * until control reaches the event loop.
+	 * If \p delayInMillisec is \c 0, the resolve is delayed
+	 * until the current events in the queue have been processed.
 	 * \return QSharedPointer to a new Promise which will be resolved
 	 * with \p value after the given \p delayInMillisec.
 	 *
+	 * \sa delayedReject()
 	 * \since 2.0.0
 	 */
 	static Ptr delayedResolve(const QVariant& value = QVariant(), int delayInMillisec = 0);
+
 	/*! Creates a Promise which is rejected after a delay.
 	 *
 	 * \param reason The reason used to reject the Promise.
 	 * \param delayInMillisec The delay in milliseconds.
 	 * If \p delayInMillisec is 0, the reject is delayed
-	 * until control reaches the event loop.
+	 * until the current events in the queue have been processed.
 	 * \return QSharedPointer to a new Promise which will be rejected
 	 * with \p reason after the given \p delayInMillisec.
 	 *
+	 * \sa delayedResolve()
 	 * \since 2.0.0
 	 */
 	static Ptr delayedReject(const QVariant& reason = QVariant(), int delayInMillisec = 0);
@@ -209,9 +226,11 @@ public:
 	 * or \p rejectedCallback) returns a Promise::Ptr, the Promise returned by then() will be
 	 * notified with the notifications from that Promise.
 	 *
-	 * \warning Do not trigger any action which could lead to the deletion of the Promise directly
-	 * from a callback. Defer such actions to the event loop. See \ref page_ownership for more
-	 * information.
+	 * \warning Never delete the Promise directly from a callback. Defer any action which could lead
+	 * to the deletion of the Promise to the event loop. See \ref page_ownership for more
+	 * information. For that reason, it also not reasonable to enter the event loop (for example using
+	 * QCoreApplication::processEvents()) from a callback. Use delayedResolve() or delayedReject()
+	 * instead.
 	 *
 	 * \tparam ResolvedFunc A callback function type expecting a `const QVariant&` as parameter
 	 * and returning either `void`, `QVariant` or `Promise::Ptr`. Or `std::nullptr_t`.

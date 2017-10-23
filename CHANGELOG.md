@@ -21,7 +21,8 @@ the destruction of one of its captured dependencies and its scheduled deletion.
 - Detection of "destruction in signal handler" in Deferred class.
 Subclasses of Deferred should now use `Deferred::resolveAndEmit()` etc. to emit specialized
 (overloaded) signals and should call `Deferred::checkDestructionInSignalHandler()` in their destructor.
-- `Promise::delayedResolve()` and `Promise::delayedReject()`
+- [!33] `Promise::delayedResolve()` and `Promise::delayedReject()`
+- Documentation and explanation of the log messages.
 
 ### Breaking Changes ###
 - [!30] Improves passing of parameters.
