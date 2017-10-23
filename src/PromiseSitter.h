@@ -95,7 +95,7 @@ public:
 	 * \param promise The Promise::Ptr which should be kept until the Promise is resolved
 	 * or rejected.
 	 * \param contextObjs An optional initializer list of QObjects acting as the lifetime context
-	 * for \p promise. When any of the objects in the list is destroyed (emits the
+	 * for \p promise. When **any** of the objects in the list is destroyed (emits the
 	 * QObject::destroyed() signal), the \p promise is removed from the PromiseSitter.
 	 * If the \p promise has already been added to the PromiseSitter, the \p contextObjs
 	 * are added to the existing context objects.

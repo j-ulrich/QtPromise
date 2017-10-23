@@ -27,7 +27,7 @@ namespace QtPromise {
  * the QNetworkReply is already finished when the NetworkDeferred is created.
  *
  * In most cases, it is not necessary to create a NetworkDeferred directly but instead
- * use the convenience method NetworkPromise::create(QNetworkReply*) which creats a
+ * use the convenience method NetworkPromise::create(QNetworkReply*) which creates a
  * NetworkDeferred and directly returns a promise on it.
  * Creating a NetworkDeferred directly is only needed if the deferred should be
  * resolved/rejected/notified independently of the QNetworkReply, which should be
@@ -213,9 +213,15 @@ public:
 	 * \param reply The QNetworkReply performing the transmission.
 	 * \note The NetworkDeferred takes ownership of the \p reply by
 	 * becoming its parent. If you don't want this, change the \p reply's
-	 * parent after calling create() and ensure the \p reply exists as long
-	 * as this NetworkDeferred is pending.
+	 * parent after calling create(). In case the \p reply is deleted
+	 * while this NetworkDeferred is still pending, this NetworkDeferred
+	 * will be rejected with an Error object with special values
+	 * (see Error::code and Error::replyData for details).
+	 * In the case the reply is aborted, the deferred will be rejected
+	 * and the ReplyData::data will be empty.
 	 * \return QSharedPointer to a new, pending NetworkDeferred.
+	 *
+	 * \sa Error
 	 */
 	static Ptr create(QNetworkReply* reply);
 
