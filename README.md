@@ -2,7 +2,8 @@
 
 > Promise Pattern for Qt
 
-[![Build status](https://gitlab.com/julrich/QtPromise/badges/master/build.svg)](https://gitlab.com/julrich/QtPromise/pipelines?scope=branches)
+[![Linux build status](https://gitlab.com/julrich/QtPromise/badges/master/build.svg)](https://gitlab.com/julrich/QtPromise/pipelines?scope=branches)
+[![Windows build status](https://ci.appveyor.com/api/projects/status/s5bsjsbnj86sm42c/branch/master?svg=true)](https://ci.appveyor.com/project/j-ulrich/qtpromise/branch/master)
 [![Coverage report](https://gitlab.com/julrich/QtPromise/badges/master/coverage.svg)](https://julrich.gitlab.io/QtPromise/coverage/)
 
 ### Table of Contents ###
