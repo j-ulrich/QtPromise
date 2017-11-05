@@ -19,6 +19,7 @@ before_build:
     - call %VCVARS_COMMANDLINE%
     - set Path=%QT_DIR%\bin;%Path%
     - set QT_QPA_PLATFORM_PLUGIN_PATH=%QT_DIR%\plugins
+    - set CMAKE_PREFIX_PATH=%QT_DIR%
     - mkdir _build
     - cd _build
     - cmake -G "%CMAKE_GENERATOR%" ..
