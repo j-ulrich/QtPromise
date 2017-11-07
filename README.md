@@ -162,6 +162,6 @@ void MyDataFetcher::printJsonData()
 
 <a name="license"></a>
 ## License ##
-Copyright (c) 2017 Jochen Ulrich
+Copyright © 2017 Jochen Ulrich
 
 QtPromise is licensed under [MIT license](LICENSE).
