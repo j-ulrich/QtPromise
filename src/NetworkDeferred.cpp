@@ -49,7 +49,11 @@ NetworkDeferred::Ptr NetworkDeferred::create(QNetworkReply* reply)
 
 void NetworkDeferred::registerMetaTypes()
 {
-	if (m_metaTypesRegistered.testAndSetAcquire(0, 1))
+	static QMutex metaTypesLock;
+	static bool registered = false;
+
+	QMutexLocker locker(&metaTypesLock);
+	if (!registered)
 	{
 		qRegisterMetaType<ReplyData>();
 		QMetaType::registerEqualsComparator<ReplyData>();
@@ -67,6 +71,7 @@ void NetworkDeferred::registerMetaTypes()
 		QMetaType::registerEqualsComparator<ReplyProgress>();
 		qRegisterMetaType<ReplyProgress>("NetworkDeferred::ReplyProgress");
 		qRegisterMetaType<ReplyProgress>("QtPromise::NetworkDeferred::ReplyProgress");
+		registered = true;
 	}
 }
 

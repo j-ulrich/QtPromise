@@ -4,7 +4,6 @@
 
 namespace QtPromise {
 
-QAtomicInt Deferred::m_metaTypesRegistered{0};
 
 Deferred::Deferred()
 	: QObject(nullptr)
@@ -17,12 +16,17 @@ Deferred::Deferred()
 
 void Deferred::registerMetaTypes()
 {
-	if (m_metaTypesRegistered.testAndSetAcquire(0, 1))
+	static QMutex metaTypesLock;
+	static bool registered = false;
+
+	QMutexLocker locker(&metaTypesLock);
+	if (!registered)
 	{
 		qRegisterMetaType<State>();
 		QMetaType::registerEqualsComparator<State>();
 		qRegisterMetaType<State>("Deferred::State");
 		qRegisterMetaType<State>("QtPromise::Deferred::State");
+		registered = true;
 	}
 }
 

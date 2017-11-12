@@ -14,12 +14,17 @@ FutureDeferred::~FutureDeferred()
 
 void FutureDeferred::registerMetaTypes()
 {
-	if (m_metaTypesRegistered.testAndSetAcquire(0, 1))
+	static QMutex metaTypesLock;
+	static bool registered = false;
+
+	QMutexLocker locker(&metaTypesLock);
+	if (!registered)
 	{
 		qRegisterMetaType<Progress>();
 		QMetaType::registerEqualsComparator<Progress>();
 		qRegisterMetaType<Progress>("FutureDeferred::Progress");
 		qRegisterMetaType<Progress>("QtPromise::FutureDeferred::Progress");
+		registered = true;
 	}
 }
 

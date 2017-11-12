@@ -283,7 +283,6 @@ private:
 	bool m_logInvalidActionMessage = true;
 	QAtomicInt m_isInSignalHandler;
 
-	static QAtomicInt m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 
