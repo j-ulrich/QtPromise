@@ -10,6 +10,15 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 ---
 
 
+## [Unreleased] ##
+
+### Fixed ###
+- [!40] Fixes a race condition in registering the meta types.
+
+
+---
+
+
 ## [2.0.0] - 2017-10-24 ##
 This release fundamentally changes the way object deletion is handled:
 instead of using deferred deletion (`QObject::deleteLater()`), the objects are now
