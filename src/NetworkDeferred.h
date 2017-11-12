@@ -282,7 +282,6 @@ private:
 	ReplyProgress m_progress;
 	Error m_error;
 
-	static QAtomicInt m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 

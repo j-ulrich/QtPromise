@@ -160,7 +160,6 @@ private:
 	QVariantList m_results;
 	Progress m_progress;
 
-	static QAtomicInt m_metaTypesRegistered;
 	static void registerMetaTypes();
 };
 

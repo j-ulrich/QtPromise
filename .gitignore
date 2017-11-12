@@ -41,6 +41,9 @@ CMakeLists.txt.user*
 .project
 .settings
 
+# VS Code
+.vscode/
+
 # CMake
 build*/
 
