@@ -10,7 +10,8 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 ---
 
 
-## [Unreleased] ##
+## [2.0.1] - 2017-11-12 ##
+Bug fix release
 
 ### Fixed ###
 - [!40] Fixes a race condition in registering the meta types.
@@ -100,3 +101,4 @@ Initial release.
 [1.1.0]: https://gitlab.com/julrich/QtPromise/tags/1.1.0
 [1.2.0]: https://gitlab.com/julrich/QtPromise/tags/1.2.0
 [2.0.0]: https://gitlab.com/julrich/QtPromise/tags/2.0.0
+[2.0.1]: https://gitlab.com/julrich/QtPromise/tags/2.0.1
