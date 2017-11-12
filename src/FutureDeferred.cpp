@@ -5,8 +5,6 @@
 namespace QtPromise
 {
 
-QAtomicInt FutureDeferred::m_metaTypesRegistered{0};
-
 FutureDeferred::~FutureDeferred()
 {
 	checkDestructionInSignalHandler();
