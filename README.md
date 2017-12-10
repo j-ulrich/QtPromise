@@ -85,10 +85,10 @@ Provides the result of an asynchronous operation as a Promise.
 QtPromise::Promise::Ptr MyClass::startAsyncOperation()
 {
 	using namespace QtPromise;
-	
+
 	Deferred::Ptr deferred = Deferred::create();
 	MyAsyncOperation* asyncOp = new MyAsyncOperation(this);
-	
+
 	QObject::connect(asyncOp, &MyAsyncOperation::success, [=](const QByteArray& data) {
 		deferred->resolve(QVariant::fromValue(data));
 	});
@@ -96,18 +96,18 @@ QtPromise::Promise::Ptr MyClass::startAsyncOperation()
 		deferred->reject(QVariant::fromValue(error));
 	});
 	QObject::connect(asyncOp, &MyAsyncOperation::progress, [=](int current, int total) {
-		QMap<int> progressMap;
+		QMap<QString, int> progressMap;
 		progressMap["current"] = current;
 		progressMap["total"] = total;
 		deferred->notify(QVariant::fromValue(progressMap));
 	});
-	
+
 	Promise::Ptr promise = Promise::create(deferred)
 	->always([=](const QVariant&) {
 		// Delete asyncOp once the operation finished
 		asyncOp->deleteLater();
 	});
-	
+
 	asyncOp->start();
 	return promise;
 }
