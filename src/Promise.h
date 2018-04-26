@@ -62,10 +62,10 @@ public:
 	 */
 	static Ptr create(Deferred::Ptr deferred);
 	/*! Creates a resolved Promise.
-	 * 
+	 *
 	 * Creates a Deferred, resolves it with the given \p value and returns
 	 * a Promise on the Deferred.
-	 * 
+	 *
 	 * \param value The value used to resolve the Promise.
 	 * \return QSharedPointer to a new, resolved Promise.
 	 */
@@ -74,7 +74,7 @@ public:
 	 *
 	 * Creates a Deferred, rejects it with the given \p reason and returns
 	 * a Promise on the Deferred.
-	 * 
+	 *
 	 * \param reason The reason used to reject the Promise.
 	 * \return QSharedPointer to a new, rejected Promise.
 	 */
@@ -270,7 +270,7 @@ public:
 	 * \sa then()
 	 */
 	template <typename AlwaysFunc>
-	Ptr always(AlwaysFunc&& alwaysCallback) const { return this->then(std::forward<AlwaysFunc>(alwaysCallback), std::forward<AlwaysFunc>(alwaysCallback)); }
+	Ptr always(AlwaysFunc&& alwaysCallback) const { return this->then(alwaysCallback, alwaysCallback); }
 
 
 Q_SIGNALS:
