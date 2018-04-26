@@ -33,6 +33,7 @@ private Q_SLOTS:
 	void testContextObjects_data();
 	void testContextObjects();
 	void testDestructor();
+	void testPromiseAccess();
 
 private:
 	struct PromiseSpies
@@ -285,6 +286,41 @@ void PromiseSitterTest::testDestructor()
 
 	// Prevent warning
 	deferred->resolve();
+}
+
+/*! \test Tests the PromiseSitter::promises() method.
+ */
+void PromiseSitterTest::testPromiseAccess()
+{
+	QScopedPointer<PromiseSitter> sitter{new PromiseSitter};
+
+	Deferred::Ptr deferred1 = Deferred::create();
+	QWeakPointer<Promise> promise1WPointer;
+
+	Deferred::Ptr deferred2 = Deferred::create();
+	QWeakPointer<Promise> promise2WPointer;
+
+	// Scope for promises
+	{
+		Promise::Ptr promise;
+
+		promise = Promise::create(deferred1);
+		sitter->add(promise);
+		promise1WPointer = promise;
+
+		promise = Promise::create(deferred2);
+		sitter->add(promise);
+		promise2WPointer = promise;
+	}
+
+	QCOMPARE(sitter->promises().size(), 2);
+	QVERIFY(sitter->promises().indexOf(promise1WPointer.toStrongRef()) >= 0);
+	QVERIFY(sitter->promises().indexOf(promise2WPointer.toStrongRef()) >= 0);
+
+	deferred1->resolve();
+
+	QTRY_COMPARE(sitter->promises().size(), 1);
+	QVERIFY(sitter->promises().indexOf(promise2WPointer.toStrongRef()) >= 0);
 }
 
 
