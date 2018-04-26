@@ -166,7 +166,7 @@ void NetworkPromiseTest::testHttp()
 void NetworkPromiseTest::testUpload()
 {
 	QNetworkAccessManager qnam;
-	QNetworkRequest request(QUrl("https://eu.httpbin.org/post"));
+	QNetworkRequest request(QUrl("http://eu.httpbin.org/post"));
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
 	QString data("foo bar");
 	QNetworkReply* reply = qnam.post(request, data.toUtf8());
@@ -300,13 +300,13 @@ void NetworkPromiseTest::testCachedData()
 	QNetworkDiskCache diskCache(&qnam);
 	diskCache.setCacheDirectory(tempDir.path());
 	qnam.setCache(&diskCache);
-	
+
 	// Load the data for the first time to cache it
 	QString dataPath = QFINDTESTDATA("data/DummyData.txt");
 	QNetworkRequest request(QUrl::fromLocalFile(dataPath));
 	QScopedPointer<QNetworkReply> firstReply{qnam.get(request)};
 	QTRY_VERIFY(firstReply->isFinished());
-	
+
 	// Load the data for the second time.
 	QNetworkReply* secondReply = qnam.get(request);
 	NetworkPromise::Ptr promise = NetworkPromise::create(secondReply);
