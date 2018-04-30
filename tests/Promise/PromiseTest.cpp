@@ -12,10 +12,6 @@ namespace QtPromise
 namespace Tests
 {
 
-const QString ACTION_RESOLVE = QStringLiteral("resolve");
-const QString ACTION_REJECT = QStringLiteral("reject");
-const QString ACTION_NOTIFY = QStringLiteral("notify");
-
 /*! Unit tests for the Promise class.
  *
  * \author jochen.ulrich
@@ -61,6 +57,7 @@ private Q_SLOTS:
 	void testDelay_data();
 	void testDelay();
 	void testQHash();
+	void testWhenFinished();
 
 private:
 	struct PromiseSpies
@@ -72,41 +69,15 @@ private:
 		QSignalSpy notified;
 	};
 
-	void callActionOnDeferred(Deferred::Ptr& deferred, const QString& action, const QVariant& data, int repetitions);
-
+	static void callActionOnDeferred(Deferred::Ptr& deferred, const QString& action, const QVariant& data, int repetitions);
+	static QList<Deferred::Ptr> createDeferredList(int count);
+	static QList<Promise::Ptr> getPromiseList(QList<Deferred::Ptr> deferreds);
 };
 
 
-//####### Helper #######
-
-PromiseTest::PromiseSpies::PromiseSpies(Promise::Ptr promise)
-	: resolved(promise.data(), &Promise::resolved),
-	  rejected(promise.data(), &Promise::rejected),
-	  notified(promise.data(), &Promise::notified)
-{
-}
-
-/*! Helper method which calls an action on a Deferred.
- *
- * \param deferred The Deferred on which the action should be executed.
- * \param action The action to be executed.
- * \param data The data to be passed to the action.
- * \param repetitions The number of times the action should be called.
- */
-void PromiseTest::callActionOnDeferred(Deferred::Ptr& deferred, const QString& action, const QVariant& data, int repetitions)
-{
-	for (int i=0; i < repetitions; ++i)
-	{
-		if (action == ACTION_RESOLVE)
-			deferred->resolve(data);
-		else if (action == ACTION_REJECT)
-			deferred->reject(data);
-		else if (action == ACTION_NOTIFY)
-			deferred->notify(data);
-		else
-			throw std::invalid_argument(std::string("Unknown action: ") + action.toStdString());
-	}
-}
+const QString ACTION_RESOLVE = QStringLiteral("resolve");
+const QString ACTION_REJECT = QStringLiteral("reject");
+const QString ACTION_NOTIFY = QStringLiteral("notify");
 
 
 //####### Tests #######
@@ -591,13 +562,13 @@ void PromiseTest::testThenPromiseCallback()
 void PromiseTest::testThenNotify()
 {
 	// Setup test scenario
-	Deferred::Ptr originalDeferred = Deferred::create();
-	Deferred::Ptr resolveDeferred = Deferred::create();
-	Deferred::Ptr notifyDeferred = Deferred::create();
+	auto originalDeferred = Deferred::create();
+	auto resolveDeferred = Deferred::create();
+	auto notifyDeferred = Deferred::create();
 
-	Promise::Ptr originalPromise = Promise::create(originalDeferred);
+	auto originalPromise = Promise::create(originalDeferred);
 
-	Promise::Ptr chainedPromise = originalPromise
+	auto chainedPromise = originalPromise
 			->then([&](const QVariant& data) -> Promise::Ptr {
 		return Promise::create(resolveDeferred);
 	}, nullptr, [&](const QVariant& progress) -> Promise::Ptr {
@@ -698,14 +669,14 @@ void PromiseTest::testThenNotifyPromiseCallback()
 	QFETCH(QList<bool>, resolveRejectSequence);
 	QFETCH(QVariantList, notifyData);
 
-	Deferred::Ptr deferred = Deferred::create();
-	Promise::Ptr promise = Promise::create(deferred);
+	auto deferred = Deferred::create();
+	auto promise = Promise::create(deferred);
 
 	QVariantList notifiedCalls;
 
 	auto iResolveRejectSeq = QListIterator<bool>{resolveRejectSequence};
 	auto iNotifyData = QListIterator<QVariant>{notifyData};
-	Promise::Ptr resultPromise = promise->then(nullptr, nullptr,
+	auto resultPromise = promise->then(nullptr, nullptr,
 	                                           [&](const QVariant& progress) -> Promise::Ptr {
 		if (iResolveRejectSeq.next())
 			return Promise::createResolved(iNotifyData.next());
@@ -741,12 +712,12 @@ void PromiseTest::testAlways()
 {
 	QFETCH(QString, action);
 
-	Deferred::Ptr deferred = Deferred::create();
-	Promise::Ptr promise = Promise::create(deferred);
+	auto deferred = Deferred::create();
+	auto promise = Promise::create(deferred);
 
 	QVariantList callbackCalls;
 
-	Promise::Ptr newPromise = promise->always([&](const QVariant& data) {
+	auto newPromise = promise->always([&](const QVariant& data) {
 		callbackCalls.push_back(data);
 	});
 
@@ -761,12 +732,12 @@ void PromiseTest::testAlways()
  */
 void PromiseTest::testThreeLevelChain()
 {
-	Deferred::Ptr deferred = Deferred::create();
-	Promise::Ptr originalPromise = Promise::create(deferred);
+	auto deferred = Deferred::create();
+	auto originalPromise = Promise::create(deferred);
 
 	QVariantList callbackCalls;
 
-	Promise::Ptr finalPromise = originalPromise->then([&](const QVariant& data) {
+	auto finalPromise = originalPromise->then([&](const QVariant& data) {
 		callbackCalls.push_back(data);
 	})->then([&](const QVariant& data) {
 		callbackCalls.push_back(data);
@@ -810,12 +781,8 @@ void PromiseTest::testAsyncChain()
  */
 void PromiseTest::testAll()
 {
-	QList<Deferred::Ptr> deferreds;
-	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
-
-	QList<Promise::Ptr> promises;
-	for (Deferred::Ptr deferred : deferreds)
-		promises << Promise::create(deferred);
+	auto deferreds = createDeferredList(3);
+	auto promises = getPromiseList(deferreds);
 
 	Promise::Ptr combinedPromise = Promise::all(promises);
 
@@ -852,12 +819,8 @@ void PromiseTest::testAll()
  */
 void PromiseTest::testAllReject()
 {
-	QList<Deferred::Ptr> deferreds;
-	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
-
-	QList<Promise::Ptr> promises;
-	for (Deferred::Ptr deferred : deferreds)
-		promises << Promise::create(deferred);
+	auto deferreds = createDeferredList(3);
+	auto promises = getPromiseList(deferreds);
 
 	Promise::Ptr combinedPromise = Promise::all(promises);
 
@@ -890,12 +853,8 @@ void PromiseTest::testAllReject()
  */
 void PromiseTest::testAny()
 {
-	QList<Deferred::Ptr> deferreds;
-	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
-
-	QList<Promise::Ptr> promises;
-	for (Deferred::Ptr deferred : deferreds)
-		promises << Promise::create(deferred);
+	auto deferreds = createDeferredList(3);
+	auto promises = getPromiseList(deferreds);
 
 	Promise::Ptr combinedPromise = Promise::any(promises);
 
@@ -929,12 +888,8 @@ void PromiseTest::testAny()
  */
 void PromiseTest::testAnyReject()
 {
-	QList<Deferred::Ptr> deferreds;
-	deferreds << Deferred::create() << Deferred::create() << Deferred::create();
-
-	QList<Promise::Ptr> promises;
-	for (Deferred::Ptr deferred : deferreds)
-		promises << Promise::create(deferred);
+	auto deferreds = createDeferredList(3);
+	auto promises = getPromiseList(deferreds);
 
 	Promise::Ptr combinedPromise = Promise::any(promises);
 
@@ -975,28 +930,25 @@ void PromiseTest::testAllAnySync_data()
 	QTest::addColumn<QList<int>>("expectedAllSignalCounts");
 	QTest::addColumn<QList<int>>("expectedAnySignalCounts");
 
-	QList<Deferred::Ptr> oneResolvedDeferreds;
-	oneResolvedDeferreds << Deferred::create() << Deferred::create() << Deferred::create();
+
+	auto oneResolvedDeferreds = createDeferredList(3);
 	oneResolvedDeferreds[0]->resolve("foo");
 	//                            // deferreds            // expectedAllSignalCounts       // expectedAnySignalCounts
 	QTest::newRow("one resolved") << oneResolvedDeferreds << (QList<int>() << 0 << 0 << 0) << (QList<int>() << 1 << 0 << 0);
 
-	QList<Deferred::Ptr> allResolvedDeferreds;
-	allResolvedDeferreds << Deferred::create() << Deferred::create() << Deferred::create();
+	auto allResolvedDeferreds = createDeferredList(3);
 	allResolvedDeferreds[0]->resolve("foo");
 	allResolvedDeferreds[1]->resolve(17);
 	allResolvedDeferreds[2]->resolve(true);
 	//                            // deferreds            // expectedAllSignalCounts       // expectedAnySignalCounts
 	QTest::newRow("all resolved") << allResolvedDeferreds << (QList<int>() << 1 << 0 << 0) << (QList<int>() << 1 << 0 << 0);
 
-	QList<Deferred::Ptr> oneRejectedDeferreds;
-	oneRejectedDeferreds << Deferred::create() << Deferred::create() << Deferred::create();
+	auto oneRejectedDeferreds = createDeferredList(3);
 	oneRejectedDeferreds[0]->reject("foo");
 	//                            // deferreds            // expectedAllSignalCounts       // expectedAnySignalCounts
 	QTest::newRow("one rejected") << oneRejectedDeferreds << (QList<int>() << 0 << 1 << 0) << (QList<int>() << 0 << 0 << 0);
 
-	QList<Deferred::Ptr> allRejectedDeferreds;
-	allRejectedDeferreds << Deferred::create() << Deferred::create() << Deferred::create();
+	auto allRejectedDeferreds = createDeferredList(3);
 	allRejectedDeferreds[0]->reject("foo");
 	allRejectedDeferreds[1]->reject(21);
 	allRejectedDeferreds[2]->reject(false);
@@ -1013,16 +965,14 @@ void PromiseTest::testAllAnySync()
 	QFETCH(QList<int>, expectedAllSignalCounts);
 	QFETCH(QList<int>, expectedAnySignalCounts);
 
-	QList<Promise::Ptr> promises;
-	for (Deferred::Ptr deferred : deferreds)
-		promises << Promise::create(deferred);
-	
+	auto promises = getPromiseList(deferreds);
+
 	Promise::Ptr allPromise = Promise::all(promises);
 	Promise::Ptr anyPromise = Promise::any(promises);
-	
+
 	PromiseSpies allSpies(allPromise);
 	PromiseSpies anySpies(anyPromise);
-	
+
 	QTRY_COMPARE(allSpies.resolved.count(), expectedAllSignalCounts[0]);
 	QTRY_COMPARE(allSpies.rejected.count(), expectedAllSignalCounts[1]);
 	QTRY_COMPARE(allSpies.notified.count(), expectedAllSignalCounts[2]);
@@ -1213,6 +1163,99 @@ void PromiseTest::testQHash()
 	QVERIFY(qHash(firstPromise) != qHash(secondPromise));
 }
 
+/*! \test Tests the Promise::whenFinished() method.
+ */
+void PromiseTest::testWhenFinished()
+{
+	auto deferreds = createDeferredList(3);
+	auto promises = getPromiseList(deferreds);
+
+	auto combinedPromise = Promise::whenFinished(promises);
+
+	PromiseSpies spies(combinedPromise);
+
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
+
+	QList<QVariant> results;
+	results << "My string" << 15 << QVariant::fromValue(QList<int>() << 7 << 13);
+
+	deferreds[0]->resolve(results[0]);
+
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
+
+	deferreds[2]->reject(results[2]);
+
+	QTRY_COMPARE(spies.resolved.count(), 0);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
+
+	deferreds[1]->resolve(results[1]);
+
+	QTRY_COMPARE(spies.resolved.count(), 1);
+	QTRY_COMPARE(spies.rejected.count(), 0);
+	QTRY_COMPARE(spies.notified.count(), 0);
+
+	auto actualResolveValue = spies.resolved.first().first().value<QList<Promise::Ptr>>();
+	auto expectedResolveValue = promises;
+	QCOMPARE(actualResolveValue, expectedResolveValue);
+}
+
+
+//####### Helper #######
+
+PromiseTest::PromiseSpies::PromiseSpies(Promise::Ptr promise)
+	: resolved(promise.data(), &Promise::resolved),
+	  rejected(promise.data(), &Promise::rejected),
+	  notified(promise.data(), &Promise::notified)
+{
+}
+
+/*! Helper method which calls an action on a Deferred.
+ *
+ * \param deferred The Deferred on which the action should be executed.
+ * \param action The action to be executed.
+ * \param data The data to be passed to the action.
+ * \param repetitions The number of times the action should be called.
+ */
+void PromiseTest::callActionOnDeferred(Deferred::Ptr& deferred, const QString& action, const QVariant& data, int repetitions)
+{
+	for (int i=0; i < repetitions; ++i)
+	{
+		if (action == ACTION_RESOLVE)
+			deferred->resolve(data);
+		else if (action == ACTION_REJECT)
+			deferred->reject(data);
+		else if (action == ACTION_NOTIFY)
+			deferred->notify(data);
+		else
+			throw std::invalid_argument(std::string("Unknown action: ") + action.toStdString());
+	}
+}
+
+
+QList<Deferred::Ptr> PromiseTest::createDeferredList(int count)
+{
+	QList<Deferred::Ptr> deferreds;
+
+	for (; count > 0; --count)
+		deferreds << Deferred::create();
+
+	return deferreds;
+}
+
+QList<Promise::Ptr> PromiseTest::getPromiseList(QList<Deferred::Ptr> deferreds)
+{
+	QList<Promise::Ptr> promises;
+
+	for (auto deferred : deferreds)
+		promises << Promise::create(deferred);
+
+	return promises;
+}
 
 }  // namespace Tests
 }  // namespace QtPromise
