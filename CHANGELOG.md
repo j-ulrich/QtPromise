@@ -14,6 +14,7 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 
 ### Added ###
 - [#14] Possibility to access the promises currently held in a `PromiseSitter`.
+- [#15] Convenient way to react when all Promises in a container have finished.
 
 ### Fixed ###
 - [#16] `Promise::always()` forwards parameter twice.
