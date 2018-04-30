@@ -128,6 +128,11 @@ public:
 	 */
 	bool contains(Promise::Ptr promise) const;
 
+	/*! \return The list of promises currently hold by this PromiseSitter.
+	 * \sa contains()
+	 */
+	QList<Promise::Ptr> promises() const;
+
 private:
 	mutable QReadWriteLock m_lock;
 	QHash<const Promise*, Promise::Ptr> m_promises;

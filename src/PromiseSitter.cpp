@@ -77,4 +77,10 @@ bool PromiseSitter::contains(Promise::Ptr promise) const
 	return m_promises.contains(promise.data());
 }
 
+QList<Promise::Ptr> PromiseSitter::promises() const
+{
+	QReadLocker locker{&m_lock};
+	return m_promises.values();
+}
+
 } // namespace QtPromise
