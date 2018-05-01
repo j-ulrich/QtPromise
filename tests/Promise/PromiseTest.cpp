@@ -57,6 +57,7 @@ private Q_SLOTS:
 	void testDelay_data();
 	void testDelay();
 	void testQHash();
+	void testWhenFinished_data();
 	void testWhenFinished();
 
 private:
@@ -69,7 +70,7 @@ private:
 		QSignalSpy notified;
 	};
 
-	static void callActionOnDeferred(Deferred::Ptr& deferred, const QString& action, const QVariant& data, int repetitions);
+	static void callActionOnDeferred(Deferred::Ptr& deferred, const QString& action, const QVariant& data, int repetitions = 1);
 	static QList<Deferred::Ptr> createDeferredList(int count);
 	static QList<Promise::Ptr> getPromiseList(QList<Deferred::Ptr> deferreds);
 };
@@ -512,7 +513,7 @@ void PromiseTest::testThenPromiseCallback()
 	QVariant deferredData("initial data");
 
 	if (!async)
-		callActionOnDeferred(deferred, action, deferredData, 1);
+		callActionOnDeferred(deferred, action, deferredData);
 
 	Promise::Ptr promise = Promise::create(deferred);
 
@@ -544,7 +545,7 @@ void PromiseTest::testThenPromiseCallback()
 		QCOMPARE(promise->state(), Deferred::Pending);
 		QCOMPARE(newPromise->state(), Deferred::Pending);
 
-		callActionOnDeferred(deferred, action, deferredData, 1);
+		callActionOnDeferred(deferred, action, deferredData);
 	}
 
 	QTEST(promise->state(), "expectedOriginalState");
@@ -722,7 +723,7 @@ void PromiseTest::testAlways()
 	});
 
 	QVariant originalData("initial data");
-	callActionOnDeferred(deferred, action, originalData, 1);
+	callActionOnDeferred(deferred, action, originalData);
 
 	QVERIFY(promise->state() == newPromise->state());
 	QCOMPARE(callbackCalls, QVariantList() << originalData);
@@ -744,7 +745,7 @@ void PromiseTest::testThreeLevelChain()
 	});
 
 	QVariant data("my data");
-	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);
+	callActionOnDeferred(deferred, ACTION_RESOLVE, data);
 	QCOMPARE(callbackCalls, QVariantList() << data << data);
 }
 
@@ -765,13 +766,13 @@ void PromiseTest::testAsyncChain()
 	});
 
 	QVariant data("my data");
-	callActionOnDeferred(deferred, ACTION_RESOLVE, data, 1);
+	callActionOnDeferred(deferred, ACTION_RESOLVE, data);
 
 	QTRY_COMPARE(finalPromise->state(), Deferred::Pending);
 
 	QVariant secondData("second data");
 	qDebug("Resolve transmitDeferred");
-	callActionOnDeferred(transmitDeferred, ACTION_RESOLVE, secondData, 1);
+	callActionOnDeferred(transmitDeferred, ACTION_RESOLVE, secondData);
 
 	QTRY_COMPARE(finalPromise->state(), Deferred::Resolved);
 	QTRY_COMPARE(finalPromise->data(), secondData);
@@ -1163,10 +1164,22 @@ void PromiseTest::testQHash()
 	QVERIFY(qHash(firstPromise) != qHash(secondPromise));
 }
 
+/*! Provides the data for the testWhenFinished() test.
+ */
+void PromiseTest::testWhenFinished_data()
+{
+	QTest::addColumn<QString>("lastPromiseAction");
+
+	QTest::newRow("resolve last") << ACTION_RESOLVE;
+	QTest::newRow("reject last")  << ACTION_REJECT;
+}
+
 /*! \test Tests the Promise::whenFinished() method.
  */
 void PromiseTest::testWhenFinished()
 {
+	QFETCH(QString, lastPromiseAction);
+
 	auto deferreds = createDeferredList(3);
 	auto promises = getPromiseList(deferreds);
 
@@ -1193,7 +1206,7 @@ void PromiseTest::testWhenFinished()
 	QTRY_COMPARE(spies.rejected.count(), 0);
 	QTRY_COMPARE(spies.notified.count(), 0);
 
-	deferreds[1]->resolve(results[1]);
+	callActionOnDeferred(deferreds[1], lastPromiseAction, results[1]);
 
 	QTRY_COMPARE(spies.resolved.count(), 1);
 	QTRY_COMPARE(spies.rejected.count(), 0);
