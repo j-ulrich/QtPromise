@@ -169,7 +169,7 @@ void ChildDeferred::onParentDestroyed(QObject* parent)
 	// removeIndices contains indices sorted from highest to lowest
 	for (int i : const_cast<const QVector<int>&>(removeIndices))
 		m_parents.removeAt(i);
-		
+
 }
 
 void ChildDeferred::onParentResolved(const QVariant& value)
@@ -177,14 +177,10 @@ void ChildDeferred::onParentResolved(const QVariant& value)
 	QMutexLocker locker(&m_lock);
 	m_resolvedCount += 1;
 	Q_EMIT parentResolved(value);
-	if (m_resolvedCount == m_parents.size())
-	{
-		// All parents have been resolved
-		QList<QVariant> results;
-		for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
-			results.append(parent->data());
-		Q_EMIT parentsResolved(results);
-	}
+	if (allParentsResolved())
+		emitParentsResolved();
+	if (allParentsFinished())
+		Q_EMIT parentsFinished();
 }
 
 void ChildDeferred::onParentRejected(const QVariant& reason)
@@ -192,15 +188,43 @@ void ChildDeferred::onParentRejected(const QVariant& reason)
 	QMutexLocker locker(&m_lock);
 	m_rejectedCount += 1;
 	Q_EMIT parentRejected(reason);
-	if (m_rejectedCount == m_parents.size())
-	{
-		// All parents have been rejected
-		QList<QVariant> reasons;
-		for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
-			reasons.append(parent->data());
-		Q_EMIT parentsRejected(reasons);
-	}
+	if (allParentsRejected())
+		emitParentsRejected();
+	if (allParentsFinished())
+		Q_EMIT parentsFinished();
 }
+
+bool ChildDeferred::allParentsResolved()
+{
+	return m_resolvedCount == m_parents.size();
+}
+
+bool ChildDeferred::allParentsRejected()
+{
+	return m_rejectedCount == m_parents.size();
+}
+
+bool ChildDeferred::allParentsFinished()
+{
+	return m_resolvedCount + m_rejectedCount == m_parents.size();
+}
+
+void ChildDeferred::emitParentsResolved()
+{
+	QList<QVariant> results;
+	for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
+		results.append(parent->data());
+	Q_EMIT parentsResolved(results);
+}
+
+void ChildDeferred::emitParentsRejected()
+{
+	QList<QVariant> reasons;
+	for (Deferred::Ptr parent : const_cast<const QVector<Deferred::Ptr>&>(m_parents))
+		reasons.append(parent->data());
+	Q_EMIT parentsRejected(reasons);
+}
+
 
 /*!
  * \endcond

@@ -1,11 +1,14 @@
 
-#include <QtTest>
-#include <QtDebug>
-#include <QSignalSpy>
-#include <QtConcurrent>
-#include <functional>
 #include "FuturePromise.h"
 
+#include <QtTest>
+#include <QtDebug>
+#include <QAtomicInteger>
+#include <QWaitCondition>
+#include <QtConcurrent>
+
+#include <algorithm>
+#include <functional>
 
 namespace QtPromise
 {
@@ -44,7 +47,15 @@ private:
 		QSignalSpy notified;
 		QSignalSpy baseNotified;
 	};
+
+	static const int MAX_THREAD_COUNT;
 };
+
+/* Ensure we have at maximum one worker thread.
+ * Else it is impossible to have the QFutures report progress in a
+ * predictable manner.
+ */
+const int FuturePromiseTest::MAX_THREAD_COUNT = 2;
 
 
 //####### Helpers #######
@@ -60,11 +71,7 @@ FuturePromiseTest::PromiseSpies::PromiseSpies(FuturePromise::Ptr promise)
 
 void FuturePromiseTest::initTestCase()
 {
-	/* Ensure we have at most one worker thread.
-	 * Else it is impossible to have the QFutures report progress in a
-	 * predictable manner.
-	 */
-	QThreadPool::globalInstance()->setMaxThreadCount(2);
+	QThreadPool::globalInstance()->setMaxThreadCount(MAX_THREAD_COUNT);
 }
 
 
@@ -75,9 +82,11 @@ void FuturePromiseTest::testBasicFuture()
 {
 	int returnValue = 0;
 	QWaitCondition waitCond;
+	QAtomicInteger<int> waitingThreads;
 	QFuture<int> future = QtConcurrent::run([&]() -> int {
 		QMutex mutex;
 		QMutexLocker locker(&mutex);
+		waitingThreads += 1;
 		waitCond.wait(&mutex);
 		return returnValue;
 	});
@@ -86,7 +95,7 @@ void FuturePromiseTest::testBasicFuture()
 
 	PromiseSpies spies(promise);
 
-	QTest::qWait(1 * 1000); // 1s
+	QTRY_VERIFY(waitingThreads == 1);
 	QVERIFY(!future.isFinished());
 	QCOMPARE(promise->state(), Deferred::Pending);
 
@@ -105,8 +114,7 @@ void FuturePromiseTest::testBasicFuture()
  */
 void FuturePromiseTest::testMultipleResults()
 {
-	QList<int> input;
-	input << 1 << 2 << 3;
+	const QList<int> input{1, 2, 3};
 
 	QMutex mutex;
 
@@ -141,14 +149,15 @@ void FuturePromiseTest::testMultipleResults()
  */
 void FuturePromiseTest::testCancel()
 {
-	QList<int> input;
-	input << 1 << 2 << 3;
+	const QList<int> input{1, 2, 3};
 
+	QAtomicInteger<int> waitingThreads;
 	QWaitCondition waitCond;
+	QMutex mutex;
 
 	std::function<int(const int&)> mapFunction = [&](const int& value) -> int {
-		QMutex mutex;
 		QMutexLocker locker(&mutex);
+		waitingThreads += 1;
 		waitCond.wait(&mutex);
 		return value * 2;
 	};
@@ -159,7 +168,7 @@ void FuturePromiseTest::testCancel()
 
 	PromiseSpies spies(promise);
 
-	QTest::qWait(1 * 500);
+	QTRY_VERIFY(waitingThreads == std::min(MAX_THREAD_COUNT, input.size()));
 
 	waitCond.wakeOne();
 
@@ -175,14 +184,15 @@ void FuturePromiseTest::testCancel()
 	QCOMPARE(spies.baseRejected.first().first(), QVariant::fromValue(promise->results()));
 	QCOMPARE(promise->results().count(), 1);
 	QCOMPARE(promise->results().first().value<int>(), 2);
+
+	future.waitForFinished();
 }
 
 /*! \test Tests the notifications of a FuturePromise when the QFuture reports progress.
  */
 void FuturePromiseTest::testProgressReporting()
 {
-	QList<int> input;
-	input << 1 << 2 << 3;
+	const QList<int> input{1, 2, 3};
 
 	QMutex mutex;
 
@@ -235,8 +245,7 @@ void FuturePromiseTest::testProgressReporting()
  */
 void FuturePromiseTest::testProgressText()
 {
-	QList<int> input;
-	input << 1 << 2 << 3;
+	const QList<int> input{1, 2, 3};
 
 	QMutex mutex;
 
@@ -300,8 +309,7 @@ void FuturePromiseTest::testFinishedFuture()
 {
 	QFETCH(bool, cancel);
 
-	QList<int> input;
-	input << 1 << 2 << 3;
+	const QList<int> input{1, 2, 3};
 
 	QMutex mutex;
 
@@ -362,8 +370,7 @@ void FuturePromiseTest::testFinishedDeferred()
 {
 	QFETCH(bool, cancel);
 
-	QList<int> input;
-	input << 1 << 2 << 3;
+	const QList<int> input{1, 2, 3};
 
 	QMutex mutex;
 

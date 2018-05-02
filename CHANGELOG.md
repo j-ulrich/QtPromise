@@ -10,6 +10,20 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 ---
 
 
+## [2.1.0] - 2018-05-03 ##
+
+### Added ###
+- [#14] Possibility to access the promises currently held in a `PromiseSitter`.
+- [#15] Convenient way to react when all Promises in a container have finished.
+
+### Fixed ###
+- [#16] `Promise::always()` forwards parameter twice.
+- Instability of FuturePromiseTest.
+
+
+---
+
+
 ## [2.0.1] - 2017-11-12 ##
 Bug fix release
 
@@ -24,8 +38,7 @@ Bug fix release
 This release fundamentally changes the way object deletion is handled:
 instead of using deferred deletion (`QObject::deleteLater()`), the objects are now
 delete immediately when their last `QSharedPointer` is deleted.
-This has proven necessary because with a deferred delete, a callback can still be invoked between
-the destruction of one of its captured dependencies and its scheduled deletion.
+This has proven necessary because with a deferred delete, a callback can still be invoked between the destruction of one of its captured dependencies and its scheduled deletion.
 
 ### Added ###
 - Detection of "destruction in signal handler" in Deferred class.
@@ -102,3 +115,4 @@ Initial release.
 [1.2.0]: https://gitlab.com/julrich/QtPromise/tags/1.2.0
 [2.0.0]: https://gitlab.com/julrich/QtPromise/tags/2.0.0
 [2.0.1]: https://gitlab.com/julrich/QtPromise/tags/2.0.1
+[2.1.0]: https://gitlab.com/julrich/QtPromise/tags/2.1.0

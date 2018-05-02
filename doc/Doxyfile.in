@@ -2153,7 +2153,8 @@ SKIP_FUNCTION_MACROS   = YES
 # run, you must also specify the path to the tagfile here.
 
 TAGFILES               = @QT5_CORE_TAGS@=http://doc.qt.io/qt-5/ \
-						@QT5_NETWORK_TAGS@=http://doc.qt.io/qt-5/
+                         @QT5_NETWORK_TAGS@=http://doc.qt.io/qt-5/ \
+                         @QT5_CONCURRENT_TAGS@=http://doc.qt.io/qt-5/
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to

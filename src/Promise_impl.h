@@ -50,7 +50,7 @@ Promise::Ptr Promise::then(ResolvedFunc&& resolvedCallback, RejectedFunc&& rejec
 		newDeferred->connectParent(m_deferred,       createCallbackWrapper(newDeferred.data(), std::forward<ResolvedFunc>(resolvedCallback), Deferred::Resolved),
 		                                             createCallbackWrapper(newDeferred.data(), std::forward<RejectedFunc>(rejectedCallback), Deferred::Rejected),
 		                                       createNotifyCallbackWrapper(newDeferred.data(), std::forward<NotifiedFunc>(notifiedCallback)));
-		
+
 		return create(newDeferred.staticCast<Deferred>());
 	}
 }
@@ -206,9 +206,7 @@ ChildDeferred::WrappedCallbackFunc Promise::createNotifyCallbackWrapper(ChildDef
 template<typename PromiseContainer>
 Promise::Ptr Promise::all_impl(const PromiseContainer& promises)
 {
-	QVector<Deferred::Ptr> deferreds;
-	for (Promise::Ptr promise : promises)
-		deferreds.append(promise->m_deferred);
+	auto deferreds = deferredsOfPromises(promises);
 	ChildDeferred::Ptr combinedDeferred = ChildDeferred::create(deferreds, true);
 
 	QObject::connect(combinedDeferred.data(), &ChildDeferred::parentsResolved, combinedDeferred.data(), &Deferred::resolve);
@@ -220,15 +218,38 @@ Promise::Ptr Promise::all_impl(const PromiseContainer& promises)
 template<typename PromiseContainer>
 Promise::Ptr Promise::any_impl(const PromiseContainer& promises)
 {
-	QVector<Deferred::Ptr> deferreds;
-	for (Promise::Ptr promise : promises)
-		deferreds.append(promise->m_deferred);
+	auto deferreds = deferredsOfPromises(promises);
 	ChildDeferred::Ptr combinedDeferred = ChildDeferred::create(deferreds, true);
-
 	QObject::connect(combinedDeferred.data(), &ChildDeferred::parentResolved, combinedDeferred.data(), &Deferred::resolve);
 	QObject::connect(combinedDeferred.data(), &ChildDeferred::parentsRejected, combinedDeferred.data(), &Deferred::reject);
 
 	return create(combinedDeferred);
+}
+
+template<typename PromiseContainer>
+Promise::Ptr Promise::whenFinished_impl(const PromiseContainer& promises)
+{
+	QList<Promise::Ptr> promiseList;
+	for (Promise::Ptr promise : promises)
+		promiseList.append(promise);
+
+	auto deferreds = deferredsOfPromises(promises);
+	ChildDeferred::Ptr combinedDeferred = ChildDeferred::create(deferreds, true);
+	auto rawCombinedDeferred = combinedDeferred.data();
+	QObject::connect(rawCombinedDeferred, &ChildDeferred::parentsFinished, rawCombinedDeferred, [rawCombinedDeferred, promiseList]() {
+		rawCombinedDeferred->resolve(QVariant::fromValue(promiseList));
+	});
+
+	return create(combinedDeferred);
+}
+
+template<typename PromiseContainer>
+QVector<Deferred::Ptr> Promise::deferredsOfPromises(const PromiseContainer& promises)
+{
+	QVector<Deferred::Ptr> deferreds;
+	for (Promise::Ptr promise : promises)
+		deferreds.append(promise->m_deferred);
+	return deferreds;
 }
 
 } // namespace QtPromise

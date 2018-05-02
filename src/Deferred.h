@@ -76,7 +76,12 @@ public:
 	/*! Smart pointer to Deferred. */
 	typedef QSharedPointer<Deferred> Ptr;
 
-	/*! Possible states of a Deferred or Promise. */
+	/*! Possible states of a Deferred or Promise.
+	 *
+	 * \note This type is registered in Qt's meta type system using
+	 * Q_DECLARE_METATYPE() and using qRegisterMetaType() and
+	 * QMetaType::registerEqualsComparator() in Deferred().
+	 */
 	enum State
 	{
 		Pending = 0,  /*!< The outcome of the asynchronous operation has not
@@ -276,7 +281,7 @@ protected:
 
 private:
 	void logInvalidActionMessage(const char* action) const;
-	
+
 	mutable QMutex m_lock;
 	State m_state;
 	QVariant m_data;

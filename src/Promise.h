@@ -62,10 +62,10 @@ public:
 	 */
 	static Ptr create(Deferred::Ptr deferred);
 	/*! Creates a resolved Promise.
-	 * 
+	 *
 	 * Creates a Deferred, resolves it with the given \p value and returns
 	 * a Promise on the Deferred.
-	 * 
+	 *
 	 * \param value The value used to resolve the Promise.
 	 * \return QSharedPointer to a new, resolved Promise.
 	 */
@@ -74,7 +74,7 @@ public:
 	 *
 	 * Creates a Deferred, rejects it with the given \p reason and returns
 	 * a Promise on the Deferred.
-	 * 
+	 *
 	 * \param reason The reason used to reject the Promise.
 	 * \return QSharedPointer to a new, rejected Promise.
 	 */
@@ -173,6 +173,29 @@ public:
 	template<typename ListType>
 	static Ptr any(const std::initializer_list<ListType>& promises) { return Promise::any_impl(promises); }
 
+	/*! Combines multiple Promises using "and" semantics while ignoring the promise result.
+	 *
+	 * Creates a Promise which is resolved when *all* provided promises
+	 * are finished, no matter if they are resolved or rejected.
+	 * The value is a QList<Promise::Ptr> of the provided \p promises.
+	 *
+	 * \tparam PromiseContainer A container type of Promise::Ptr objects.
+	 * The container type must be iterable using a range-base \c for loop.
+	 * \param promises A \p PromiseContainer of the promises which should be combined.
+	 * \return A QSharedPointer to a new Promise which is resolved when all \p promises
+	 * are either resolved or rejected.
+	 * The returned Promise is never rejected nor notified.
+	 * \since 2.1.0
+	 */
+	template<typename PromiseContainer>
+	static Ptr whenFinished(PromiseContainer&& promises) { return Promise::whenFinished_impl(std::forward<PromiseContainer>(promises)); }
+	/*! \overload
+	 * Overload for initializer lists.
+	 */
+	template<typename ListType>
+	static Ptr whenFinished(const std::initializer_list<ListType>& promises) { return Promise::whenFinished_impl(promises); }
+
+
 	/*! Default destructor */
 	virtual ~Promise() = default;
 
@@ -270,7 +293,7 @@ public:
 	 * \sa then()
 	 */
 	template <typename AlwaysFunc>
-	Ptr always(AlwaysFunc&& alwaysCallback) const { return this->then(std::forward<AlwaysFunc>(alwaysCallback), std::forward<AlwaysFunc>(alwaysCallback)); }
+	Ptr always(AlwaysFunc&& alwaysCallback) const { return this->then(alwaysCallback, alwaysCallback); }
 
 
 Q_SIGNALS:
@@ -362,6 +385,11 @@ private:
 	static Ptr all_impl(const PromiseContainer& promises);
 	template<typename PromiseContainer>
 	static Ptr any_impl(const PromiseContainer& promises);
+	template<typename PromiseContainer>
+	static Ptr whenFinished_impl(const PromiseContainer& promises);
+
+	template<typename PromiseContainer>
+	static QVector<Deferred::Ptr> deferredsOfPromises(const PromiseContainer& promises);
 
 
 };

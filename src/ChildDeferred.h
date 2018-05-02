@@ -168,6 +168,8 @@ Q_SIGNALS:
 	 */
 	void parentsRejected(QList<QVariant> reasons) const;
 
+	void parentsFinished() const;
+
 protected:
 	/*! Creates a pending ChildDeferred object holding a pointer to a parent Deferred.
 	 *
@@ -186,6 +188,11 @@ private:
 	void trackParentResult(Deferred* parent);
 	void disconnectParents();
 	void disconnectParent(Deferred* parent);
+	bool allParentsResolved();
+	bool allParentsRejected();
+	bool allParentsFinished();
+	void emitParentsResolved();
+	void emitParentsRejected();
 
 	mutable QMutex m_lock;
 	QVector<Deferred::Ptr> m_parents;
