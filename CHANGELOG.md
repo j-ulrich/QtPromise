@@ -10,7 +10,7 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 ---
 
 
-## [2.1.0] - 2018-05-02 ##
+## [2.1.0] - 2018-05-03 ##
 
 ### Added ###
 - [#14] Possibility to access the promises currently held in a `PromiseSitter`.
