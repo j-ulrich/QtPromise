@@ -10,7 +10,7 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 ---
 
 
-## Unreleased ##
+## [2.1.0] - 2018-05-03 ##
 
 ### Added ###
 - [#14] Possibility to access the promises currently held in a `PromiseSitter`.
@@ -18,6 +18,7 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 
 ### Fixed ###
 - [#16] `Promise::always()` forwards parameter twice.
+- Instability of FuturePromiseTest.
 
 
 ---
@@ -114,3 +115,4 @@ Initial release.
 [1.2.0]: https://gitlab.com/julrich/QtPromise/tags/1.2.0
 [2.0.0]: https://gitlab.com/julrich/QtPromise/tags/2.0.0
 [2.0.1]: https://gitlab.com/julrich/QtPromise/tags/2.0.1
+[2.1.0]: https://gitlab.com/julrich/QtPromise/tags/2.1.0
