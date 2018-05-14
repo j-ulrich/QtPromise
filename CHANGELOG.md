@@ -10,7 +10,7 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 ---
 
 
-## Unreleased ##
+## [2.1.1] - 2018-05-14 ##
 
 ### Fixed ###
 - [#17] Promise::all(), Promise::any() and Promise::whenFinished() resolve/reject too early when used with resolved/rejected Promise
@@ -123,3 +123,4 @@ Initial release.
 [2.0.0]: https://gitlab.com/julrich/QtPromise/tags/2.0.0
 [2.0.1]: https://gitlab.com/julrich/QtPromise/tags/2.0.1
 [2.1.0]: https://gitlab.com/julrich/QtPromise/tags/2.1.0
+[2.1.1]: https://gitlab.com/julrich/QtPromise/tags/2.1.1
