@@ -10,7 +10,14 @@ This changelog follows the [Keep a Changelog](http://keepachangelog.com) format.
 ---
 
 
+## Unreleased ##
+
+### Fixed ###
+- [#17] Promise::all(), Promise::any() and Promise::whenFinished() resolve/reject too early when used with resolved/rejected Promise
+
+
 ## [2.1.0] - 2018-05-03 ##
+Feature addition: Use PromiseSitter to track status of a set of Promises
 
 ### Added ###
 - [#14] Possibility to access the promises currently held in a `PromiseSitter`.
