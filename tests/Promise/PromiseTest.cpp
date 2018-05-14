@@ -789,6 +789,8 @@ void PromiseTest::testAll()
 
 	PromiseSpies spies(combinedPromise);
 
+	QTest::qWait(0);
+
 	QTRY_COMPARE(spies.resolved.count(), 0);
 	QTRY_COMPARE(spies.rejected.count(), 0);
 	QTRY_COMPARE(spies.notified.count(), 0);
@@ -827,6 +829,8 @@ void PromiseTest::testAllReject()
 
 	PromiseSpies spies(combinedPromise);
 
+	QTest::qWait(0);
+
 	QTRY_COMPARE(spies.resolved.count(), 0);
 	QTRY_COMPARE(spies.rejected.count(), 0);
 	QTRY_COMPARE(spies.notified.count(), 0);
@@ -860,6 +864,8 @@ void PromiseTest::testAny()
 	Promise::Ptr combinedPromise = Promise::any(promises);
 
 	PromiseSpies spies(combinedPromise);
+
+	QTest::qWait(0);
 
 	QTRY_COMPARE(spies.resolved.count(), 0);
 	QTRY_COMPARE(spies.rejected.count(), 0);
@@ -896,6 +902,8 @@ void PromiseTest::testAnyReject()
 
 	PromiseSpies spies(combinedPromise);
 
+	QTest::qWait(0);
+
 	QTRY_COMPARE(spies.resolved.count(), 0);
 	QTRY_COMPARE(spies.rejected.count(), 0);
 	QTRY_COMPARE(spies.notified.count(), 0);
@@ -923,7 +931,11 @@ void PromiseTest::testAnyReject()
 	QTRY_COMPARE(spies.rejected.first().first(), QVariant::fromValue(rejectReasons));
 }
 
+
+
 /*! Provides the data for the testAllAnySync() test.
+ *
+ * \sa [Issue #17](https://gitlab.com/julrich/QtPromise/issues/17)
  */
 void PromiseTest::testAllAnySync_data()
 {
@@ -937,6 +949,12 @@ void PromiseTest::testAllAnySync_data()
 	//                            // deferreds            // expectedAllSignalCounts       // expectedAnySignalCounts
 	QTest::newRow("one resolved") << oneResolvedDeferreds << (QList<int>() << 0 << 0 << 0) << (QList<int>() << 1 << 0 << 0);
 
+	auto moreThanHalfResolvedDeferreds = createDeferredList(3);
+	moreThanHalfResolvedDeferreds[0]->resolve();
+	moreThanHalfResolvedDeferreds[2]->resolve();
+	//                                       // deferreds                     // expectedAllSignalCounts       // expectedAnySignalCounts
+	QTest::newRow("more than half resolved") << moreThanHalfResolvedDeferreds << (QList<int>() << 0 << 0 << 0) << (QList<int>() << 1 << 0 << 0);
+
 	auto allResolvedDeferreds = createDeferredList(3);
 	allResolvedDeferreds[0]->resolve("foo");
 	allResolvedDeferreds[1]->resolve(17);
@@ -948,6 +966,13 @@ void PromiseTest::testAllAnySync_data()
 	oneRejectedDeferreds[0]->reject("foo");
 	//                            // deferreds            // expectedAllSignalCounts       // expectedAnySignalCounts
 	QTest::newRow("one rejected") << oneRejectedDeferreds << (QList<int>() << 0 << 1 << 0) << (QList<int>() << 0 << 0 << 0);
+
+	auto moreThanHalfRejectedDeferreds = createDeferredList(3);
+	moreThanHalfRejectedDeferreds[0]->reject();
+	moreThanHalfRejectedDeferreds[2]->reject();
+	//                                       // deferreds                     // expectedAllSignalCounts       // expectedAnySignalCounts
+	QTest::newRow("more than half rejected") << moreThanHalfRejectedDeferreds << (QList<int>() << 0 << 1 << 0) << (QList<int>() << 0 << 0 << 0);
+
 
 	auto allRejectedDeferreds = createDeferredList(3);
 	allRejectedDeferreds[0]->reject("foo");
@@ -973,6 +998,8 @@ void PromiseTest::testAllAnySync()
 
 	PromiseSpies allSpies(allPromise);
 	PromiseSpies anySpies(anyPromise);
+
+	QTest::qWait(0);
 
 	QTRY_COMPARE(allSpies.resolved.count(), expectedAllSignalCounts[0]);
 	QTRY_COMPARE(allSpies.rejected.count(), expectedAllSignalCounts[1]);
@@ -1186,6 +1213,8 @@ void PromiseTest::testWhenFinished()
 	auto combinedPromise = Promise::whenFinished(promises);
 
 	PromiseSpies spies(combinedPromise);
+
+	QTest::qWait(0);
 
 	QTRY_COMPARE(spies.resolved.count(), 0);
 	QTRY_COMPARE(spies.rejected.count(), 0);
