@@ -8,8 +8,10 @@
 #define QTPROMISE_CHILDDEFERRED_H_
 
 #include "Deferred.h"
+
 #include <QList>
 #include <QVector>
+#include <QObjectCleanupHandler>
 
 #include <functional>
 
@@ -186,6 +188,8 @@ private Q_SLOTS:
 
 private:
 	void trackParentResult(Deferred* parent);
+	template<typename CallbackType>
+	void callTrackParentResultMethodAsync(CallbackType&& callback);
 	void disconnectParents();
 	void disconnectParent(Deferred* parent);
 	bool allParentsResolved();
@@ -200,6 +204,7 @@ private:
 	int m_resolvedCount;
 	int m_rejectedCount;
 	bool m_trackParentResults;
+	QObjectCleanupHandler m_trackParentResultAsyncTimers;
 };
 
 
