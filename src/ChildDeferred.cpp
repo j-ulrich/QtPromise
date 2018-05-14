@@ -9,11 +9,10 @@ namespace QtPromise
  */
 
 ChildDeferred::ChildDeferred(const QVector<Deferred::Ptr>& parents, bool trackResults)
-	: Deferred(), m_lock(QMutex::Recursive), m_resolvedCount(0), m_rejectedCount(0)
+	: Deferred(), m_lock(QMutex::Recursive), m_resolvedCount(0), m_rejectedCount(0), m_trackParentResults(trackResults)
 {
 	setLogInvalidActionMessage(false);
 	setParents(parents);
-	setTrackParentResults(trackResults);
 
 	QObject::connect(this, &Deferred::resolved, this, &ChildDeferred::removeParentsDelayed);
 	QObject::connect(this, &Deferred::rejected, this, &ChildDeferred::removeParentsDelayed);
@@ -92,6 +91,7 @@ void ChildDeferred::removeParents(bool delayed)
 		});
 	}
 
+	m_trackParentResultAsyncTimers.clear();
 	m_parents.clear();
 }
 
@@ -100,6 +100,8 @@ void ChildDeferred::setTrackParentResults(bool trackParentResults)
 	QMutexLocker locker(&m_lock);
 
 	m_trackParentResults = trackParentResults;
+	m_trackParentResultAsyncTimers.clear();
+
 	if (m_trackParentResults)
 	{
 		m_resolvedCount = m_rejectedCount = 0;
@@ -122,12 +124,12 @@ void ChildDeferred::trackParentResult(Deferred* parent)
 	switch(parent->state())
 	{
 	case Resolved:
-		QTimer::singleShot(0, this, [this, parent]() {
+		callTrackParentResultMethodAsync([this, parent](){
 			this->onParentResolved(parent->data());
 		});
 		break;
 	case Rejected:
-		QTimer::singleShot(0, this, [this, parent]() {
+		callTrackParentResultMethodAsync([this, parent](){
 			this->onParentRejected(parent->data());
 		});
 		break;
@@ -136,6 +138,16 @@ void ChildDeferred::trackParentResult(Deferred* parent)
 		QObject::connect(parent, &Deferred::resolved, this, &ChildDeferred::onParentResolved, Qt::UniqueConnection);
 		QObject::connect(parent, &Deferred::rejected, this, &ChildDeferred::onParentRejected, Qt::UniqueConnection);
 	}
+}
+
+template<typename CallbackType>
+void ChildDeferred::callTrackParentResultMethodAsync(CallbackType&& callback)
+{
+	auto timer = new QTimer(this);
+	m_trackParentResultAsyncTimers.add(timer);
+	timer->setSingleShot(true);
+	QObject::connect(timer, &QTimer::timeout, this, std::forward<CallbackType>(callback));
+	timer->start(0);
 }
 
 void ChildDeferred::disconnectParents()
